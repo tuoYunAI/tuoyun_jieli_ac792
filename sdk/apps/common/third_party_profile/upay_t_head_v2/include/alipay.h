@@ -1,0 +1,5 @@
+#include "app/setting/inc/alipay_account_manage.h"
+#include "app/pay_code/inc/alipay_pay.h"
+#include "app/bind_ble/inc/alipay_bind.h"
+#include "app/aid_code/inc/aid_code.h"
+// #include "hal/csi/inc/iotsec.h"

@@ -1,0 +1,2 @@
+CC_DEFINE+= \
+-DLIBEVENT_COMMIT_HASH=\"tiny-curl-8_4_0_172e54cda18412da73fd8eb4e444e8a5b371ca59\"

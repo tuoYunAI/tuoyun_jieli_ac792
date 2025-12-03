@@ -1,0 +1,185 @@
+{
+ "type": "音箱",
+ "sdk": "smart_robot",
+ "singleSeries": false,
+ "chip": "AC792N",
+ "version": "V1.0.0",
+ "ingoreConfig": false,
+ "pack": "AC792N-demo",
+ "patch": {
+  "title": "",
+  "sn": 0,
+  "path": "",
+  "flag": "empty_patch"
+ },
+ "specialPatchKey": "",
+ "projectType": "OfflineProject",
+ "tabform": [
+  {
+   "type": 1,
+   "fileName": "src\\板级配置.json",
+   "binName": "boardcfg.bin",
+   "showName": "板级配置"
+  },
+  {
+   "type": 1,
+   "fileName": "src\\功能配置.json",
+   "binName": "modecfg.bin",
+   "showName": "功能配置"
+  },
+  {
+   "type": 1,
+   "fileName": "src\\蓝牙配置.json",
+   "binName": "btcfg.bin",
+   "showName": "蓝牙配置"
+  },
+  {
+   "type": 1,
+   "fileName": "src\\LE_AUDIO配置",
+   "binName": "leacfg.bin",
+   "showName": "LE_AUDIO配置",
+   "folder": true,
+   "files": [
+    {
+     "type": 1,
+     "fileName": "src\\LE_AUDIO配置\\公共配置.json",
+     "binName": "leacfg.bin",
+     "showName": "公共配置",
+     "data": ""
+    },
+    {
+     "type": 1,
+     "fileName": "src\\LE_AUDIO配置\\BIS配置.json",
+     "binName": "leacfg.bin",
+     "showName": "BIS配置",
+     "data": ""
+    },
+    {
+     "type": 1,
+     "fileName": "src\\LE_AUDIO配置\\CIS配置.json",
+     "binName": "leacfg.bin",
+     "showName": "CIS配置",
+     "data": ""
+    }
+   ]
+  },
+  {
+   "type": 1,
+   "fileName": "src\\网络配置.json",
+   "binName": "",
+   "showName": "网络配置"
+  },
+  {
+   "type": 1,
+   "fileName": "src\\音频配置.json",
+   "binName": "audiocfg.bin",
+   "showName": "音频配置"
+  },
+  {
+   "type": 3,
+   "fileName": "src\\提示音.tone",
+   "binName": "",
+   "showName": "提示音"
+  },
+  {
+   "type": 4,
+   "fileName": "src\\音频流程",
+   "binName": "stream.bin",
+   "showName": "音频流程",
+   "folder": true,
+   "files": [
+    {
+     "type": 4,
+     "fileName": "src\\音频流程\\系统模式.x6flow",
+     "binName": "stream.bin",
+     "showName": "系统模式",
+     "data": ""
+    },
+    {
+     "type": 4,
+     "fileName": "src\\音频流程\\媒体.x6flow",
+     "binName": "stream.bin",
+     "showName": "媒体",
+     "data": ""
+    },
+    {
+     "type": 4,
+     "fileName": "src\\音频流程\\蓝牙通话.x6flow",
+     "binName": "stream.bin",
+     "showName": "蓝牙通话",
+     "data": ""
+    },
+    {
+     "type": 4,
+     "fileName": "src\\音频流程\\麦克风音效.x6flow",
+     "binName": "stream.bin",
+     "showName": "麦克风音效",
+     "data": ""
+    },
+    {
+     "type": 4,
+     "fileName": "src\\音频流程\\USB Audio.x6flow",
+     "binName": "stream.bin",
+     "showName": "USB Audio",
+     "data": ""
+    },
+    {
+     "type": 4,
+     "fileName": "src\\音频流程\\录音.x6flow",
+     "binName": "stream.bin",
+     "showName": "录音",
+     "data": ""
+    },
+    {
+     "type": 4,
+     "fileName": "src\\音频流程\\声波配网.x6flow",
+     "binName": "stream.bin",
+     "showName": "声波配网",
+     "data": ""
+    },
+    {
+     "type": 4,
+     "fileName": "src\\音频流程\\智能语音.x6flow",
+     "binName": "stream.bin",
+     "showName": "智能语音",
+     "data": ""
+    },
+    {
+     "type": 4,
+     "fileName": "src\\音频流程\\LE_Audio.x6flow",
+     "binName": "stream.bin",
+     "showName": "LE_Audio",
+     "data": ""
+    },
+    {
+     "type": 4,
+     "fileName": "src\\音频流程\\recoder_vir_tx.x6flow",
+     "binName": "stream.bin",
+     "showName": "recoder_vir_tx",
+     "data": ""
+    }
+   ]
+  }
+ ],
+ "create_time": "2025-10-27T08:06:27.568Z",
+ "update_time": "2025-11-28T14:18:38.233Z",
+ "standardPatch": "",
+ "lastOpenToolVersion": "4.6.2",
+ "lastStencilFlowTime": "2025-11-24T20:57:52.3330096+08:00",
+ "createFromBranch": "",
+ "versionName": "V1.0.0",
+ "checkPatchTime": 0,
+ "relateVersion": "",
+ "variant": [
+  {
+   "name": "wifi_camera",
+   "path": ".\\sdk\\apps\\wifi_camera\\board\\wl83",
+   "task": " ac792n_wifi_camera"
+  }
+ ],
+ "defaultVariant": {
+  "path": ".\\sdk\\apps\\wifi_soundbox\\board\\wl83",
+  "task": "ac792n_wifi_soundbox",
+  "name": "默认配置"
+ }
+}

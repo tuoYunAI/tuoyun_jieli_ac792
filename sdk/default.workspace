@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_workspace_file>
+	<Workspace title="Workspace">
+		<Project filename="apps/wifi_camera/board/wl83/AC792N_WIFI_CAMERA.cbp" />
+		<Project filename="apps/wifi_soundbox/board/wl83/AC792N_WIFI_SOUNDBOX.cbp" />
+		<Project filename="apps/demo/demo_ble/board/wl83/AC792N_DEMO_DEMO_BLE.cbp" />
+		<Project filename="apps/demo/demo_wifi_ext/board/wl83/AC792N_DEMO_DEMO_WIFI_EXT.cbp" />
+		<Project filename="apps/demo/demo_ui/board/wl83/AC792N_DEMO_DEMO_UI.cbp" />
+		<Project filename="apps/demo/demo_hello/board/wl83/AC792N_DEMO_DEMO_HELLO.cbp" />
+		<Project filename="apps/demo/demo_wifi/board/wl83/AC792N_DEMO_DEMO_WIFI.cbp" />
+	</Workspace>
+</CodeBlocks_workspace_file>

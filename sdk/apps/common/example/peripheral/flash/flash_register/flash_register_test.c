@@ -1,0 +1,66 @@
+#include "app_config.h"
+#include "system/includes.h"
+#include "asm/sfc_norflash_api.h"
+
+#ifdef USE_FLASH_REGISTER_TEST_DEMO
+
+//所有的函数都需要定义在spi_code段
+SEC_USED(.spi_code)
+static void flash_register_test_task(void *arg)
+{
+    u8 reg1 = 0, reg2 = 0;
+    int ret;
+    printf("---> flash_register_test_task \n");
+    /******************************************************
+      在norflash_enter_spi_code和norflash_exit_spi_code框内：
+      所有代码和数据和const数组和变量只能在sdram或者内部sram，
+      数据和const数组和变量可以指定内部sram的SEC_USED(.sram)或
+      者sdram的SEC_USED(.data)，如果系统的代码是跑flash（即打开了CONFIG_SFC_ENABLE宏），
+      则不能加打印信息
+    *******************************************************/
+    //1 用户独自操作flash先norflash_enter_spi_code
+    norflash_enter_spi_code(0);
+
+    //2 等待flash忙结束
+    ret = norflash_wait_busy(0);
+    if (!ret) { //不忙读取寄存器测试
+        //3 读取寄存器1
+        norflash_spi_cs(0, 0);
+        norflash_spi_write_byte(0, 0x05);
+        reg1 = norflash_spi_read_byte(0);
+        norflash_spi_cs(0, 1);
+
+        //4 读取寄存器2
+        norflash_spi_cs(0, 0);
+        norflash_spi_write_byte(0, 0x35);
+        reg2 = norflash_spi_read_byte(0);
+        norflash_spi_cs(0, 1);
+    }
+
+    //5 用户独自操作flash完成则需要norflash_exit_spi_code
+    norflash_exit_spi_code(0);
+
+    /******************************************************
+       在norflash_enter_spi_code和norflash_exit_spi_code框内：
+      所有代码和数据和const数组和变量只能在sdram或者内部sram，
+      数据和const数组和变量可以指定内部sram的SEC_USED(.sram)或
+      者sdram的SEC_USED(.data)，如果系统的代码是跑flash（即打开了CONFIG_SFC_ENABLE宏），
+      则不能加打印信息
+    *******************************************************/
+    //6 因此下列打印需要放在退出之后才能使用
+    printf("---> reg1 = 0x%x , reg2 = 0x%x \n", reg1, reg2);
+
+    while (1) {
+        os_time_dly(10);
+    }
+}
+
+static int c_main_flash_register(void)
+{
+    os_task_create(flash_register_test_task, NULL, 12, 1000, 0, "flash_register_test_task");
+    return 0;
+}
+
+late_initcall(c_main_flash_register);
+
+#endif // USE_FLASH_REGISTER_TEST_DEMO

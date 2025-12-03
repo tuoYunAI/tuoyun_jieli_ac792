@@ -1,0 +1,3316 @@
+{
+ "fields": [
+  {
+   "__config__": {
+    "layout": "rowFormItem",
+    "tag": "group",
+    "tagIcon": "row",
+    "layoutTree": true,
+    "componentName": "经典蓝牙",
+    "showComponentName": true,
+    "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+    "template": "",
+    "span": 24,
+    "formId": 106,
+    "renderKey": "1061641976427166",
+    "children": [
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": " 蓝牙信息",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 246,
+       "renderKey": "2461651911272271",
+       "children": [
+        {
+         "__config__": {
+          "label": "蓝牙名",
+          "labelWidth": 130,
+          "showLabel": true,
+          "changeTag": true,
+          "tag": "el-input",
+          "tagIcon": "input",
+          "defaultValue": "wifi_soundbox_",
+          "required": false,
+          "layout": "colFormItem",
+          "span": 8,
+          "document": "https://element.eleme.cn/#/zh-CN/component/input",
+          "regList": [],
+          "dataType": [
+           "string"
+          ],
+          "formId": 122,
+          "renderKey": "1221647417192429",
+          "eventField": [],
+          "saveWay": "bin",
+          "uuid": "101",
+          "dataAlignLen": "32",
+          "originValue": "wifi_soundbox"
+         },
+         "__slot__": {
+          "prepend": "",
+          "append": ""
+         },
+         "placeholder": "蓝牙名",
+         "style": {
+          "width": "80%"
+         },
+         "clearable": true,
+         "prefix-icon": "",
+         "suffix-icon": "",
+         "maxlength": "31",
+         "show-word-limit": false,
+         "readonly": false,
+         "disabled": false,
+         "__vModel__": "field122",
+         "id": "id_1647417192429_26"
+        },
+        {
+         "__config__": {
+          "label": "MAC地址",
+          "labelWidth": 130,
+          "showLabel": true,
+          "changeTag": true,
+          "tag": "el-input",
+          "tagIcon": "input",
+          "defaultValue": "FF FF FF FF FF FF",
+          "required": false,
+          "layout": "colFormItem",
+          "span": 8,
+          "document": "https://element.eleme.cn/#/zh-CN/component/input",
+          "regList": [],
+          "dataType": [
+           "MAC_ADDR"
+          ],
+          "formId": 183,
+          "renderKey": "1831654133172976",
+          "eventField": [],
+          "saveWay": "bin",
+          "uuid": "102",
+          "dataAlignLen": ""
+         },
+         "__slot__": {
+          "prepend": "",
+          "append": ""
+         },
+         "placeholder": "",
+         "style": {
+          "width": "80%"
+         },
+         "clearable": true,
+         "prefix-icon": "",
+         "suffix-icon": "",
+         "maxlength": "31",
+         "show-word-limit": false,
+         "readonly": false,
+         "disabled": false,
+         "__vModel__": "field183",
+         "id": "id_1654133172976_1"
+        },
+        {
+         "__config__": {
+          "label": "最大发射功率",
+          "showLabel": true,
+          "labelWidth": 130,
+          "tag": "el-select",
+          "tagIcon": "select",
+          "layout": "colFormItem",
+          "span": 8,
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/select",
+          "formId": 106,
+          "renderKey": "1061641779750907",
+          "defaultValue": 8,
+          "uuid": "601",
+          "saveWay": "bin",
+          "eventField": [],
+          "originValue": 8,
+          "formItemWidth": ""
+         },
+         "__slot__": {
+          "options": [
+           {
+            "label": "0",
+            "value": 0
+           },
+           {
+            "label": "1",
+            "value": 1
+           },
+           {
+            "label": "2",
+            "value": 2
+           },
+           {
+            "label": "3",
+            "value": 3
+           },
+           {
+            "label": "4",
+            "value": 4
+           },
+           {
+            "label": "5",
+            "value": 5
+           },
+           {
+            "label": "6",
+            "value": 6,
+            "hide": false,
+            "disabled": false
+           },
+           {
+            "label": "7",
+            "value": 7,
+            "hide": false,
+            "disabled": false
+           },
+           {
+            "label": "8",
+            "value": 8,
+            "hide": false,
+            "disabled": false
+           },
+           {
+            "label": "9",
+            "value": 9,
+            "hide": false,
+            "disabled": false
+           }
+          ]
+         },
+         "placeholder": "0-9最大发射功率",
+         "style": {
+          "width": "100%"
+         },
+         "clearable": true,
+         "disabled": false,
+         "filterable": false,
+         "multiple": false,
+         "__vModel__": "field106",
+         "id": "id_1647310638392_30"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "60px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1730969756449_1"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_139",
+       "enableUuid": "",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "template": "",
+       "span": 24,
+       "formId": 139,
+       "renderKey": "1391757043304927",
+       "children": [
+        {
+         "__config__": {
+          "label": "蓝牙发射器使能",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 0,
+          "span": 4,
+          "showLabel": true,
+          "labelWidth": 200,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 141,
+          "renderKey": "1411757043380697",
+          "saveWay": "macro",
+          "uuid": "TCFG_USER_EMITTER_ENABLE",
+          "eventField": [],
+          "originValue": 0
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1757043380697_4",
+         "__vModel__": "field141"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "70px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1757043304927_2"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_245",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 245,
+       "renderKey": "2451651911196928",
+       "children": [
+        {
+         "__config__": {
+          "label": "单次回连时间(s)",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 180,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 8,
+          "span": 8,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "8"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 251,
+          "renderKey": "2511651911337771",
+          "eventField": [],
+          "tip": "",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_PAGE_TIMEOUT"
+         },
+         "placeholder": "单次回连时间(s)",
+         "min": 4,
+         "max": 20,
+         "step": 1,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field251",
+         "id": "id_1651911337771_123"
+        },
+        {
+         "__config__": {
+          "label": "开机回连超时(s)",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 180,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 30,
+          "span": 8,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "32"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 111,
+          "renderKey": "1111647255006161",
+          "eventField": [],
+          "tip": "",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_POWERON_PAGE_TIME",
+          "originValue": 30
+         },
+         "placeholder": "默认16s开机回连超时(s)",
+         "step": 10,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field111",
+         "min": 6,
+         "max": 1000,
+         "id": "id_1647310638392_31"
+        },
+        {
+         "__config__": {
+          "label": "超距断开回连超时(s)",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 180,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 120,
+          "span": 8,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "32"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 107,
+          "renderKey": "1071647243044450",
+          "eventField": [],
+          "tip": "",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_TIMEOUT_PAGE_TIME"
+         },
+         "placeholder": "默认60s超距断开回连超时(s)",
+         "step": 10,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field107",
+         "min": 10,
+         "max": 1000,
+         "id": "id_1647310638392_32"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "60px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1651911196928_117"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_106",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 106,
+       "renderKey": "1061660304360450",
+       "children": [
+        {
+         "__config__": {
+          "label": "开机可被发现时间 (s)",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 180,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 120,
+          "span": 8,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "16"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 107,
+          "renderKey": "1071665282114928",
+          "eventField": [],
+          "tip": "TWS已连接、连上一台设备且无其它配对记录的情况下，打开”可被发现“的时间",
+          "saveWay": "macro",
+          "uuid": "TCFG_DUAL_CONN_INQUIRY_SCAN_TIME"
+         },
+         "placeholder": "",
+         "min": 0,
+         "max": 600,
+         "step": 10,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field107",
+         "id": "id_1665282114928_0"
+        },
+        {
+         "__config__": {
+          "label": "等待第二台连接时间(s)",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 180,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 0,
+          "span": 8,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "16"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 128,
+          "renderKey": "1281657087601602",
+          "eventField": [],
+          "tip": "连上1台设备且有其它配对记录的情况下，可被已配对设备连接的时间，0表示一直可以被连接",
+          "saveWay": "macro",
+          "uuid": "TCFG_DUAL_CONN_PAGE_SCAN_TIME"
+         },
+         "placeholder": "等待第二台连接时间(s)",
+         "min": 0,
+         "max": 600,
+         "step": 10,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field128",
+         "id": "id_1657087601602_0"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "60px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1660304360450_1"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_149",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 149,
+       "renderKey": "1491654054671829",
+       "children": [
+        {
+         "__config__": {
+          "label": "音量同步",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 1,
+          "span": 6,
+          "showLabel": true,
+          "labelWidth": 80,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 150,
+          "renderKey": "1501654054671829",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_VOL_SYNC_ENABLE",
+          "eventField": [],
+          "tip": "使能后默认会关闭最大音量的提示音",
+          "tipAlways": false
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1654054671829_1",
+         "__vModel__": "field150"
+        },
+        {
+         "__config__": {
+          "label": "电量显示",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 1,
+          "span": 6,
+          "showLabel": true,
+          "labelWidth": 80,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 151,
+          "renderKey": "1511654054671829",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_DISPLAY_BAT_ENABLE"
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1654054671829_2",
+         "__vModel__": "field151"
+        },
+        {
+         "__config__": {
+          "label": "歌曲信息显示",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 1,
+          "span": 6,
+          "showLabel": true,
+          "labelWidth": 100,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 108,
+          "renderKey": "1081676370365900",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_MUSIC_INFO_ENABLE",
+          "eventField": [],
+          "originValue": 1
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1676370365900_0",
+         "__vModel__": "field108"
+        },
+        {
+         "__config__": {
+          "label": "音频抢播",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 0,
+          "span": 6,
+          "showLabel": true,
+          "labelWidth": 80,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "status": 0,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "formId": 103,
+          "renderKey": "1031696906717871",
+          "eventField": [],
+          "originValue": 0,
+          "saveWay": "macro",
+          "uuid": "TCFG_A2DP_PREEMPTED_ENABLE",
+          "tip": "连接两台手机时手机端点播放歌曲是否抢占"
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1696906717871_0",
+         "__vModel__": "field103"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "100px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1654054671829_0"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_140",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 140,
+       "renderKey": "1401660187290253",
+       "children": [
+        {
+         "__config__": {
+          "label": "A2DP延时SBC(msec)",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 180,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 300,
+          "span": 8,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "32"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 141,
+          "renderKey": "1411660187290253",
+          "eventField": [],
+          "tip": "",
+          "saveWay": "macro",
+          "uuid": "TCFG_A2DP_DELAY_TIME_SBC",
+          "formItemWidth": ""
+         },
+         "placeholder": "",
+         "min": 20,
+         "max": 1000,
+         "step": 10,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field141",
+         "id": "id_1660187290253_16"
+        },
+        {
+         "__config__": {
+          "label": "A2DP低延时SBC(msec)",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 180,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 100,
+          "span": 8,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "32",
+           "-1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 142,
+          "renderKey": "1421660187290253",
+          "eventField": [],
+          "tip": "",
+          "saveWay": "macro",
+          "uuid": "TCFG_A2DP_DELAY_TIME_SBC_LO",
+          "formItemWidth": "",
+          "originValue": 100
+         },
+         "placeholder": "",
+         "min": 20,
+         "max": 200,
+         "step": 10,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field142",
+         "id": "id_1660187290253_17"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "60px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1660187290253_15"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_153",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 153,
+       "renderKey": "1531654054828896",
+       "children": [
+        {
+         "__config__": {
+          "label": "A2DP延时AAC(msec)",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 180,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 300,
+          "span": 8,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "32",
+           "-1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 154,
+          "renderKey": "1541654054828896",
+          "eventField": [],
+          "tip": "",
+          "saveWay": "macro",
+          "uuid": "TCFG_A2DP_DELAY_TIME_AAC",
+          "formItemWidth": ""
+         },
+         "placeholder": "",
+         "min": 20,
+         "max": 1000,
+         "step": 10,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field154",
+         "id": "id_1654054828896_5"
+        },
+        {
+         "__config__": {
+          "label": "A2DP低延时AAC(msec)",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 180,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 100,
+          "span": 8,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "32"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 155,
+          "renderKey": "1551654054828896",
+          "eventField": [],
+          "tip": "",
+          "saveWay": "macro",
+          "uuid": "TCFG_A2DP_DELAY_TIME_AAC_LO",
+          "formItemWidth": ""
+         },
+         "placeholder": "",
+         "min": 20,
+         "max": 200,
+         "step": 10,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field155",
+         "id": "id_1654054828896_6"
+        },
+        {
+         "__config__": {
+          "label": "A2DP自适应最大延时(msec)",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 200,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 550,
+          "span": 8,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "32",
+           "-1"
+          ],
+          "formId": 113,
+          "renderKey": "1131678798772782",
+          "saveWay": "macro",
+          "uuid": "TCFG_A2DP_ADAPTIVE_MAX_LATENCY",
+          "formItemWidth": "",
+          "originValue": 550
+         },
+         "placeholder": "",
+         "min": 100,
+         "max": 1000,
+         "step": 10,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "id": "id_1678796750708_0",
+         "__vModel__": "field112"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "60px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1654054828896_4"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_244",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 244,
+       "renderKey": "2441651911176160",
+       "children": [
+        {
+         "__config__": {
+          "label": "AAC",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 1,
+          "span": 4,
+          "showLabel": true,
+          "labelWidth": 100,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 236,
+          "renderKey": "2361651910846580",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_SUPPORT_AAC",
+          "eventField": []
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1651910846580_108",
+         "__vModel__": "field236"
+        },
+        {
+         "__config__": {
+          "label": "MSBC",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 1,
+          "span": 4,
+          "showLabel": true,
+          "labelWidth": 80,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "macro"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 237,
+          "renderKey": "2371651910865786",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_SUPPORT_MSBC",
+          "eventField": []
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1651910865786_109",
+         "__vModel__": "field237"
+        },
+        {
+         "__config__": {
+          "label": "SBC_BitPool",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 100,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 38,
+          "span": 6,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "1",
+           "8"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 156,
+          "renderKey": "1561654055561492",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_SBC_BITPOOL",
+          "eventField": [],
+          "originValue": 38
+         },
+         "placeholder": "",
+         "min": 0,
+         "max": 100,
+         "step": 1,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "id": "id_1654055561492_7",
+         "__vModel__": "field156"
+        },
+        {
+         "__config__": {
+          "label": "AAC码率",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": null,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 320000,
+          "span": 10,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "status": 0,
+          "dataType": [
+           "32",
+           "1"
+          ],
+          "formId": 144,
+          "renderKey": "1441684908317928",
+          "originValue": 320000,
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_AAC_BITRATE",
+          "eventField": []
+         },
+         "placeholder": "AAC码率",
+         "min": 131072,
+         "max": 320000,
+         "step": 1,
+         "step-strictly": false,
+         "precision": 0,
+         "controls-position": "",
+         "disabled": false,
+         "id": "id_1684908317928_3",
+         "__vModel__": "field144"
+        },
+        {
+         "__config__": {
+          "label": "LHDC_V3/V4",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 0,
+          "span": 4,
+          "showLabel": true,
+          "labelWidth": 100,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "macro"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 113,
+          "renderKey": "1131726621967734",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_SUPPORT_LHDC",
+          "eventField": [],
+          "originValue": 0
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1726621967734_1",
+         "__vModel__": "field113"
+        },
+        {
+         "__config__": {
+          "label": "LHDC_V5",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 0,
+          "span": 4,
+          "showLabel": true,
+          "labelWidth": 80,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "macro"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 114,
+          "renderKey": "1141726621975575",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_SUPPORT_LHDC_V5",
+          "eventField": [],
+          "originValue": 0
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1726621975575_2",
+         "__vModel__": "field114"
+        },
+        {
+         "__config__": {
+          "label": "LDAC",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 0,
+          "span": 4,
+          "showLabel": true,
+          "labelWidth": 100,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 112,
+          "renderKey": "1121726621966053",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_SUPPORT_LDAC",
+          "eventField": [],
+          "originValue": 0
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1726621966053_0",
+         "__vModel__": "field112"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "90px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1651911176160_116"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "后台模式",
+       "enableUuid": "",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "template": "",
+       "span": 24,
+       "formId": 107,
+       "renderKey": "1071676443869536",
+       "children": [
+        {
+         "__config__": {
+          "label": "音乐检测时间",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": null,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 1940,
+          "span": 8,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "32",
+           "1"
+          ],
+          "formId": 110,
+          "renderKey": "1101676453900341",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_BACKGROUND_DETECT_TIME",
+          "originValue": 1940,
+          "tip": "处于后台时需要检测多久能量跳转到蓝牙模式(单位ms)"
+         },
+         "placeholder": "音乐检测时间音乐检测时间",
+         "min": 1000,
+         "max": 5000,
+         "step": 20,
+         "step-strictly": true,
+         "controls-position": "",
+         "disabled": false,
+         "id": "id_1676453900341_10",
+         "__vModel__": "field110"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "70px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1676443869536_7"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_102",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 102,
+       "renderKey": "1021725348288120",
+       "children": [
+        {
+         "__config__": {
+          "label": "A2DP静音检测使能",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 1,
+          "span": 6,
+          "showLabel": true,
+          "labelWidth": 160,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 103,
+          "renderKey": "1031725348288120",
+          "saveWay": "macro",
+          "uuid": "TCFG_A2DP_SILENCE_DETECT_ENABLE",
+          "eventField": [],
+          "tip": "",
+          "tipAlways": false
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1725348288120_1",
+         "__vModel__": "field103"
+        },
+        {
+         "__config__": {
+          "label": "A2DP-SBC静音检测使能",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 1,
+          "span": 6,
+          "showLabel": true,
+          "labelWidth": 200,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 104,
+          "renderKey": "1041725348288120",
+          "saveWay": "macro",
+          "uuid": "TCFG_A2DP_SBC_SILENCE_DETECT_ENABLE"
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1725348288120_2",
+         "__vModel__": "field104"
+        },
+        {
+         "__config__": {
+          "label": "A2DP-AAC静音检测使能",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 1,
+          "span": 6,
+          "showLabel": true,
+          "labelWidth": 200,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 105,
+          "renderKey": "1051725348288120",
+          "saveWay": "macro",
+          "uuid": "TCFG_A2DP_AAC_SILENCE_DETECT_ENABLE",
+          "eventField": [],
+          "originValue": 1
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1725348288120_3",
+         "__vModel__": "field105"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "100px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1725348288120_0"
+     }
+    ],
+    "dataType": [],
+    "eventField": []
+   },
+   "type": "default",
+   "justify": "start",
+   "align": "top",
+   "style": {
+    "height": "700px",
+    "paddingLeft": "0px"
+   },
+   "id": "id_1647310638392_38",
+   "show-text": false
+  },
+  {
+   "__config__": {
+    "layout": "rowFormItem",
+    "tag": "group",
+    "tagIcon": "row",
+    "layoutTree": true,
+    "componentName": "蓝牙协议",
+    "enableUuid": "",
+    "showComponentName": true,
+    "dataType": [
+     "8",
+     "1"
+    ],
+    "status": 0,
+    "template": "",
+    "span": 24,
+    "formId": 103,
+    "renderKey": "1031682317173715",
+    "children": [
+     {
+      "__config__": {
+       "label": "SPP",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 1,
+       "span": 5,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 102,
+       "renderKey": "1021725430616478",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_SPP",
+       "eventField": []
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1725430616478_29",
+      "__vModel__": "field102"
+     },
+     {
+      "__config__": {
+       "label": "HFP",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 1,
+       "span": 5,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 103,
+       "renderKey": "1031725430634743",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_HFP",
+       "eventField": []
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1725430634743_30",
+      "__vModel__": "field103"
+     },
+     {
+      "__config__": {
+       "label": "A2DP",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 1,
+       "span": 5,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 104,
+       "renderKey": "1041725430645026",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_A2DP",
+       "eventField": []
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1725430645026_31",
+      "__vModel__": "field104"
+     },
+     {
+      "__config__": {
+       "label": "AVCTP",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 1,
+       "span": 5,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 105,
+       "renderKey": "1051725430657683",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_AVCTP",
+       "eventField": []
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1725430657683_32",
+      "__vModel__": "field105"
+     },
+     {
+      "__config__": {
+       "label": "HID",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 0,
+       "span": 4,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 107,
+       "renderKey": "1071725431498847",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_HID",
+       "eventField": [],
+       "originValue": 0
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1725431498847_34",
+      "__vModel__": "field107"
+     },
+     {
+      "__config__": {
+       "label": "PNP",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 0,
+       "span": 5,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 108,
+       "renderKey": "1081725431499698",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_PNP",
+       "eventField": [],
+       "originValue": 0
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1725431499698_35",
+      "__vModel__": "field108"
+     },
+     {
+      "__config__": {
+       "label": "PBAP",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 0,
+       "span": 5,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 109,
+       "renderKey": "1091725431500150",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_PBAP",
+       "eventField": [],
+       "originValue": 0
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1725431500150_36",
+      "__vModel__": "field109"
+     },
+     {
+      "__config__": {
+       "label": "PAN",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 0,
+       "span": 5,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 110,
+       "renderKey": "1101725431500551",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_PAN",
+       "eventField": [],
+       "originValue": 0
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1725431500551_37",
+      "__vModel__": "field110"
+     },
+     {
+      "__config__": {
+       "label": "MAP",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 0,
+       "span": 5,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 112,
+       "renderKey": "1121725431604352",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_MAP",
+       "eventField": [],
+       "originValue": 0
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1725431604352_39",
+      "__vModel__": "field112"
+     },
+     {
+      "__config__": {
+       "label": "HFP_AG",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 0,
+       "span": 4,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1",
+        "macro"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 107,
+       "renderKey": "1071725592024699",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_HFP_AG",
+       "eventField": [],
+       "originValue": 0
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1725592024699_0",
+      "__vModel__": "field107"
+     },
+     {
+      "__config__": {
+       "label": "BIP",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 0,
+       "span": 5,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1",
+        "macro"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 137,
+       "renderKey": "1371757043021934",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_BIP",
+       "eventField": [],
+       "originValue": 0
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1757043021934_0",
+      "__vModel__": "field137"
+     },
+     {
+      "__config__": {
+       "label": "OPP",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 0,
+       "span": 5,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1",
+        "macro"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 104,
+       "renderKey": "1041757475772763",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_OPP",
+       "eventField": [],
+       "originValue": 0
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1757475772763_0",
+      "__vModel__": "field104"
+     },
+     {
+      "__config__": {
+       "label": "IAP",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 0,
+       "span": 5,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1",
+        "macro"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 105,
+       "renderKey": "1051757475773822",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_IAP",
+       "eventField": [],
+       "originValue": 0
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1757475773822_1",
+      "__vModel__": "field105"
+     },
+     {
+      "__config__": {
+       "label": "HSP",
+       "tag": "el-switch",
+       "tagIcon": "switch",
+       "defaultValue": 0,
+       "span": 5,
+       "showLabel": true,
+       "labelWidth": 100,
+       "layout": "colFormItem",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8",
+        "1",
+        "macro"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+       "formId": 108,
+       "renderKey": "1081757483649216",
+       "saveWay": "macro",
+       "uuid": "TCFG_BT_SUPPORT_PROFILE_HSP",
+       "eventField": [],
+       "originValue": 0
+      },
+      "style": {},
+      "disabled": false,
+      "active-text": "",
+      "inactive-text": "",
+      "active-color": null,
+      "inactive-color": null,
+      "active-value": 1,
+      "inactive-value": 0,
+      "id": "id_1757483649216_4",
+      "__vModel__": "field108"
+     }
+    ],
+    "eventField": [],
+    "uuid": ""
+   },
+   "type": "default",
+   "justify": "start",
+   "align": "top",
+   "style": {
+    "height": "100px",
+    "paddingLeft": "0px"
+   },
+   "id": "id_1725430589231_28"
+  },
+  {
+   "__config__": {
+    "layout": "rowFormItem",
+    "tag": "group",
+    "tagIcon": "row",
+    "layoutTree": true,
+    "componentName": "BLE",
+    "showComponentName": true,
+    "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+    "template": "",
+    "span": 24,
+    "formId": 108,
+    "renderKey": "1081641976559552",
+    "children": [
+     {
+      "__config__": {
+       "label": "BLE蓝牙名",
+       "labelWidth": 130,
+       "showLabel": true,
+       "changeTag": true,
+       "tag": "el-input",
+       "tagIcon": "input",
+       "defaultValue": "wifi_soundbox(BLE)",
+       "required": false,
+       "layout": "colFormItem",
+       "span": 8,
+       "document": "https://element.eleme.cn/#/zh-CN/component/input",
+       "regList": [],
+       "dataType": [
+        "string"
+       ],
+       "formId": 145,
+       "renderKey": "1451730969823847",
+       "eventField": [],
+       "saveWay": "bin",
+       "uuid": "103",
+       "dataAlignLen": "32",
+       "originValue": "wifi_soundbox(BLE)"
+      },
+      "__slot__": {
+       "prepend": "",
+       "append": ""
+      },
+      "placeholder": "BLE蓝牙名",
+      "style": {
+       "width": "80%"
+      },
+      "clearable": true,
+      "prefix-icon": "",
+      "suffix-icon": "",
+      "maxlength": "31",
+      "show-word-limit": false,
+      "readonly": false,
+      "disabled": false,
+      "__vModel__": "field145",
+      "id": "id_1730969823847_2"
+     },
+     {
+      "__config__": {
+       "label": "BLE MAC地址",
+       "labelWidth": 130,
+       "showLabel": true,
+       "changeTag": true,
+       "tag": "el-input",
+       "tagIcon": "input",
+       "defaultValue": "FF FF FF FF FF FF",
+       "required": false,
+       "layout": "colFormItem",
+       "span": 8,
+       "document": "https://element.eleme.cn/#/zh-CN/component/input",
+       "regList": [],
+       "dataType": [
+        "MAC_ADDR"
+       ],
+       "formId": 146,
+       "renderKey": "1461730969837850",
+       "eventField": [],
+       "saveWay": "bin",
+       "uuid": "104",
+       "dataAlignLen": ""
+      },
+      "__slot__": {
+       "prepend": "",
+       "append": ""
+      },
+      "placeholder": "",
+      "style": {
+       "width": "80%"
+      },
+      "clearable": true,
+      "prefix-icon": "",
+      "suffix-icon": "",
+      "maxlength": "31",
+      "show-word-limit": false,
+      "readonly": false,
+      "disabled": false,
+      "__vModel__": "field146",
+      "id": "id_1730969837850_3"
+     },
+     {
+      "__config__": {
+       "label": "BLE最大发射功率",
+       "showLabel": true,
+       "labelWidth": 130,
+       "tag": "el-select",
+       "tagIcon": "select",
+       "layout": "colFormItem",
+       "span": 8,
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "dataType": [
+        "8"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/select",
+       "formId": 145,
+       "renderKey": "1451730969379102",
+       "defaultValue": 8,
+       "uuid": "615",
+       "saveWay": "bin",
+       "eventField": [],
+       "originValue": 8,
+       "formItemWidth": "",
+       "emptyValue": "8"
+      },
+      "__slot__": {
+       "options": [
+        {
+         "label": "0 ",
+         "value": 0
+        },
+        {
+         "label": "1",
+         "value": 1
+        },
+        {
+         "label": "2",
+         "value": 2
+        },
+        {
+         "label": "3",
+         "value": 3
+        },
+        {
+         "label": "4",
+         "value": 4
+        },
+        {
+         "label": "5",
+         "value": 5
+        },
+        {
+         "label": "6",
+         "value": 6,
+         "hide": false,
+         "disabled": false
+        },
+        {
+         "label": "7",
+         "value": 7,
+         "hide": false,
+         "disabled": false
+        },
+        {
+         "label": "8",
+         "value": 8,
+         "hide": false,
+         "disabled": false
+        },
+        {
+         "label": "9",
+         "value": 9,
+         "hide": false,
+         "disabled": false
+        }
+       ]
+      },
+      "placeholder": "0-9BLE最大发射功率",
+      "style": {
+       "width": "100%"
+      },
+      "clearable": true,
+      "disabled": false,
+      "filterable": false,
+      "multiple": false,
+      "__vModel__": "field145",
+      "id": "id_1730969379102_0"
+     }
+    ],
+    "dataType": [],
+    "saveWay": "",
+    "uuid": "",
+    "eventField": [],
+    "enableUuid": "",
+    "disable": true,
+    "emptyValue": "0"
+   },
+   "type": "default",
+   "justify": "start",
+   "align": "top",
+   "style": {
+    "height": "120px",
+    "paddingLeft": "0px"
+   },
+   "id": "id_1647310638392_52"
+  },
+  {
+   "__config__": {
+    "layout": "rowFormItem",
+    "tag": "group",
+    "tagIcon": "row",
+    "layoutTree": true,
+    "componentName": "TWS",
+    "showComponentName": true,
+    "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+    "template": "",
+    "span": 24,
+    "formId": 107,
+    "renderKey": "1071641976492295",
+    "children": [
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_253",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 253,
+       "renderKey": "2531651911915387",
+       "children": [
+        {
+         "__config__": {
+          "label": "MAC地址",
+          "showLabel": true,
+          "labelWidth": 80,
+          "tag": "el-select",
+          "tagIcon": "select",
+          "layout": "colFormItem",
+          "span": 6,
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "32"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/select",
+          "formId": 122,
+          "renderKey": "1221641800601349",
+          "defaultValue": 1,
+          "saveWay": "macro",
+          "uuid": "TCFG_TWS_USE_COMMMON_ADDR",
+          "eventField": [],
+          "originValue": 1
+         },
+         "__slot__": {
+          "options": [
+           {
+            "label": "使用公共地址",
+            "value": 1
+           },
+           {
+            "label": "不使用公共地址",
+            "value": 0
+           }
+          ]
+         },
+         "placeholder": "请选择MAC地址",
+         "style": {
+          "width": "100%"
+         },
+         "clearable": true,
+         "disabled": false,
+         "filterable": false,
+         "multiple": false,
+         "__vModel__": "field122",
+         "id": "id_1647310638392_41"
+        },
+        {
+         "__config__": {
+          "label": "配对码",
+          "labelWidth": 60,
+          "showLabel": true,
+          "changeTag": true,
+          "tag": "el-input",
+          "tagIcon": "input",
+          "defaultValue": "0xFFFF",
+          "required": false,
+          "layout": "colFormItem",
+          "span": 4,
+          "document": "https://element.eleme.cn/#/zh-CN/component/input",
+          "regList": [],
+          "dataType": [
+           "0X",
+           "16"
+          ],
+          "formId": 119,
+          "renderKey": "1191641800418045",
+          "saveWay": "bin",
+          "uuid": "602",
+          "eventField": []
+         },
+         "__slot__": {
+          "prepend": "",
+          "append": ""
+         },
+         "placeholder": "",
+         "style": {
+          "width": "100%"
+         },
+         "clearable": false,
+         "prefix-icon": "",
+         "suffix-icon": "",
+         "maxlength": null,
+         "show-word-limit": false,
+         "readonly": false,
+         "disabled": false,
+         "__vModel__": "field119",
+         "id": "id_1647310638392_40"
+        },
+        {
+         "__config__": {
+          "label": "配对方式",
+          "showLabel": true,
+          "labelWidth": 80,
+          "tag": "el-select",
+          "tagIcon": "select",
+          "layout": "colFormItem",
+          "span": 5,
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "macro"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/select",
+          "formId": 121,
+          "renderKey": "1211641800464660",
+          "defaultValue": "CONFIG_TWS_PAIR_BY_CLICK",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_TWS_PAIR_MODE",
+          "eventField": [],
+          "tip": "",
+          "originValue": "CONFIG_TWS_PAIR_BY_CLICK"
+         },
+         "__slot__": {
+          "options": [
+           {
+            "label": "按键配对",
+            "value": "CONFIG_TWS_PAIR_BY_CLICK"
+           },
+           {
+            "label": "自动配对",
+            "value": "CONFIG_TWS_PAIR_BY_AUTO"
+           }
+          ]
+         },
+         "placeholder": "配对方式",
+         "style": {
+          "width": "90%"
+         },
+         "clearable": true,
+         "disabled": false,
+         "filterable": false,
+         "multiple": false,
+         "__vModel__": "field121",
+         "id": "id_1647310638392_39"
+        },
+        {
+         "__config__": {
+          "label": "声道选择",
+          "showLabel": true,
+          "labelWidth": 80,
+          "tag": "el-select",
+          "tagIcon": "select",
+          "layout": "colFormItem",
+          "span": 7,
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "macro"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/select",
+          "formId": 123,
+          "renderKey": "1231641801050971",
+          "defaultValue": "CONFIG_TWS_MASTER_AS_LEFT",
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_TWS_CHANNEL_SELECT",
+          "eventField": [],
+          "originValue": "CONFIG_TWS_MASTER_AS_LEFT"
+         },
+         "__slot__": {
+          "options": [
+           {
+            "label": "主机作左箱",
+            "value": "CONFIG_TWS_MASTER_AS_LEFT"
+           },
+           {
+            "label": "主机作右箱",
+            "value": "CONFIG_TWS_MASTER_AS_RIGHT"
+           },
+           {
+            "label": "固定左箱",
+            "value": "CONFIG_TWS_AS_LEFT"
+           },
+           {
+            "label": "固定右箱",
+            "value": "CONFIG_TWS_AS_RIGHT"
+           },
+           {
+            "label": "按键发起配对的音箱做左箱",
+            "value": "CONFIG_TWS_START_PAIR_AS_LEFT"
+           },
+           {
+            "label": "按键发起配对的音箱做右箱",
+            "value": "CONFIG_TWS_START_PAIR_AS_RIGHT"
+           },
+           {
+            "label": "外部有上拉电阻作为左箱",
+            "value": "CONFIG_TWS_EXTERN_UP_AS_LEFT"
+           },
+           {
+            "label": "外部有下拉电阻作为左箱",
+            "value": "CONFIG_TWS_EXTERN_DOWN_AS_LEFT"
+           },
+           {
+            "label": "外部有上拉电阻作为右箱",
+            "value": "CONFIG_TWS_EXTERN_UP_AS_RIGHT"
+           },
+           {
+            "label": "外部有下拉电阻作为右箱",
+            "value": "CONFIG_TWS_EXTERN_DOWN_AS_RIGHT"
+           }
+          ]
+         },
+         "placeholder": "",
+         "style": {
+          "width": "100%"
+         },
+         "clearable": true,
+         "disabled": false,
+         "filterable": false,
+         "multiple": false,
+         "__vModel__": "field123",
+         "id": "id_1647310638392_42"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "60px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1651911915387_125"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_254",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 254,
+       "renderKey": "2541651911935441",
+       "children": [
+        {
+         "__config__": {
+          "label": "开机配对超时(s)",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 120,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 6,
+          "span": 7,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "1",
+           "8"
+          ],
+          "formId": 111,
+          "renderKey": "1111660305696297",
+          "eventField": [],
+          "saveWay": "macro",
+          "uuid": "TCFG_TWS_PAIR_TIMEOUT"
+         },
+         "placeholder": "开机配对超时(s)",
+         "min": 2,
+         "max": 120,
+         "step": 1,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "id": "id_1660305696297_6",
+         "__vModel__": "field111"
+        },
+        {
+         "__config__": {
+          "label": "单次连接超时(s)",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": 120,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "defaultValue": 6,
+          "span": 7,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "1",
+           "8"
+          ],
+          "formId": 118,
+          "renderKey": "1181660305750513",
+          "eventField": [],
+          "uuid": "TCFG_TWS_CONN_TIMEOUT",
+          "saveWay": "macro"
+         },
+         "placeholder": "单次连接超时(s)",
+         "min": 2,
+         "max": 20,
+         "step": 1,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "id": "id_1660305750513_13",
+         "__vModel__": "field118"
+        },
+        {
+         "__config__": {
+          "label": "单台连手机也能进行配对",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 0,
+          "span": 5,
+          "showLabel": true,
+          "labelWidth": 170,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "status": 0,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "formId": 312,
+          "renderKey": "3121691388754974",
+          "uuid": "TCFG_TWS_PAIR_ALWAYS",
+          "originValue": 0,
+          "eventField": [],
+          "saveWay": "macro"
+         },
+         "style": {},
+         "disabled": true,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1691388754974_0",
+         "__vModel__": "field312"
+        },
+        {
+         "__config__": {
+          "label": "同步关机",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 1,
+          "span": 5,
+          "showLabel": true,
+          "labelWidth": 120,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "status": 0,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "formId": 101,
+          "renderKey": "1011692154969098",
+          "eventField": [],
+          "uuid": "TCFG_TWS_POWEROFF_SAME_TIME",
+          "originValue": 1,
+          "saveWay": "macro"
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1692154969098_0",
+         "__vModel__": "field101"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "60px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1651911935441_126"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_112",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 112,
+       "renderKey": "1121660305734445",
+       "children": [
+        {
+         "__config__": {
+          "label": "TWS连接超时自动配对新音箱",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 0,
+          "span": 7,
+          "showLabel": true,
+          "labelWidth": 200,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 117,
+          "renderKey": "1171660305734445",
+          "saveWay": "macro",
+          "uuid": "TCFG_TWS_AUTO_PAIR_WITHOUT_UNPAIR",
+          "tip": "当TWS连接超时且未连接手机的情况下，自动进配对模式3秒钟，可用于解决一边耳机丢配对信息导致无法连接情况",
+          "eventField": [],
+          "originValue": 0
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1660305734445_12",
+         "__vModel__": "field117"
+        },
+        {
+         "__config__": {
+          "label": "两边同时按配对键进入配对",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 0,
+          "span": 7,
+          "showLabel": true,
+          "labelWidth": 200,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "status": 0,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "formId": 311,
+          "renderKey": "3111691372442261",
+          "tip": "两边音箱同时按配对键才能配对",
+          "uuid": "TCFG_TWS_PAIR_BY_BOTH_SIDES",
+          "saveWay": "macro",
+          "eventField": []
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1691372442261_0",
+         "__vModel__": "field311"
+        },
+        {
+         "__config__": {
+          "label": "自动主从切换",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 0,
+          "span": 5,
+          "showLabel": true,
+          "labelWidth": 170,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 115,
+          "renderKey": "1151660305734445",
+          "saveWay": "macro",
+          "uuid": "TCFG_TWS_AUTO_ROLE_SWITCH_ENABLE",
+          "eventField": [],
+          "originValue": 0
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1660305734445_10",
+         "__vModel__": "field115"
+        },
+        {
+         "__config__": {
+          "label": "主从电量平衡",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 0,
+          "span": 5,
+          "showLabel": true,
+          "labelWidth": 120,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/switch",
+          "formId": 116,
+          "renderKey": "1161660305734445",
+          "saveWay": "macro",
+          "uuid": "TCFG_TWS_POWER_BALANCE_ENABLE",
+          "eventField": [],
+          "originValue": 0
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1660305734445_11",
+         "__vModel__": "field116"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "60px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1660305734445_7"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_131",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 131,
+       "renderKey": "1311705040278234",
+       "children": [
+        {
+         "__config__": {
+          "label": "TWS本地音乐转发",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 1,
+          "span": 7,
+          "showLabel": true,
+          "labelWidth": 200,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "status": 0,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "formId": 136,
+          "renderKey": "1361705040278234",
+          "saveWay": "macro",
+          "uuid": "TCFG_LOCAL_TWS_ENABLE",
+          "paddingLeft": "",
+          "eventField": [],
+          "originValue": 1
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1705040278234_5",
+         "__vModel__": "field136"
+        },
+        {
+         "__config__": {
+          "label": "TWS本地音乐音量同步",
+          "tag": "el-switch",
+          "tagIcon": "switch",
+          "defaultValue": 0,
+          "span": 6,
+          "showLabel": true,
+          "labelWidth": 200,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "status": 0,
+          "dataType": [
+           "8",
+           "1"
+          ],
+          "formId": 137,
+          "renderKey": "1371705040278234",
+          "saveWay": "macro",
+          "uuid": "TCFG_LOCAL_TWS_SYNC_VOL"
+         },
+         "style": {},
+         "disabled": false,
+         "active-text": "",
+         "inactive-text": "",
+         "active-color": null,
+         "inactive-color": null,
+         "active-value": 1,
+         "inactive-value": 0,
+         "id": "id_1705040278234_6",
+         "__vModel__": "field137"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "60px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1705040278234_0"
+     }
+    ],
+    "dataType": [
+     "8",
+     "1"
+    ],
+    "eventField": [],
+    "enableUuid": "TCFG_USER_TWS_ENABLE",
+    "saveWay": "macro",
+    "tipAlways": false,
+    "disable": false,
+    "showResetBtn": false,
+    "hideAddTemplate": false
+   },
+   "type": "default",
+   "justify": "start",
+   "align": "top",
+   "style": {
+    "height": "300px",
+    "paddingLeft": "0px"
+   },
+   "id": "id_1647310638392_46",
+   "show-text": false
+  },
+  {
+   "__config__": {
+    "layout": "rowFormItem",
+    "tag": "group",
+    "tagIcon": "row",
+    "layoutTree": true,
+    "componentName": "sniff",
+    "showComponentName": true,
+    "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+    "template": "",
+    "span": 24,
+    "formId": 109,
+    "renderKey": "1091641976608374",
+    "children": [
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_269",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 269,
+       "renderKey": "2691651914424846",
+       "children": [
+        {
+         "__config__": {
+          "label": "检测时间",
+          "showLabel": true,
+          "labelWidth": "",
+          "tag": "el-select",
+          "tagIcon": "select",
+          "layout": "colFormItem",
+          "span": 5,
+          "required": false,
+          "regList": [],
+          "changeTag": true,
+          "dataType": [
+           "32"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/select",
+          "formId": 151,
+          "renderKey": "1511641867324070",
+          "defaultValue": 5,
+          "eventField": [],
+          "saveWay": "macro",
+          "uuid": "TCFG_BT_SNIFF_CHECK_TIME",
+          "originValue": 5
+         },
+         "__slot__": {
+          "options": [
+           {
+            "label": "2s",
+            "value": 2
+           },
+           {
+            "label": "5s",
+            "value": 5
+           },
+           {
+            "label": "8s",
+            "value": 8
+           },
+           {
+            "label": "10",
+            "value": 10
+           }
+          ]
+         },
+         "placeholder": "请选择检测时间",
+         "style": {
+          "width": "100%"
+         },
+         "clearable": false,
+         "disabled": false,
+         "filterable": false,
+         "multiple": false,
+         "__vModel__": "field151",
+         "id": "id_1731045357381_1"
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "60px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1731045359260_2"
+     },
+     {
+      "__config__": {
+       "layout": "rowFormItem",
+       "tag": "group",
+       "tagIcon": "row",
+       "layoutTree": true,
+       "componentName": "row_271",
+       "showComponentName": false,
+       "dataType": [
+        "8",
+        "1"
+       ],
+       "document": "https://element.eleme.cn/#/zh-CN/component/layout#row-attributes",
+       "template": "",
+       "span": 24,
+       "formId": 271,
+       "renderKey": "2711651914738252",
+       "children": [
+        {
+         "__config__": {
+          "label": "LRC窗口初值",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": null,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "span": 6,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "32"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 113,
+          "renderKey": "1131647255517564",
+          "defaultValue": 400,
+          "saveWay": "macro",
+          "uuid": "TCFG_LRC_WIN_SIZE",
+          "paddingLeft": "",
+          "eventField": []
+         },
+         "placeholder": "默认400us",
+         "step": 1,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field113",
+         "id": "id_1731045364166_4",
+         "min": 0,
+         "max": 600
+        },
+        {
+         "__config__": {
+          "label": "LRC窗口步进",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": null,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "span": 6,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "32"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 115,
+          "renderKey": "1151647311644072",
+          "defaultValue": 400,
+          "uuid": "TCFG_LRC_WIN_STEP",
+          "saveWay": "macro"
+         },
+         "placeholder": "默认480us",
+         "step": 1,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field115",
+         "id": "id_1731045365735_5",
+         "min": 0,
+         "max": 600
+        },
+        {
+         "__config__": {
+          "label": "OSC窗口初值",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": null,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "span": 6,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "32"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 119,
+          "renderKey": "1191647311752714",
+          "defaultValue": 400,
+          "uuid": "TCFG_OSC_WIN_SIZE",
+          "saveWay": "macro"
+         },
+         "placeholder": "默认140us",
+         "step": 1,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field119",
+         "id": "id_1731045367268_6",
+         "min": 0,
+         "max": 480
+        },
+        {
+         "__config__": {
+          "label": "OSC窗口步进",
+          "showLabel": true,
+          "changeTag": true,
+          "labelWidth": null,
+          "tag": "el-input-number",
+          "tagIcon": "number",
+          "span": 6,
+          "layout": "colFormItem",
+          "required": false,
+          "regList": [],
+          "dataType": [
+           "32"
+          ],
+          "document": "https://element.eleme.cn/#/zh-CN/component/input-number",
+          "formId": 120,
+          "renderKey": "1201647311827184",
+          "defaultValue": 400,
+          "saveWay": "macro",
+          "uuid": "TCFG_OSC_WIN_STEP",
+          "eventField": []
+         },
+         "placeholder": "默认480us",
+         "step": 1,
+         "step-strictly": false,
+         "controls-position": "",
+         "disabled": false,
+         "__vModel__": "field120",
+         "id": "id_1731045369274_7",
+         "min": 0,
+         "max": 600
+        }
+       ],
+       "eventField": []
+      },
+      "type": "default",
+      "justify": "start",
+      "align": "top",
+      "style": {
+       "height": "60px",
+       "paddingLeft": "0px"
+      },
+      "id": "id_1731045362021_3"
+     }
+    ],
+    "dataType": [],
+    "eventField": [],
+    "showResetBtn": false,
+    "enableUuid": "TCFG_BT_SNIFF_ENABLE",
+    "disable": false
+   },
+   "type": "default",
+   "justify": "start",
+   "align": "top",
+   "style": {
+    "height": "100px",
+    "paddingLeft": "0px"
+   },
+   "id": "id_1731045355512_0"
+  },
+  {
+   "__config__": {
+    "layout": "rowFormItem",
+    "tag": "group",
+    "tagIcon": "row",
+    "layoutTree": true,
+    "componentName": "第三方协议配置",
+    "enableUuid": "TCFG_THIRD_PARTY_PROTOCOLS_ENABLE",
+    "showComponentName": true,
+    "dataType": [
+     "8",
+     "1"
+    ],
+    "template": "",
+    "span": 24,
+    "formId": 105,
+    "renderKey": "1051667219312646",
+    "children": [
+     {
+      "__config__": {
+       "label": "第三方协议选择",
+       "tag": "el-checkbox-group",
+       "tagIcon": "checkbox",
+       "defaultValue": [],
+       "span": 13,
+       "showLabel": true,
+       "labelWidth": 200,
+       "layout": "colFormItem",
+       "optionType": "default",
+       "required": false,
+       "regList": [],
+       "changeTag": true,
+       "border": false,
+       "status": 0,
+       "dataType": [
+        "macro"
+       ],
+       "formId": 233,
+       "renderKey": "2331690279078603",
+       "eventField": [],
+       "uuid": "TCFG_THIRD_PARTY_PROTOCOLS_SEL",
+       "saveWay": "macro",
+       "originValue": [
+        "NET_CFG_EN"
+       ],
+       "tipAlways": true,
+       "tip": "",
+       "formItemWidth": "400px",
+       "emptyValue": "NET_CFG_EN"
+      },
+      "__slot__": {
+       "options": [
+        {
+         "label": "RCSP(杰理之家)",
+         "value": "RCSP_MODE_EN",
+         "hide": false,
+         "disabled": false
+        },
+        {
+         "label": "MULTI_BOX_ADV",
+         "value": "MULTI_BOX_ADV_EN",
+         "hide": false,
+         "disabled": false
+        },
+        {
+         "label": "CUSTOM_DEMO",
+         "value": "CUSTOM_DEMO_EN",
+         "hide": false,
+         "disabled": false
+        },
+        {
+         "label": "MIJIA",
+         "value": "MIJIA_EN",
+         "hide": false,
+         "disabled": false
+        },
+        {
+         "label": "CLIENT",
+         "value": "CLIENT_EN",
+         "hide": false,
+         "disabled": false
+        },
+        {
+         "label": "DUEROS",
+         "value": "DUEROS_EN",
+         "hide": false,
+         "disabled": false
+        },
+        {
+         "label": "NET_CFG",
+         "value": "NET_CFG_EN",
+         "hide": false,
+         "disabled": false
+        },
+        {
+         "label": "LE_HOGP",
+         "value": "LE_HOGP_EN",
+         "hide": false,
+         "disabled": false
+        },
+        {
+         "label": "ALIPAY",
+         "value": "ALIPAY_EN",
+         "hide": false,
+         "disabled": false
+        }
+       ]
+      },
+      "style": {
+       "width": "100%"
+      },
+      "size": "medium",
+      "disabled": false,
+      "id": "id_1690279078603_0",
+      "__vModel__": "field233"
+     }
+    ],
+    "eventField": [],
+    "disable": false,
+    "saveWay": "macro"
+   },
+   "type": "default",
+   "justify": "start",
+   "align": "top",
+   "style": {
+    "height": "",
+    "paddingLeft": "0px"
+   },
+   "id": "id_1667219312646_0"
+  }
+ ],
+ "formName": "蓝牙配置",
+ "formRef": "elForm",
+ "formModel": "formData",
+ "size": "small",
+ "labelPosition": "left",
+ "labelWidth": 100,
+ "formRules": "rules",
+ "gutter": 30,
+ "disabled": false,
+ "span": 24,
+ "formBtns": false,
+ "unFocusedComponentBorder": false,
+ "maxFormId": 306,
+ "version": {
+  "code": 1,
+  "tool": "4.4.0"
+ }
+}
