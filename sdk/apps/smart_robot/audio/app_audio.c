@@ -11,7 +11,7 @@
 #include "sdk_config.h"
 #include "app_event.h"
 #include "app_audio.h"
-#include "protocol.h"
+#include "app_protocol.h"
 #include "recorder/tuoyun_voice_recorder.h"
 #include "player/tuoyun_flow_player.h"  
 
@@ -49,9 +49,21 @@ static void audio_stop_speaker(bool wait_play_end){
         log_info("speaker status already muted");   
         return;
     }
+    if (wait_play_end && m_speaker_inited){
+        if (m_speaker_status == WORKING_STATUS_STOP_PENDING){
+            log_info("speaker status already awaiting for stop");   
+            return;
+        }
+        m_speaker_status = WORKING_STATUS_STOP_PENDING;
+    }else{
+        log_info("clear the speaker");
+        m_speaker_status = WORKING_STATUS_STOP;
+        tuoyun_audio_player_clear();
+        m_speaker_inited = 0;
+        m_audio_received_frame = 0;
+    }
     
-    m_speaker_status = WORKING_STATUS_STOP;
-
+#if 0
     int received_frame = m_audio_received_frame;
     m_audio_received_frame = 0;
     if (wait_play_end && received_frame > 0){
@@ -61,16 +73,17 @@ static void audio_stop_speaker(bool wait_play_end){
     log_info("clear the speaker");
     tuoyun_audio_player_clear();
     m_speaker_inited = 0;
+ #endif   
 }
 
 static void audio_start_speaker(){
 
     if (m_speaker_status == WORKING_STATUS_START){
-        log_info("speaker status already open");
+        log_info("speaker status already open, %d, %d", m_speaker_inited, m_audio_received_frame);
         return;
     }
+    log_info("@@@@@ Please listen...");
     m_speaker_status = WORKING_STATUS_START;
-    log_info("speaker status open");
     if (!m_speaker_inited && m_audio_received_frame >= MAX_CACHED_FRAME){
         tuoyun_audio_player_start(tuoyun_player_event_callback);
         m_speaker_inited = 1;
@@ -98,8 +111,8 @@ static void audio_start_mic(){
         log_info("mic status already open");
         return;
     }
+    log_info("@@@@@ Please start speak...");
     tuoyun_voice_param_t param = {0};
-    log_info("tuoyun_voice_recorder_open");
     param.code_type = AUDIO_CODING_OPUS;
     param.frame_ms = g_audio_enc_media_param.frame_duration;
     param.output = proc_enc_audio_data;
@@ -158,7 +171,7 @@ int dialog_audio_init(media_parameter_ptr downlink_media_param)
 int dialog_audio_close(void)
 {
     audio_stop_mic();
-    audio_stop_speaker(true);
+    audio_stop_speaker(false);
     return 0;
 }
 
@@ -170,7 +183,9 @@ int dialog_proc_speak_status(device_working_status_t  status){
         audio_stop_mic();
     }else if(status == WORKING_STATUS_STOP){
         audio_stop_speaker(true);
-        audio_start_mic();
+        if (m_speaker_inited == 0){
+            audio_start_mic();
+        }
     }else{
         log_info("invalid speak status: %d", status);
     }
@@ -185,8 +200,15 @@ static int tuoyun_player_event_callback(enum stream_event event)
     case STREAM_EVENT_START:
         break;
     case STREAM_EVENT_STOP:
-        log_info("++++++++++++tuoyun_player_event_callback: stop speaker");
+        log_info("tuoyun_player_event_callback: stop speaker: %d", m_speaker_status);
         m_speaker_inited = 0;
+        if (m_speaker_status == WORKING_STATUS_STOP_PENDING){
+            m_speaker_status = WORKING_STATUS_STOP;
+            tuoyun_audio_player_clear();
+            audio_start_mic();
+            m_audio_received_frame = 0;
+            log_info("tuoyun_player_event_callback: switch to mic");
+        }
         break;
     case STREAM_EVENT_END:
         break;
@@ -211,7 +233,7 @@ int dialog_audio_dec_frame_write(audio_stream_packet_ptr packet){
     /**
      * 启动播放器时，必须确保缓存中有数据，否则会出现读不到数据超时导致播放失败的问题
      */
-    if(!m_speaker_inited && m_speaker_status == WORKING_STATUS_START && m_audio_received_frame >= MAX_CACHED_FRAME){
+    if(!m_speaker_inited && m_speaker_status != WORKING_STATUS_STOP && m_audio_received_frame >= MAX_CACHED_FRAME){
         log_info("**********audio player start");
         m_speaker_inited = 1;
         tuoyun_audio_player_start(tuoyun_player_event_callback);

@@ -6,7 +6,6 @@
 #include "generic/typedef.h"
 #include "wifi/wifi_def.h"
 
-void enter_wifi_config_mode(void);
 
 int start_wifi_network(void);
 
@@ -42,10 +41,13 @@ int comfirm_wifi_param(void);
 
 int check_wifi_connected(void);
 
+void enter_config_network_state(void);
 
 u8 check_if_in_config_network_state(void);
 
 u32 get_wifi_ip();
+
+char* get_device_unique_code();
 
 #endif
 

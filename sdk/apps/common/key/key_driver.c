@@ -111,7 +111,7 @@ static void key_driver_scan(void *key)
 #endif
 
             scan_para->click_delay_cnt = 1;  //按键等待下次连击延时开始
-#if defined CONFIG_UI_ENABLE && (defined USE_LVGL_V8_UI_DEMO || defined USE_LVGL_V9_UI_DEMO)
+#if defined CONFIG_UI_ENABLE && (defined USE_LVGL_V8_UI_DEMO || defined USE_LVGL_V9_UI)
             e.type = scan_para->key_type;//区分按键类型
             e.action = KEY_EVENT_UP;
             e.value = scan_para->last_key;
@@ -128,7 +128,7 @@ static void key_driver_scan(void *key)
             } else {
                 scan_para->click_cnt++;  //单击次数累加
             }
-#if defined CONFIG_UI_ENABLE && (defined USE_LVGL_V8_UI_DEMO || defined USE_LVGL_V9_UI_DEMO)
+#if defined CONFIG_UI_ENABLE && (defined USE_LVGL_V8_UI_DEMO || defined USE_LVGL_V9_UI)
             e.type = scan_para->key_type;//区分按键类型
             e.action = KEY_EVENT_DOWN;
             e.value = cur_key_value;

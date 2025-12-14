@@ -4,7 +4,7 @@
  */
 #include "lcd_config.h"
 
-#ifdef USE_LVGL_V9_UI_DEMO
+#ifdef USE_LVGL_V9_UI
 
 /*********************
  *      INCLUDES

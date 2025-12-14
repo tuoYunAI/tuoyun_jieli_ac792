@@ -6,6 +6,7 @@
 #endif
 #include "jl_kws_common.h"
 #include "jl_kws_api.h"
+#include "asm/power_interface.h"
 
 #if TCFG_KWS_VOICE_RECOGNITION_ENABLE
 

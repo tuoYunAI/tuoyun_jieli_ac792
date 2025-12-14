@@ -15,7 +15,7 @@
 #include <chrono>
 #include <iosfwd>
 #include <errno.h>
-
+extern int errno;
 #ifdef __MVS__
 # include <__support/ibm/nanosleep.h>
 #endif

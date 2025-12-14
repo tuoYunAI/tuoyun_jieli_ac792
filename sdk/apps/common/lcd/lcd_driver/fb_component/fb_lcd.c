@@ -27,7 +27,7 @@
 #define LOG_DEBUG_ENABLE
 #define LOG_ERROR_ENABLE
 #include "system/debug.h"
-#if (defined USE_LVGL_V8_UI_DEMO || define USE_LVGL_V9_UI_DEMO)
+#if (defined USE_LVGL_V8_UI_DEMO || define USE_LVGL_V9_UI)
 #include "lv_conf.h"
 #endif
 

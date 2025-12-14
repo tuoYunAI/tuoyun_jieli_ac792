@@ -21,7 +21,7 @@
 #define ROOBO_ALGORITHM 2 //ROOBO 单/双MIC唤醒 ROOBO_DUAL_MIC_ALGORITHM ,,,测试版本只支持运行10分钟
 #define WANSON_ALGORITHM 3 //华镇算法,测试版只能够正确识别1000次
 #define JLKWS_ALGORITHM 4 //杰理算法,现阶段仅用于测试效果
-#define CONFIG_ASR_ALGORITHM  AISP_ALGORITHM //本地打断唤醒算法选择
+#define CONFIG_ASR_ALGORITHM  JLKWS_ALGORITHM //本地打断唤醒算法选择
 #endif
 
 
@@ -156,7 +156,7 @@
 #endif
 
 #if defined CONFIG_UI_FILE_SAVE_IN_RESERVED_EXPAND_ZONE
-#define CONFIG_UI_PACKRES_LEN 0x200000
+#define CONFIG_UI_PACKRES_LEN 0x10000
 #define CONFIG_UI_PACKRES_ADR ((__FLASH_SIZE__) - (CONFIG_UI_PACKRES_LEN) - 0x1000)
 #endif
 
@@ -180,7 +180,6 @@
 //*********************************************************************************//
 
 #ifdef CONFIG_NET_ENABLE
-// #define CONFIG_LTE_PHY_ENABLE                //usb网卡
 #define CONFIG_WIFI_ENABLE                   //无线WIFI
 
 #ifdef CONFIG_SFC_ENABLE
@@ -398,7 +397,7 @@
 //                                UI DEMO配置                                      //
 //*********************************************************************************//
 #if TCFG_LCD_ENABLE
-#define USE_LVGL_V9_UI_DEMO
+#define USE_LVGL_V9_UI
 
 /*#define USE_LVGL_V8_UI_DEMO*/
 #define LV_DISP_UI_FB_NUM 2
@@ -418,7 +417,7 @@
 #define TCFG_DEBUG_DLOG_ENABLE                  0    // 离线log功能
 #define TCFG_DEBUG_DLOG_FLASH_SEL               0    // 选择log保存到内置flash还是外置flash; 0:内置flash; 1:外置flash
 #define TCFG_DLOG_FLASH_START_ADDR              0    // 配置外置flash用于存储dlog和异常数据的区域起始地址
-#define TCFG_DLOG_FLASH_REGION_SIZE             (512 * 1024)    // 配置外置flash用于存储dlog和异常数据的区域大小
+#define TCFG_DLOG_FLASH_REGION_SIZE             (1 * 1024)    // 配置外置flash用于存储dlog和异常数据的区域大小
 #if (TCFG_DEBUG_DLOG_ENABLE && TCFG_DEBUG_DLOG_FLASH_SEL)
 #if (!defined(TCFG_NORFLASH_DEV_ENABLE) || (TCFG_NORFLASH_DEV_ENABLE == 0))
 #undef TCFG_NORFLASH_DEV_ENABLE

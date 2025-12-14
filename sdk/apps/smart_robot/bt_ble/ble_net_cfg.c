@@ -42,16 +42,19 @@
 #include "system/debug.h"
 
 
-#define ACTION_CMD_GET_MAC         0x00
-#define ACTION_CMD_GET_VENDOR_UID  0x01
-#define ACTION_CMD_START_SCAN_WIFI 0x10
-#define ACTION_CMD_GET_WIFI_COUNT  0x11
-#define ACTION_CMD_CONFIRM_WIFI    0x20
-#define ACTION_CMD_WIFI_STATUS     0x21
+#define ACTION_CMD_GET_UNIQUE_CODE   0x00
+#define ACTION_CMD_GET_VENDOR_UID    0x01
+#define ACTION_CMD_GET_PRODUCT_TYPE  0x02
+#define ACTION_CMD_START_SCAN_WIFI   0x10
+#define ACTION_CMD_GET_WIFI_COUNT    0x11
+#define ACTION_CMD_CONFIRM_WIFI      0x20
+#define ACTION_CMD_WIFI_STATUS       0x21
 
 typedef struct {
-    u8 get_mac_result;
-    u8 mac[6];
+
+    u8 get_product_type_result;
+    u8 get_unique_code_result;
+    u8 unique_code[33];
     u8 get_vendor_uid_result;
     u8 vendor_uid[32];
     u32 wifi_list_cnt;
@@ -459,27 +462,19 @@ static uint16_t att_read_callback(hci_con_handle_t connection_handle, uint16_t a
     log_info("read_callback, handle= 0x%04x,buffer= %08x\n", handle, (u32)buffer);
     switch (handle) {
     case ATT_CHARACTERISTIC_GET_DEVICE_INFO_HANDLE:
-        if (g_net_cfg_status.last_cmd == ACTION_CMD_GET_MAC && g_net_cfg_status.get_mac_result == 0) {
-            int msg_len = sizeof(g_net_cfg_status.mac);
+        if (g_net_cfg_status.last_cmd == ACTION_CMD_GET_UNIQUE_CODE && g_net_cfg_status.get_unique_code_result == 0) {
+            int msg_len = sizeof(g_net_cfg_status.unique_code);
             if (buffer == NULL) {
-                return 17;
+                return 33;
             }
             if (offset >= msg_len) {
                 break;
             }
 
-            char mac_str[18] = {0};
-            // 将MAC地址转换为字符串格式
-            char* mac = g_net_cfg_status.mac;
-            snprintf(mac_str, sizeof(mac_str), "%02x:%02x:%02x:%02x:%02x:%02x",
-                    mac[0] & 0xff, mac[1] & 0xff, mac[2] & 0xff,
-                    mac[3] & 0xff, mac[4] & 0xff, mac[5] & 0xff);
-
-            memcpy(buffer, mac_str, 17);
-            g_net_cfg_status.get_mac_result = 1; //只读一次
+            memcpy(buffer, g_net_cfg_status.unique_code, strnlen(g_net_cfg_status.unique_code, sizeof(g_net_cfg_status.unique_code) - 1));
+            g_net_cfg_status.get_unique_code_result = 1; //只读一次
             return buffer_size;
-        }
-        else if (g_net_cfg_status.last_cmd == ACTION_CMD_GET_VENDOR_UID && g_net_cfg_status.get_vendor_uid_result == 0) {
+        }else if (g_net_cfg_status.last_cmd == ACTION_CMD_GET_VENDOR_UID && g_net_cfg_status.get_vendor_uid_result == 0) {
             int msg_len = strlen(g_net_cfg_status.vendor_uid);
             if (buffer == NULL) {
                 return msg_len;
@@ -490,9 +485,22 @@ static uint16_t att_read_callback(hci_con_handle_t connection_handle, uint16_t a
             memcpy(buffer, &g_net_cfg_status.vendor_uid[offset], strlen(g_net_cfg_status.vendor_uid) - offset);
             g_net_cfg_status.get_vendor_uid_result = 1; //只读一次
             return buffer_size;
+        }else if (g_net_cfg_status.last_cmd == ACTION_CMD_GET_PRODUCT_TYPE && g_net_cfg_status.get_product_type_result == 0) {
+            char* type = PRODUCT_TYPE;
+            int msg_len = strlen(type);
+            if (buffer == NULL) {
+                return msg_len;
+            }
+            if (offset >= msg_len) {
+                break;
+            }
+            
+            memcpy(buffer, &type[offset], strlen(type) - offset);
+            g_net_cfg_status.get_product_type_result = 1; //只读一次
+            return buffer_size;
         }else{
-            log_info("err, last cmd: %d, get_mac_result: %d, get_vendor_uid_result: %d\n", 
-                g_net_cfg_status.last_cmd, g_net_cfg_status.get_mac_result, g_net_cfg_status.get_vendor_uid_result );
+            log_info("err, last cmd: %d, get_unique_code_result: %d, get_vendor_uid_result: %d\n", 
+                g_net_cfg_status.last_cmd, g_net_cfg_status.get_unique_code_result, g_net_cfg_status.get_vendor_uid_result );
         }
         break;      
     case ATT_CHARACTERISTIC_ACTION_CMD_HANDLE:
@@ -509,7 +517,7 @@ static uint16_t att_read_callback(hci_con_handle_t connection_handle, uint16_t a
             
             *buffer = ret;
             if(ret == 0){
-                sys_timeout_add_to_task("sys_timer", NULL, net_config_done_reset, 5000);
+                sys_timeout_add_to_task("sys_timer", NULL, net_config_done_reset, 3000);
             }
         }
         return 1;
@@ -677,9 +685,9 @@ static int att_write_callback(hci_con_handle_t connection_handle, uint16_t att_h
         }
         action_cmd = buffer[0];
         g_net_cfg_status.last_cmd = action_cmd;
-        if (action_cmd == ACTION_CMD_GET_MAC) {
-            get_wifi_mac((char *)g_net_cfg_status.mac);
-            g_net_cfg_status.get_mac_result = 0;
+        if (action_cmd == ACTION_CMD_GET_UNIQUE_CODE) {
+            strncpy((char *)g_net_cfg_status.unique_code, get_device_unique_code(), sizeof(g_net_cfg_status.unique_code)-1);
+            g_net_cfg_status.get_unique_code_result= 0;
             break;
         }
         else if (action_cmd == ACTION_CMD_GET_VENDOR_UID)
@@ -687,6 +695,12 @@ static int att_write_callback(hci_con_handle_t connection_handle, uint16_t att_h
             strcpy((char *)g_net_cfg_status.vendor_uid, PRODUCT_VENDOR_UID);
             g_net_cfg_status.get_vendor_uid_result = 0;
             log_info("get vendor uid: %s\n", g_net_cfg_status.vendor_uid);
+            break;
+        }
+        else if (action_cmd == ACTION_CMD_GET_PRODUCT_TYPE)
+        {
+            g_net_cfg_status.get_product_type_result= 0;
+            log_info("get product type: %s\n", PRODUCT_TYPE);
             break;
         }
         

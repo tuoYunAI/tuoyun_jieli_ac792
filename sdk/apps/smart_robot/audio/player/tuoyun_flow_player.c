@@ -20,6 +20,12 @@
 #include "file_player.h"
 #include "volume_node.h"
 
+#include "syscfg/syscfg_id.h"
+#include "app_mcp_server.h"
+
+#include "json_c/json_object.h"
+#include "json_c/json_tokener.h"
+
 #define LOG_TAG             "[PLAYER]"
 #define LOG_ERROR_ENABLE
 #define LOG_DEBUG_ENABLE
@@ -63,7 +69,7 @@ static tuoyun_flow_player_hdl_t tuoyun_flow_player_hdl;
 #define __this (&tuoyun_flow_player_hdl)
 
 static const struct stream_file_ops virtual_dev_ops;
-
+static s16 m_volume = 50;
 
 
 #define CACHE_BUF_LEN (500 * 1024)
@@ -400,6 +406,9 @@ void tuoyun_audio_player_start(player_event_callback_fn callback)
     start_player(player, &virtual_dev_ops);
 
     log_info("start the tuoyun player");
+    if (m_volume > 0){
+        tuoyun_audio_player_set_volume(m_volume);
+    }
 
 }
 
@@ -411,12 +420,12 @@ void tuoyun_audio_player_clear(void)
 }
 
 
-void tuoyun_audio_player_set_volume(u8 volume){   
+void tuoyun_audio_player_set_volume(s16 volume){   
 
     if (volume > 100){
         volume = 100;
     }
-
+    m_volume = volume;
     char vol_name[32]={0 };
     int err1;
     struct volume_cfg cfg={0};;
@@ -436,22 +445,57 @@ void tuoyun_audio_player_set_volume(u8 volume){
         log_error("audio_digital_vol_node_name_set err:%x", err1);
     }
     log_info("volume set : %d", volume);
+
+    s16 save_music_volume = (s16)volume;
+    syscfg_write(CFG_MUSIC_VOL, &save_music_volume, 2);
+
     return;
 }
 
 int tuoyun_audio_player_get_volume(){   
 
+    os_mutex_pend(&__this->mutex, 0);
+    if(__this->player == NULL) {
+        os_mutex_post(&__this->mutex);
+        return m_volume;
+    }
+    os_mutex_post(&__this->mutex);
+    
     char vol_name[32]={0 };
     int err1;
     struct volume_cfg cfg={0};;
+    log_info("tuoyun_audio_player_get_volume m_volume:%d", m_volume);
 
     int err=jlstream_get_node_param(NODE_UUID_VOLUME_CTRLER, NODE_VOLUME_FLOW, &cfg,    sizeof(struct volume_cfg));
     if(!err){
         log_info("audio_digital_vol_node_name_get err:%x", err);
-        return 0;
+        return m_volume;
     }
     log_info("volume get : %d", cfg.cur_vol);
+    if (cfg.cur_vol == 0){
+        return m_volume;
+    }
+    m_volume = (int)cfg.cur_vol;
     return cfg.cur_vol;
+}
+
+json_object* mcp_call_set_volume(property_ptr props, size_t len) {
+    if (len != 1 || strcmp(props[0].name, "volume") != 0) {
+        return NULL; // Invalid parameters
+    }
+
+    int volume = props[0].value.int_value;
+    tuoyun_audio_player_set_volume((s16)volume);
+    log_info("MCP set_volume called with volume: %d", volume);
+    char buf[32];
+    snprintf(buf, sizeof(buf), "Volume set to %d", volume);
+    json_object *result = json_object_new_object();
+    json_object *type = json_object_new_string("text");
+    json_object *text = json_object_new_string(buf);
+
+    json_object_object_add(result, "type", type);
+    json_object_object_add(result, "text", text);
+    return result;
 }
 
 static int __player_init(void)
@@ -467,8 +511,29 @@ static int __player_init(void)
     
     cbuf_init(&g_audio_cache_cbuf, buf, CACHE_BUF_LEN);
 
+    s16 vol = 0;
+    int ret = syscfg_read(CFG_MUSIC_VOL, &vol, 2);
+    if (ret > 0) {
+        m_volume = vol;
+    }
+
+    property_t volume_property = {
+        .name = "volume",
+        .type = kPropertyTypeInteger,
+        .required = 1,
+        .max_int_value = 100,
+        .min_int_value = 0,
+        .description = "Volume level from 0 to 100"
+    };
+    
+    add_mcp_tool("set_volume", 
+        "Set the volume of the audio speaker. If the current volume is unknown, you must call `get_device_status` tool first and then call this tool.",
+        mcp_call_set_volume,
+        &volume_property, 
+        1);
+
     return 0;
 }
 
-__initcall(__player_init);
+late_initcall(__player_init);
 

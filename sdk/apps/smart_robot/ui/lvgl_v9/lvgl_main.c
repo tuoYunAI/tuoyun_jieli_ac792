@@ -4,6 +4,18 @@
 #include "event/key_event.h"
 #include "event/touch_event.h"
 #include "lvgl.h"
+#include "app_ui.h"
+
+
+
+#define LOG_TAG             "[UI]"
+#define LOG_ERROR_ENABLE
+#define LOG_DEBUG_ENABLE
+#define LOG_INFO_ENABLE
+#define LOG_DUMP_ENABLE
+#define LOG_CLI_ENABLE
+#include "system/debug.h"
+
 extern uint32_t timer_get_ms(void);
 
 static char lvgl_suspend_flag = 1;
@@ -403,13 +415,14 @@ u8 lvgl_ui_is_suspended(void)
 }
 
 
-_WEAK_ void lvgl_v9_main_task_hook(void)
+_WEAK_ int lvgl_v9_main_task_hook(void)
 {
 
 }
 
 _WEAK_ void lvgl_v9_gui_init(void)
 {
+    log_info("lvgl_v9_gui_init");
     lv_init();
     lv_port_disp_init();
     lv_port_indev_init();
@@ -455,7 +468,7 @@ void lvgl_main_task(void *priv)
     char lvgl_task_pend_timeout_refr_flag = 0;
     u32 time_till_next;
 
-
+    log_info("lvgl_main_task start");
     lvgl_v9_gui_init();
 
     //刷新第一帧不需要事件触发
@@ -463,27 +476,25 @@ void lvgl_main_task(void *priv)
     if (time_till_next != 0xFFFFFFFF) {
         sys_hi_timeout_add(NULL, lvgl_timer_event_timeout, time_till_next);
     }
-
+    
     while (1) {
-
-        ret = os_taskq_pend_timeout(msg, ARRAY_SIZE(msg), portMAX_DELAY);
-        if (ret != OS_TASKQ) {
-            printf("lvgl_main_task os_taskq_pend err=%d %d\n", ret, msg[0]);
+        
+        ret = os_taskq_pend_timeout(msg, ARRAY_SIZE(msg), 5);
+        if (ret < 0) {
+            LV_LOG_ERROR("lvgl_main_task os_taskq_pend err=%d %d\n", ret, msg[0]);
             continue;
         }
-
-        lvgl_v9_main_task_hook();
 
         /* if (lvgl_suspend_flag) { */
         /* printf("ui task suspended...,%d\r\n", msg[1]); */
         /* } */
 
         if (ret == OS_TIMEOUT) {
-            if (lvgl_task_pend_timeout_refr_flag == 0) {
+            if (lvgl_v9_main_task_hook() == 0) {
                 /*puts("ui task pend timeout, nothing happend\r\n");*/
                 continue; //如果没有模型改变消息，不需要刷新屏幕
             } else {
-                puts("ui task pend timeout, module change happend\r\n");
+                LV_LOG_INFO("ui task pend timeout, module change happend\r\n");
             }
             lvgl_task_pend_timeout_refr_flag = 0;
         } else if (msg[1] == UI_MSG_TOUCH) {
@@ -559,7 +570,7 @@ void lvgl_main_task(void *priv)
 
 int lvgl_v9_main_task_init(void)
 {
-    puts("lvgl_v9_main_task_init \n\n");
+    LV_LOG_INFO("lvgl_v9_main_task_init");
 
     return thread_fork(LVGL_TASK_NAME, 18, 8 * 1024, 256, &lvgl_task_pid, lvgl_main_task, NULL);
 }

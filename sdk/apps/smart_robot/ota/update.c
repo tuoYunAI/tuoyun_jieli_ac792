@@ -18,7 +18,12 @@
 #include "syscfg_id.h"
 #include "app_event.h"
 #include "app_ota.h"
-#include "protocol.h"
+#include "app_protocol.h"
+#include "app_wifi.h"
+
+#include "device/device.h"
+#include "asm/sfc_norflash_api.h"
+
 
 
 #define LOG_TAG             "[OTA]"
@@ -143,6 +148,7 @@ int register_device(char *mac, char* vendor_uid)
     json_object_object_add(root, "type", json_object_new_string(PRODUCT_TYPE));
     json_object_object_add(root, "language", json_object_new_string(APP_LANGUAGE));
     json_object_object_add(root, "mac", json_object_new_string(mac));
+    json_object_object_add(root, "unique_code", json_object_new_string(get_device_unique_code()));
 
     // 添加application对象字段
     json_object_object_add(app_obj, "name", json_object_new_string(FIRMWARE_NAME));
@@ -175,7 +181,7 @@ int register_device(char *mac, char* vendor_uid)
             log_info("register_device : httpcli_post fail %d\n", ret);
             break;
         } 
-        
+        log_info("@@@@@@@@@@@@@@@@register_device : httpcli_post success\n");
 
         if (http_body_buf.recv_len > 0) {
             /** 对从服务器收到的json格式的版本信息进行解析，获取其版本号，版本描述信息和升级固件的URL信息*/
@@ -185,16 +191,21 @@ int register_device(char *mac, char* vendor_uid)
                 //log_info("register_device : json_tokener_parse : %s \n", json_object_to_json_string(parse));
                 json_object *activation = json_object_object_get(parse, "activation");
                 if (activation != NULL) {
-                    log_info("required to activate");
-                    struct app_event event =
-                    {
-                        .event = APP_EVENT_ACTIVATION,
-                        .arg = NULL,
-                    };
-                    app_event_notify(APP_EVENT_FROM_USER, &event);
-                    break;
+                    char* code = json_get_string(activation, "code");
+                    if (code && strlen(code) > 0 ){
+                        log_info("required to activate: %s", code);
+                        struct app_event event =
+                        {
+                            .event = APP_EVENT_ACTIVATION,
+                            .arg = NULL,
+                        };
+                        app_event_notify(APP_EVENT_FROM_USER, &event);
+                        break;
+                    }
+                    
                 }
-
+                char* code = json_get_string(parse, "code");
+                log_info("@@@@@@@@@@@@@register_device, activation: %s", code ? code : "null");
                 json_object *firmware_info = json_object_object_get(parse, "firmware");
 
                 if (firmware_info != NULL) {
@@ -205,7 +216,7 @@ int register_device(char *mac, char* vendor_uid)
 
                     if(strcmp(ota_version, FIRMWARE_VERSION) > 0 && strlen(http_ota_url) > 0){
                         log_info("try to upgrade from %s to %s.\n", FIRMWARE_VERSION, ota_version);
-                         http_create_download_task();
+                        http_create_download_task();
                         break;
                     }
                 }
@@ -356,6 +367,13 @@ _finish_:
     log_info("download success.\n");
 
     net_fclose(update_fd, sock_err);
+    struct app_event event ={
+                        .event = APP_EVENT_OTA_END,
+                        .arg = 0,
+                    };
+                    
+    app_event_notify(APP_EVENT_FROM_USER, &event);
+    os_time_dly(200);
     system_soft_reset();
 
 _out_:
@@ -368,6 +386,12 @@ _out_:
     free(hdl->recv_buf);
     memset(hdl, 0, sizeof(struct download_hdl));
     free(hdl);
+    struct app_event event_fail ={
+                        .event = APP_EVENT_OTA_END,
+                        .arg = 1,
+                    };
+                    
+    app_event_notify(APP_EVENT_FROM_USER, &event_fail);
 }
 
 int http_create_download_task(void)
@@ -408,8 +432,36 @@ int http_create_download_task(void)
     hdl->ctx.priv = hdl;
     hdl->ctx.connection = "close";
 
+    struct app_event event ={
+                        .event = APP_EVENT_OTA_START,
+                        .arg = NULL,
+                    };
+                    
+    app_event_notify(APP_EVENT_FROM_USER, &event);
+    
     //创建下载线程
     return thread_fork("download_task", 20,  2 * 1024, 0, NULL, download_task, hdl);
 }
 
 
+
+static u8 m_unique_code[33] = {0};
+char* get_device_unique_code(){
+    return m_unique_code;
+}
+
+
+static int update_module_init(void){
+    u8 uuid[20] = {0};
+    norflash_ioctl(NULL, IOCTL_GET_UNIQUE_ID, (u32)(uuid));//获取UUID 
+
+    for(int i = 0; i < 16; i++){
+        sprintf(&m_unique_code[i*2], "%02X", uuid[i]);
+    }
+
+    log_info("@@@@@@@Device UUID: %s", m_unique_code);
+    return 0;
+}
+
+
+late_initcall(update_module_init);

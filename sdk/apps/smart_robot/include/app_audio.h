@@ -3,7 +3,7 @@
 #define __AUDIO__
 
 #include "os/os_api.h"
-#include "protocol.h"
+#include "app_protocol.h"
 
 typedef struct{
     int event;

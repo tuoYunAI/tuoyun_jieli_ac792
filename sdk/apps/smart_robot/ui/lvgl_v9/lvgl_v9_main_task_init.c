@@ -3,12 +3,18 @@
 #include "lv_conf.h"
 #include "lvgl.h"
 
-#ifdef USE_LVGL_V9_UI_DEMO
+#ifdef USE_LVGL_V9_UI
 
-void lvgl_v9_main_task_hook(void)
-{
 
-}
+#define LOG_TAG             "[UI]"
+#define LOG_ERROR_ENABLE
+#define LOG_DEBUG_ENABLE
+#define LOG_INFO_ENABLE
+#define LOG_DUMP_ENABLE
+#define LOG_CLI_ENABLE
+#include "system/debug.h"
+
+
 static void lv_example_img_bin(void)
 {
     LV_IMAGE_DECLARE(img_benchmark_cogwheel_argb);
@@ -41,7 +47,7 @@ static void lv_example_img_bin(void)
 
 void lvgl_v9_gui_init(void)
 {
-    puts("lvgl_v9_gui_init \n\n");
+    log_info("lvgl_v9_gui_init");
 
 #if 0
     while (!storage_device_ready()) {//等待sd文件系统挂载完成
@@ -88,11 +94,12 @@ void lvgl_v9_gui_init(void)
 
 static int lvgl_v9_main_init(void)
 {
+    log_info("lvgl_v9_main_init");
     int lvgl_v9_main_task_init(void);
     lvgl_v9_main_task_init();
     return 0;
 }
-late_initcall(lvgl_v9_main_init);
+__initcall(lvgl_v9_main_init);
 
 #endif
 

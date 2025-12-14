@@ -93,7 +93,7 @@ _reconnect_:
             printf("recv_buf = %s.\n", recv_buf);
             memset(recv_buf, 0, sizeof(recv_buf));
             //此处可添加数据处理函数
-            tcp_send_data(client_info->fd, "Data received successfully!", strlen("Data received successfully!"));
+            tcp_send_data(client_info->fd, recv_buf, strlen(recv_buf));
         } else {
             tcp_client_quit(client_info);
             goto _reconnect_;
@@ -302,7 +302,7 @@ static void debug_server_transmiting(void *priv)
     }
 }
 
-static void tcp_server_start(void *priv)
+static void tcp_server_init_task(void *priv)
 {
     int err;
     enum wifi_sta_connect_state state;
@@ -440,6 +440,20 @@ void dbg_printf_buf(u8 *buf, u32 len){
     return;
 }
 
+static int m_debug_server_inited = 0;
+
+void start_debug_server()
+{
+#ifdef TELNET_LOG_OUTPUT
+    if (m_debug_server_inited == 1){
+        return;
+    }
+    m_debug_server_inited = 1;
+    if (thread_fork("debug_tcp_server_start", 10, 512, 0, NULL, tcp_server_init_task, NULL) != OS_NO_ERR) {
+        printf("thread fork fail\n");
+    }
+#endif
+}
 
 
 #ifdef TELNET_LOG_OUTPUT
@@ -453,10 +467,6 @@ void c_main(void *priv)
     }
 
     cbuf_init(&cbuf, buf, buf_len);
-
-    if (thread_fork("debug_tcp_server_start", 10, 512, 0, NULL, tcp_server_start, NULL) != OS_NO_ERR) {
-        printf("thread fork fail\n");
-    }
 }
 
 early_initcall(c_main);

@@ -80,7 +80,6 @@ static void kws_algo_local_init(void)
 
 int jl_kws_algo_init(void)
 {
-    FILE *fp = NULL;
     void *buf_ptr = NULL;
 
     buf_ptr = zalloc(KWS_FRAME_LEN);

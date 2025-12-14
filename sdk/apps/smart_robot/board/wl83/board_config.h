@@ -2,7 +2,8 @@
 #define BOARD_CONFIG_H
 
 //板子型号
-#define CONFIG_BOARD_SMART_ROBOT_DEVELOP
+//#define CONFIG_BOARD_SMART_ROBOT_DEVELOP
+#define CONFIG_BOARD_SMART_ROBOT_DEMO
 
 //芯片型号sdram和flash配置文件
 #include "chip_cfg.h"

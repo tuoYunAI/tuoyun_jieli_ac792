@@ -5,8 +5,10 @@
 #pragma code_seg(".tuoyun_asr_recorder.text")
 #endif
 
+
 #include "app_config.h"
 #include "system/includes.h"
+#include "os/os_cfg.h"
 #include "jlstream.h"
 #include "app_audio.h"
 #include "encoder_fmt.h"
@@ -38,31 +40,13 @@
 
 #endif
 
-#if WAKEUP_ALGORITHM
-typedef struct LDEEW_ENGINE LDEEW_ENGINE_S;
 
-char *LDEEW_Get_DeviceName(void);
-char *LDEEW_version(void);
-int LDEEW_memSize(void);
-LDEEW_ENGINE_S *LDEEW_RUN(void *pvMemBase, int len, void *pvWkpEnv, void *pvWkpHandler, void *pvAsrHandler);
-int LDEEW_feed(LDEEW_ENGINE_S *pstLfespdEng, char *pcData, int iLen);
-
-LDEEW_ENGINE_S *pstLfespdEng = NULL;
-
-#endif
-
+extern void aisp_suspend(void);
 
 typedef struct tuoyun_asr_recorder {
     struct jlstream *stream;
     int inited;
-    int started;
 }tuoyun_asr_recorder_t, *tuoyun_asr_recorder_ptr;
-
-
-
-static u8* m_buf;
-static cbuffer_t cbuf;
-static buf_len = 1024*20;
 
 static tuoyun_asr_recorder_ptr g_tuoyun_asr_recorder = NULL;
 static OS_MUTEX mutex;
@@ -101,17 +85,9 @@ static int recorder_data_output(void *priv, u8 *data, int len)
         os_mutex_post(&mutex);
         return 0;
     }
-    if (g_tuoyun_asr_recorder->started == 0) {
-        os_mutex_post(&mutex);
-        return 0;
-    }
 
-
-    u32 wlen = cbuf_write(&cbuf, data, len);
-    if (wlen == 0) {
-        cbuf_clear(&cbuf);
-        return 0;
-    }
+    extern int aisp_vfs_fwrite(void *data, u32 len);
+    int wlen = aisp_vfs_fwrite(data, len);
 
     os_mutex_post(&mutex);
     return wlen;
@@ -123,6 +99,7 @@ static const struct stream_file_ops asr_tx_ops = {
 
 static int vad_callback(enum vad_event event)
 {
+#if 0     //必须一直输入pcm数据来维持kws工作
     os_mutex_pend(&mutex, 0);
     if (!g_tuoyun_asr_recorder || !g_tuoyun_asr_recorder->inited) {
         os_mutex_post(&mutex);
@@ -134,29 +111,13 @@ static int vad_callback(enum vad_event event)
     switch (event) {
     case VAD_EVENT_SPEAK_START:
         log_info("@@@@@@@@@VAD_EVENT_SPEAK_START");
-        cbuf_clear(&cbuf);
-        g_tuoyun_asr_recorder->started = 1;
         break;
     case VAD_EVENT_SPEAK_STOP:
-        log_info("@@@@@@@@@VAD_EVENT_SPEAK_STOP");
-        int blen = cbuf_get_data_size(&cbuf);
-        log_info("asr data len: %d", blen);
-        g_tuoyun_asr_recorder->started = 0;
-        char* buf = malloc(blen);
-        if (!buf){
-            log_error("failed to alloc mem");
-            break;
-        }
-        int read_len = cbuf_read(&cbuf, buf, blen);
-        if (read_len > 0) {
-            #if WAKEUP_ALGORITHM
-            LDEEW_feed(pstLfespdEng, (char *)buf, read_len);
-            #endif
-        }
-        
+        log_info("@@@@@@@@@VAD_EVENT_SPEAK_STOP");   
         break;
     }
     os_mutex_post(&mutex);
+#endif    
     return 0;
 }
 
@@ -246,9 +207,9 @@ void tuoyun_asr_recorder_open()
         goto __exit1;
     }
 
-    cbuf_clear(&cbuf);
     g_tuoyun_asr_recorder->inited = 1;
     os_mutex_post(&mutex);
+    aisp_resume();
 
     log_info("tuoyun asr recorder init success");
     return;
@@ -264,6 +225,7 @@ __exit0:
 
 int tuoyun_asr_recorder_close()
 {
+    aisp_suspend();
     os_mutex_pend(&mutex, 0);
     if (!g_tuoyun_asr_recorder) {
         os_mutex_post(&mutex);    
@@ -283,122 +245,20 @@ int tuoyun_asr_recorder_close()
 }
 
 
-#if WAKEUP_ALGORITHM
-#if AISP_DUAL_MIC_ALGORITHM
-static int aec_handler(void *pvUsrData, s8 *pcData, s32 iLen, s8 iStatus)
-#else
-//typedef int (*LDEEW_handler_t)(void *user_data, int status, char *json, int bytes);
-static int aec_handler(void *pcData, int iStatus, char *json, int iLen)
-#endif
-{
-    u32 wlen;
 
-
-    return 0;
-}
-
-static int wtk_handler(void *pvUsrData, int iIdx, char *pcJson)
-{
-    
-    json_object *obj = NULL;
-    const char *keyword = NULL;
-
-    obj = json_tokener_parse(pcJson);
-    if (obj) {
-        keyword = json_get_string(obj, "wakeupWord");
-        if (keyword) {
-            log_info("@@@@@@@@@@@@@@@@@@@+++++++++={ wakeup_word: %s}\n", keyword);
-            if (!strcmp(keyword, "zan ting bo fang")) {
-                
-            } else if (!strcmp(keyword, "bo fang yin yue")) {
-                
-            } else if (!strcmp(keyword, "shang yi shou")) {
-                
-            } else if (!strcmp(keyword, "xia yi shou")) {
-                
-            } else if (!strcmp(keyword, "da sheng yi dian")) {
-                
-            } else if (!strcmp(keyword, "xiao sheng yi dian")) {
-                
-            } else {
-                
-            }
-
-        }
-        json_object_put(obj);
-    }
-
-    return 0;
-}
-
-
-
-typedef struct dui_auth_info {
-    char *productKey;
-    char *productId;
-    char *ProductSecret;
-} dui_auth_info_t;
-
-static void aisp_init()
-{
-    u32 memPoolLen = LDEEW_memSize();  //获取算法需要的heap大小
-    u32 mic_len, linein_len;
-
-    log_info("aisp_main run 0x%x,%s\r\n", (u32)LDEEW_version(), LDEEW_version());
-    log_info("memPoolLen is:%d\n", memPoolLen);
-
-    dui_auth_info_t auth_info;
-    /* 此处信息请根据dui信息修改 https://www.duiopen.com/ */
-    auth_info.productKey = "58f1aeeb54fadab27a6ce70fd222ec46";
-    auth_info.productId = "279594353";
-    auth_info.ProductSecret = "89249b0fb48d7c12454a079fc97aee72";
-    extern int app_dui_auth_second(dui_auth_info_t *auth_info, u8 mark);
-    if (0 != app_dui_auth_second(&auth_info, 0)) {
-        log_info("dui auth fail, please contact aispeech!!!");
-        return;
-    }
-    log_info("app_dui_auth_second ok");
-
-    void *pcMemPool = calloc(1, memPoolLen);  //申请内存
-    if (NULL == pcMemPool) {
-        return;
-    }
-
-    /* start engine and pass auth cfg*/
-    pstLfespdEng = LDEEW_RUN(pcMemPool, memPoolLen, "words=xiao ai tong xue,da sheng yi dian,xiao sheng yi dian,zan ting bo fang,xia yi shou;thresh=0.60,0.32,0.32,0.33,0.33;", wtk_handler, aec_handler); //唤醒词：小爱同学
-    /* pstLfespdEng = LDEEW_RUN(pcMemPool, memPoolLen, "words=ni hao xiao le,da sheng yi dian,xiao sheng yi dian,zan ting bo fang,xia yi shou;thresh=0.60,0.32,0.32,0.33,0.33;", wtk_handler, aec_handler); //唤醒词：你好小乐 */
-    if (NULL == pstLfespdEng || pstLfespdEng == (void *)0xffffffff) {
-        log_error("LDEEW_Start auth fail \n");
-        free(pcMemPool);
-        return;
-    }
-    log_info("LDEEW_Start auth OK \n");
-
-
-    free(pcMemPool);
-}
-
-#endif
 
 
 static void asr_init(void *priv)
 {
-    m_buf = malloc(buf_len);
-    if (m_buf == NULL) {
-        log_info("malloc fail\n");
-        return;
-    }
-
-    cbuf_init(&cbuf, m_buf, buf_len);
-
     if (os_mutex_create(&mutex) != OS_NO_ERR) {
         log_error("%s os_mutex_create buf_mutex fail\n", __FILE__);
         return;
     }
 
-#if WAKEUP_ALGORITHM
-    aisp_init();
-#endif    
+    extern int aisp_open();
+    aisp_open();
 }
 
+
 late_initcall(asr_init);
+

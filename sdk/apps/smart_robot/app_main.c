@@ -9,7 +9,7 @@
 #include "app_msg.h"
 #include "app_tone.h"
 #include "app_event.h"
-#include "protocol.h"
+#include "app_protocol.h"
 #include "app_wifi.h"
 #include "app_ble.h"
 #include "app_ota.h"
@@ -110,9 +110,9 @@ const struct task_info task_info_table[] = {
     /**
      * AI SESSION START
      */
-    {"protocol_session",    22,     PROTOCOL_SESSION_STK_SIZE,   0,		 protocol_session_tcb_stk_q	 },
-    {"protocol_audio",      28,     PROTOCOL_AUDIO_STK_SIZE,     0,		 protocol_audio_tcb_stk_q	 },
-    {"protocol_audio_demo",      16,     PROTOCOL_AUDIO_STK_SIZE,     0,		 protocol_audio_demo_tcb_stk_q	 },
+    {"protocol_mqtt_proc",      25,     PROTOCOL_SESSION_STK_SIZE,   0,		 protocol_session_tcb_stk_q	 },
+    {"protocol_audio",          28,     PROTOCOL_AUDIO_STK_SIZE,     0,		 protocol_audio_tcb_stk_q	 },
+    {"protocol_audio_demo",     16,     PROTOCOL_AUDIO_STK_SIZE,     0,		 protocol_audio_demo_tcb_stk_q	 },
     /**
      * AI SESSION END
      */
@@ -169,18 +169,98 @@ const struct task_info task_info_table[] = {
     {0, 0},
 };
 
+void enter_mode_network_interrupted(void){
 
+    play_tone_file(get_tone_files()->net_disc);
+    log_info("enter_idle_mode");
+    ui_set_status_text("网络断开");
+}
+void enter_mode_activation(void){
 
-static int ble_inited = 0;
-void start_ble_net_cfg(void){
-    if (!ble_inited) {
-        ble_inited = 1;
-    } else {
-        return;
-    }
-    bt_ble_module_init();
+    log_info("enter_mode_activation");
+    play_tone_file(get_tone_files()->activating);
+    ui_set_status_text("设备正在激活...");
+}
+void enter_mode_network_configuring(void){
+    play_tone_file(get_tone_files()->net_cfg_enter);
+    log_info("enter_mode_network_configuring");
+    ui_set_status_text("进入配网模式");
 }
 
+void enter_mode_network_config_success(void){
+    play_tone_file(get_tone_files()->net_cfg_succ);
+    log_info("enter_mode_network_config_success");
+    ui_set_status_text("网络配置成功，重启中...");
+}
+
+void enter_mode_regitering(void){
+
+    play_tone_file(get_tone_files()->net_connected);
+    ui_set_status_text("正在注册...");
+}
+
+void enter_mode_regiter_result(int result){
+    if(result == 0){
+        ui_set_status_text("注册失败"); 
+        play_tone_file(get_tone_files()->register_fail);
+    }else{
+        ui_set_status_text("注册成功");
+        play_tone_file(get_tone_files()->register_success);
+        //jl_kws_speech_recognition_open();
+        //os_time_dly(100);
+    }
+    
+}
+
+void enter_mode_conntecting_server(void){
+    log_info("enter_mode_connteting_server");
+    ui_set_status_text("正在连接服务");
+}
+
+void enter_mode_idle(void){
+    log_info("enter_idle_mode");
+    ui_set_status_text("待命");
+    ui_set_emotion_text("");
+    ui_set_content_text("");
+    //jl_kws_speech_recognition_start();
+    //log_info("@@@@@@@@@@@@: jl_kws_speech_recognition_start ---- start");
+}
+void enter_mode_ota(void){
+    log_info("enter_mode_ota");
+    ui_set_status_text("正在升级中...");
+}
+
+void enter_mode_ota_end(int result ){
+    if(result == 0){
+        log_info("enter_mode_ota_end: success");
+        ui_set_status_text("升级成功，重启中..."); 
+    }else{
+        log_info("enter_mode_ota_end: failed"); 
+        ui_set_status_text("升级失败");
+    }
+    
+}
+
+void enter_mode_renewal_overduep(void){
+    play_tone_file(get_tone_files()->renewal_overdue);
+    ui_set_status_text("您还未购买服务或服务已过期");
+}
+
+void enter_mode_dialog_initiating(void){
+    ui_set_status_text("正在呼叫...");
+    //jl_kws_speech_recognition_stop();
+
+    //log_info("@@@@@@@@@@@@: jl_kws_speech_recognition_stop ---- stop");
+}
+
+
+void enter_mode_dialog_listening(void){
+    ui_set_status_text("聆听中");
+}
+
+void enter_mode_dialog_speaking(void){
+    ui_set_status_text("讲话中");
+}
 
 
 void start_network(void)
@@ -193,6 +273,7 @@ void start_network(void)
 
 void proc_register_device(void)
 {
+    enter_mode_regitering();
     char mac[6] = {0};
     int ret = get_wifi_mac(mac);
     if (ret != 0) {
@@ -205,7 +286,8 @@ void proc_register_device(void)
              mac[0] & 0xff, mac[1] & 0xff, mac[2] & 0xff,
              mac[3] & 0xff, mac[4] & 0xff, mac[5] & 0xff);
 
-    register_device(mac_str, PRODUCT_VENDOR_UID);
+    ret = register_device(mac_str, PRODUCT_VENDOR_UID);
+    enter_mode_regiter_result(ret == 0);
 }
 
 void start_register_device()
@@ -250,7 +332,7 @@ void app_main(void)
 }
 
 
-
+static int ble_inited = 0;
 static int net_wifi_event_handler(void *evt)
 {
     struct net_event *event = (struct net_event *)evt;
@@ -259,14 +341,22 @@ static int net_wifi_event_handler(void *evt)
     case NET_EVENT_CONNECTED:
         log_info("net_wifi_event_handler: NET_EVENT_CONNECTED, note: %s", event->arg);
         start_register_device();
-        int ret = play_tone_file(get_tone_files()->net_cfg_succ);
-        if(0 != ret){
-            log_info("play_tone_file err");
-        }
+        void start_debug_server();
+        start_debug_server();
         break;
     case NET_CONNECT_TIMEOUT_NOT_FOUND_SSID:
         log_info("net_wifi_event_handler: NET_CONNECT_TIMEOUT_NOT_FOUND_SSID, note: %s", event->arg);
-        start_ble_net_cfg();
+        
+        if (!ble_inited) {
+            ble_inited = 1;
+            bt_ble_module_init();
+            enter_config_network_state();
+            enter_mode_network_configuring();
+        }/*
+        没有网络时, 会进入配网模式, 不需要提示网络断开
+        else {
+            enter_mode_network_interrupted();
+        }*/
         break;
     default:
         break;
@@ -281,18 +371,44 @@ void app_user_event_handler(struct app_event *event)
     switch (event->event) {
     case APP_EVENT_ACTIVATION:
         log_info("app_user_event_handler: APP_EVENT_ACTIVATION");
-        enter_wifi_config_mode();
-        start_ble_net_cfg();    
+        
+        ble_inited = 1;
+        bt_ble_module_init();
+        enter_config_network_state();
+        enter_mode_activation();
         break;
+    case APP_EVENT_OTA_START:
+        log_info("app_user_event_handler: APP_EVENT_OTA_START");
+        enter_mode_ota();
+        break;
+    case APP_EVENT_OTA_END:
+        log_info("app_user_event_handler: APP_EVENT_OTA_END");
+        enter_mode_ota_end((int)(event->arg));
+        break;    
     case APP_EVENT_WIFI_CFG_FINISH:
         log_info("app_user_event_handler: APP_EVENT_WIFI_CFG_FINISH");
+        enter_mode_network_config_success();
         break;
     case APP_EVENT_MQTT_CONNECTION_PARAM:
         log_info("app_user_event_handler: APP_EVENT_MQTT_CONNECTION_PARAM");
+        enter_mode_conntecting_server();
         start_protocol(event->arg);
-        break;        
+        break;
+    case APP_EVENT_MQTT_CONNECTION_STATUS:
+        if ((int)(event->arg) == MQTT_STATUS_ENSTABLISHED) {
+            log_info("app_user_event_handler: APP_EVENT_MQTT_CONNECTION_STATUS: ESTABLISHED");
+            enter_mode_idle();
+        } else {
+            log_info("app_user_event_handler: APP_EVENT_MQTT_CONNECTION_STATUS: INTERRUPTED");
+            enter_mode_conntecting_server();
+        }
+        break;
     case APP_EVENT_DATA:
         log_info("app_user_event_handler: APP_EVENT_DATA");
+        break;    
+    case APP_EVENT_WAKEUP_WORD_DETECTED:
+        log_info("app_user_event_handler: APP_EVENT_WAKEUP_WORD_DETECTED: %s", (char*)event->arg);
+        init_call((char*)event->arg);
         break;      
     default:
         break;
@@ -301,20 +417,7 @@ void app_user_event_handler(struct app_event *event)
 
 
 
-void enter_listening_mode(void)
-{
-}
 
-void enter_speaking_mode(void)
-{
-    send_stop_listening();
-}
-
-void enter_idle_mode(void)
-{
-    log_info("enter_idle_mode");
-    send_stop_listening();
-}
 
 void app_protocol_event_handler(struct app_event *event)
 {
@@ -325,20 +428,26 @@ void app_protocol_event_handler(struct app_event *event)
         if (notify) {
             log_info("notify event: %d, status: %s, message: %s, emotion: %s\n",
                      notify->event, notify->status, notify->message, notify->emotion);
+            if (notify->event == CTRL_EVENT_EXPIRE) {
+                enter_mode_renewal_overduep();   
+            }     
         }
+    
         break;  
     case APP_EVENT_CALL_ESTABLISHED:
         log_info("app_user_event_handler: APP_EVENT_CALL_ESTABLISHED");
         tuoyun_asr_recorder_close();
         dialog_audio_init((media_parameter_ptr)event->arg);
+        enter_mode_dialog_initiating();
         break;
     case APP_EVENT_CALL_REJECTED:
         log_info("app_user_event_handler: APP_EVENT_CALL_REJECTED");
-
+        enter_mode_idle();
         break;
     case APP_EVENT_CALL_NO_ANSWER:
         log_info("app_user_event_handler: APP_EVENT_CALL_NO_ANSWER");  
-
+        enter_mode_idle();
+        break;  
     case APP_EVENT_CALL_UPDATED:
         log_info("app_user_event_handler: APP_EVENT_CALL_UPDATED");
         message_session_event_t* session_event = event->arg;
@@ -360,23 +469,38 @@ void app_protocol_event_handler(struct app_event *event)
             break;
         case CTRL_EVENT_SHOW_TEXT:
             log_info("Received text to speak: %s\n", session_event->text?session_event->text:"NULL");
+            if(session_event->text) {
+                ui_set_content_text(session_event->text);
+            }
             /* code */
             break;
         case CTRL_EVENT_SPEAKER:
             if (session_event->status == WORKING_STATUS_TEXT) {
                 log_info("Received text to speak: %s\n", session_event->text?session_event->text:"NULL");
                 dialog_proc_speak_status(WORKING_STATUS_START);
+                if(session_event->text) {
+                    ui_set_content_text(session_event->text);
+                }
                 return;
             }
             dialog_proc_speak_status(session_event->status);
+            if (session_event->status == WORKING_STATUS_START) {
+                enter_mode_dialog_speaking();
+            } else if (session_event->status == WORKING_STATUS_STOP) {
+                enter_mode_dialog_listening();
+            }
             
+            if (strnlen(session_event->emotion, sizeof(session_event->emotion)) > 0) {
+                ui_set_emotion_text(session_event->emotion);
+            }
             /* code */
             break;
         case CTRL_EVENT_LISTEN:
-            
-            break;
-        case CTRL_EVENT_LLM:
-            
+            if (session_event->status == WORKING_STATUS_START) {
+                enter_mode_dialog_listening();
+            } else if (session_event->status == WORKING_STATUS_STOP) {
+                enter_mode_dialog_speaking();
+            }
             break;
         default:
             break;
@@ -387,7 +511,7 @@ void app_protocol_event_handler(struct app_event *event)
         log_info("app_user_event_handler: APP_EVENT_CALL_SERVER_TERMINATED");
         dialog_audio_close();
         tuoyun_asr_recorder_open();
-
+        enter_mode_idle();
         break;
     case APP_EVENT_CALL_TERMINATE_ACK:
         log_info("app_user_event_handler: APP_EVENT_CALL_TERMINATE_ACK");
@@ -429,8 +553,8 @@ static void app_default_key_click(struct key_event *key)
     log_info("+++++++key click: %d\n", key->value);
     switch (key->value) {
     case KEY_OK:
-        int init_call(char* wake_up_word);
-        init_call("你好小智");
+        
+        //init_call("你好小智");
         break;
     case KEY_VOLUME_DEC:
     case KEY_UP:
@@ -448,8 +572,8 @@ static void app_default_key_click(struct key_event *key)
         if (vol > 100) {
             vol = 100;
         }
-        void tuoyun_audio_player_set_volume(u8 volume);
-        tuoyun_audio_player_set_volume(vol);
+        void tuoyun_audio_player_set_volume(s16 volume);
+        tuoyun_audio_player_set_volume((s16)vol);
         log_info("set volume: %d\n", vol);
         break;
     case KEY_NEXT:
@@ -460,7 +584,6 @@ static void app_default_key_click(struct key_event *key)
         break;
     case KEY_MENU:
     case KEY_POWER:
-    lv_example_get_started_1();
         break;
     default:
         break;
@@ -494,7 +617,7 @@ static void app_default_key_long(struct key_event *key)
 
 static void app_default_key_event_handler(struct key_event *key)
 {
-    log_info("key event: type=%d, action=%d, value=%d\n", key->type, key->action, key->value);
+    //log_info("key event: type=%d, action=%d, value=%d\n", key->type, key->action, key->value);
     switch (key->action) {
     case KEY_EVENT_CLICK:
         app_default_key_click(key);
@@ -516,7 +639,7 @@ static void app_default_key_event_handler(struct key_event *key)
  */
 void app_default_event_handler(struct sys_event *event)
 {
-    log_info("app_default_event_handler: type=%d, from=%d\n", event->type, event->from);
+    //log_info("app_default_event_handler: type=%d, from=%d\n", event->type, event->from);
     const struct app_event_handler *handler;
 
     for_each_app_event_handler(handler) {
@@ -556,6 +679,7 @@ void app_ui_key_event_handler(struct app_event *event)
     log_info("app_ui_key_event_handler: type=%d, action=%d, value=%d\n", key->type, key->action, key->value);
     app_default_key_event_handler(key);
 }
+
 
 REGISTER_APP_EVENT_HANDLER(network_wifi_event) = {
     .event      = SYS_NET_EVENT,

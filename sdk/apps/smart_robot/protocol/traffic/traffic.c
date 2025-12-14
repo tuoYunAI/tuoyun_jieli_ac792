@@ -1,6 +1,6 @@
 #include "system/includes.h"
 #include "traffic.h"
-#include "protocol.h"
+#include "app_protocol.h"
 #include "app_event.h"
 #include "mbedtls/aes.h"
 #include "mbedtls/entropy.h"
@@ -40,6 +40,7 @@ static traffic_state_machine_t m_traffic_state;;
 
 static u8 audio_transmission_started = 0;
 static void traffic_receive_task();
+static void traffic_receive_monitor_task();
 static void traffic_uplink_empty_task();
 
 
@@ -177,6 +178,10 @@ int start_traffic_tunnel(media_parameter_ptr param){
             log_info("thread audio receive fork fail\n");
             break;
         }
+        if (thread_fork("traffic_receive_monitor_task", 20, 1024, 0, NULL, traffic_receive_monitor_task, NULL) != OS_NO_ERR) {
+            log_info("thread audio receive fork fail\n");
+            break;
+        }
         
         return 0;
     }while(0);
@@ -270,11 +275,26 @@ static void traffic_uplink_empty_task(){
 
         //log_info("send demo audio packet\n");
         send_audio(&packet);
-        msleep(200);
+        os_time_dly(20);
         /* code */
     }
     
 }
+
+
+
+/* 重排窗口大小：可存放的最大乱序包数量 */
+const int REORDER_WINDOW = 20;
+typedef struct {
+    uint32_t seq;
+    uint8_t *payload;
+    int filled;
+} reorder_entry_t;
+
+reorder_entry_t *m_cache_block = NULL;
+uint8_t *m_cache_data_buf = NULL;
+uint32_t m_timeout_cnt = 0;
+static OS_MUTEX mutex;
 
 
 static void traffic_receive_task(){
@@ -286,7 +306,7 @@ static void traffic_receive_task(){
      * 60ms帧, 最长不超过20K
      */
     int packet_len = m_traffic_state.downlink_audio_packet_len + nonce_size;
-    int buf_len = 20*1024;
+    int buf_len = 8*1024;
     u8* udp_recv_buf = malloc(buf_len);
     if(!udp_recv_buf){
         log_info("failed to alloc mem for udp recv buf");
@@ -305,6 +325,22 @@ static void traffic_receive_task(){
 
     log_info("traffic receive task start, buffer size: %d\n", buf_len);
     m_traffic_state.rx_seq = 0;
+    
+    m_cache_block = calloc(REORDER_WINDOW, sizeof(reorder_entry_t));
+    if (m_cache_block) {
+        m_cache_data_buf = malloc(REORDER_WINDOW * m_traffic_state.downlink_audio_packet_len);
+        if (!m_cache_data_buf) {
+            free(m_cache_block);
+            m_cache_block = NULL;
+        } else {
+            for (int i = 0; i < REORDER_WINDOW; i++) {
+                m_cache_block[i].payload = m_cache_data_buf + i * m_traffic_state.downlink_audio_packet_len;
+                m_cache_block[i].filled = 0;
+                m_cache_block[i].seq = 0;
+            }
+        }
+    }
+    m_timeout_cnt = 0;
     for(;;){
         
         if(!check_if_session_in_call() || !m_traffic_state.udp_fd){
@@ -322,9 +358,11 @@ static void traffic_receive_task(){
             continue;
         }
         
-        
+        m_timeout_cnt = 0;
+
         //continue;
         int offset = 0;
+        os_mutex_pend(&mutex, 0);
         while(offset < recv_len){
             if (recv_len - offset < packet_len){
                 break;
@@ -333,42 +371,159 @@ static void traffic_receive_task(){
             size_t nc_off = 0;
             memcpy(ctr_block, udp_recv_buf + offset, nonce_size); // nonce from header
 
-            long sequence = ntohl(*(uint32_t*)&ctr_block[12]);
-            if (m_traffic_state.rx_seq == 0){
+            long sequence = (long)ntohl(*(uint32_t*)&ctr_block[12]);
+            if (m_traffic_state.rx_seq == 0) {
                 m_traffic_state.rx_seq = sequence - 1; // 初始化序列号
             }
 
-            if (sequence <= m_traffic_state.rx_seq){
-                //log_info("@@@@@@Out-of-order audio packet detected: expected seq = %ld, received seq %d\n", m_traffic_state.rx_seq+1, sequence);
+            if (sequence <= m_traffic_state.rx_seq) {
+                // 已处理过或太旧，直接丢弃
                 offset += packet_len;
                 continue;
-            } 
-            
-            
-            if (m_traffic_state.rx_seq + 1 != sequence){
-                log_info("@@@@@@Audio packet loss detected: expected seq %ld, received seq %d\n", m_traffic_state.rx_seq + 1, sequence);
             }
 
-            m_traffic_state.rx_seq = sequence;
-
-
-            // 解密音频数据
+            /* 解密到临时缓冲（audio_pack.payload 已分配） */
             int ret = mbedtls_aes_crypt_ctr(&m_traffic_state.aes_ctx,
-                                        m_traffic_state.downlink_audio_packet_len,
-                                        &nc_off,
-                                        ctr_block,
-                                        stream_block,
-                                        udp_recv_buf + offset + nonce_size,
-                                        audio_pack.payload);
+                                            m_traffic_state.downlink_audio_packet_len,
+                                            &nc_off,
+                                            ctr_block,
+                                            stream_block,
+                                            udp_recv_buf + offset + nonce_size,
+                                            audio_pack.payload);
 
             if (ret != 0) {
                 log_info("AES decryption failed: %d\n", ret);
-                continue;;
+                offset += packet_len;
+                continue;
             }
-            dialog_audio_dec_frame_write(&audio_pack);
-            offset += packet_len;
+
+            /* 如果是期望的下一个序号，直接交付并消费后续缓冲中连续的包 */
+            if ((long)(m_traffic_state.rx_seq + 1) == sequence) {
+                dialog_audio_dec_frame_write(&audio_pack);
+                m_traffic_state.rx_seq = sequence;
+
+                /* 检查缓冲区中是否存在后续连续包 */
+                if (m_cache_block) {
+                    int progressed = 1;
+                    while (progressed) {
+                        progressed = 0;
+                        uint32_t want = m_traffic_state.rx_seq + 1;
+                        for (int i = 0; i < REORDER_WINDOW; i++) {
+                            if (m_cache_block[i].filled && m_cache_block[i].seq == want) {
+                                /* 将已解密数据放到 audio_pack.payload，然后交付 */
+                                memcpy(audio_pack.payload, m_cache_block[i].payload, m_traffic_state.downlink_audio_packet_len);
+                                dialog_audio_dec_frame_write(&audio_pack);
+                                m_traffic_state.rx_seq = m_cache_block[i].seq;
+                                m_cache_block[i].filled = 0;
+                                progressed = 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                offset += packet_len;
+                continue;
+            }
+
+            /* 序号大于期望：尝试放入重排缓冲区 */
+            if (m_cache_block) {
+                long gap = sequence - (m_traffic_state.rx_seq + 1);
+                if (gap >= REORDER_WINDOW) {
+                    log_info("@@@@@@Audio packet jump detected: expected seq %ld, received seq %d\n", m_traffic_state.rx_seq + 1, sequence);
+                    /* 跳跃过大，视为重同步：清空缓冲并把当前包作为新的连续开始 */
+                    for (int i = 0; i < REORDER_WINDOW; i++) m_cache_block[i].filled = 0;
+                    /* 直接交付当前包并更新序号 */
+                    dialog_audio_dec_frame_write(&audio_pack);
+                    m_traffic_state.rx_seq = sequence;
+                    offset += packet_len;
+                    continue;
+                } else {
+                    log_info("@@@@@@Audio packet out-of-order detected: expected seq %ld, received seq %d\n", m_traffic_state.rx_seq + 1, sequence);
+                    int idx = sequence % REORDER_WINDOW;
+                    /* 存放到缓冲区（覆盖旧条目） */
+                    memcpy(m_cache_block[idx].payload, audio_pack.payload, m_traffic_state.downlink_audio_packet_len);
+                    m_cache_block[idx].seq = sequence;
+                    m_cache_block[idx].filled = 1;
+                    offset += packet_len;
+                    continue;
+                }
+            } else {
+                /* 无缓冲支持，直接检测丢包并更新序号为最新 */
+                if (m_traffic_state.rx_seq + 1 != sequence) {
+                    log_info("@@@@@@Audio packet loss detected: expected seq %ld, received seq %d\n", m_traffic_state.rx_seq + 1, sequence);
+                }
+                dialog_audio_dec_frame_write(&audio_pack);
+                m_traffic_state.rx_seq = sequence;
+                offset += packet_len;
+                continue;
+            }
         }
+        os_mutex_post(&mutex);
+    }
+    if (m_cache_block) {
+        free(m_cache_block);
+        m_cache_block = NULL;
+    }
+    if (m_cache_data_buf) {
+        free(m_cache_data_buf);
+        m_cache_data_buf = NULL;
     }
     free(audio_pack.payload);
     audio_pack.payload = NULL;
 }
+
+
+static void traffic_receive_monitor_task(){
+
+    audio_stream_packet_t audio_pack = {0};
+    audio_pack.payload = malloc(m_traffic_state.downlink_audio_packet_len);
+    if(!audio_pack.payload){
+        log_info("failed to alloc mem for received data");
+        return;
+    }
+    audio_pack.payload_len = m_traffic_state.downlink_audio_packet_len;
+
+    while (1) {
+        if(!check_if_session_in_call() || !m_traffic_state.udp_fd){
+            break;
+        }
+        m_timeout_cnt++;
+        if (m_timeout_cnt > 10){ // 200ms没有收到数据，flush缓存数据
+            //log_info("traffic receive monitor: no data timeout, flush traffic data\n");
+
+            os_mutex_pend(&mutex, 0);
+            m_traffic_state.rx_seq = 0;
+            if (m_cache_block) {
+                for (int i = 0; i < REORDER_WINDOW; i++) {
+                    if (m_cache_block[i].filled && m_cache_block[i].seq > m_traffic_state.rx_seq) {
+                        /* 将已解密数据放到 audio_pack.payload，然后交付 */
+                        memcpy(audio_pack.payload, m_cache_block[i].payload, m_traffic_state.downlink_audio_packet_len);
+                        dialog_audio_dec_frame_write(&audio_pack);
+                        m_traffic_state.rx_seq = m_cache_block[i].seq;
+                        m_cache_block[i].filled = 0;
+                    }        
+                }
+            }
+            m_timeout_cnt = 0;
+            os_mutex_post(&mutex);
+        }
+        os_time_dly(2);
+    }
+
+    free(audio_pack.payload);
+    audio_pack.payload = NULL;
+}
+
+
+
+void traffic_init(void *priv){
+    
+    if (os_mutex_create(&mutex) != OS_NO_ERR) {
+        log_error("os_mutex_create mutex fail\n");
+        return;
+    }
+
+}
+
+late_initcall(traffic_init);

@@ -4,7 +4,8 @@
 #include "system/timer.h"
 #include "system/includes.h"
 #include "app_event.h"
-#include "mcp_server.h"
+#include "app_mcp_server.h"
+#include "app_audio.h"
 
 #include "osipparser2/osip_list.h"
 #include "json_c/json_object.h"
@@ -22,61 +23,87 @@
 
 
 typedef struct {
-    char* name;
-    char* tool_json;
+    char name[MCP_NAME_LEN];
+    char* description;
+    mcp_call_fn mcp_call_fn;
+    int property_count;
+    property_t properties[0]
 }mcp_tool_t, *mcp_tool_ptr;
+
+
+
+
 
 static osip_list_t m_mcp_tools_list;
 static int m_mcp_tools_count = -1;
 static OS_MUTEX mutex;
 
-void register_mcp_service(char* name, char* tool_json){
-    if (!name || !tool_json){
+void add_mcp_tool(char* name, 
+     char* description, 
+     mcp_call_fn callback, 
+     property_ptr props, 
+     size_t len){
+    if (!name || !callback){
         log_info("invalid mcp tool info\n");
         return;
     }
-    log_info("register mcp tool: %s, %s\n", name, tool_json);
+    if (len > 0 && !props){
+        log_info("prop is null");
+        return;
+    }
+
+    log_info("register mcp tool: %s, %s\n", name, description ? description : "");
 
     os_mutex_pend(&mutex, 0);
-    if (m_mcp_tools_count < 0){
-        osip_list_init(&m_mcp_tools_list);
-        m_mcp_tools_count = 0;
-    }
-    do{
-
-        mcp_tool_ptr tool = malloc(sizeof(mcp_tool_t));
-        if (!tool){
-            log_info("failed to alloc mem for mcp tool\n");
-            break;
-        }
-        char* name_copy = malloc(strlen(name)+1);
-        if (!name_copy){
-            log_info("failed to alloc mem for mcp tool name\n");
-            free(tool);
-            break;
-        }
-        strcpy(name_copy, name);
-        char* json_copy = malloc(strlen(tool_json)+1);
-        if (!json_copy){
-            log_info("failed to alloc mem for mcp tool json\n");
-            free(name_copy);
-            free(tool);
-            break;
-        }
-        strcpy(json_copy, tool_json);
-        tool->name = name_copy;
-        tool->tool_json = json_copy;
-        if (osip_list_add(&m_mcp_tools_list, tool, -1) != 0){
-            log_info("failed to add mcp tool to list\n");
-            free(json_copy);
-            free(name_copy);    
-            free(tool);    
-        }
-        m_mcp_tools_count++;
-        log_info("mcp tool added, total count: %d\n", m_mcp_tools_count);
-    }while(0);
     
+    /* Allocate mcp_tool_t + space for properties */
+    size_t alloc_size = sizeof(mcp_tool_t) + (len ? (len * sizeof(property_t)) : 0);
+    mcp_tool_ptr tool = malloc(alloc_size);
+    if (!tool){
+        log_info("failed to alloc mem for mcp tool\n");
+        os_mutex_post(&mutex);
+        return;
+    }
+
+    /* Initialize fixed fields */
+    memset(tool, 0, alloc_size);
+    strncpy(tool->name, name, sizeof(tool->name) - 1);
+    tool->name[sizeof(tool->name) - 1] = '\0';
+
+    if (description) {
+        char *description_copy = malloc(strlen(description) + 1);
+        if (!description_copy) {
+            log_info("failed to alloc mem for mcp tool description\n");
+            free(tool);
+            os_mutex_post(&mutex);
+            return;
+        }
+        strcpy(description_copy, description);
+        tool->description = description_copy;
+    } else {
+        tool->description = NULL;
+    }
+
+    tool->mcp_call_fn = callback;
+    tool->property_count = (int)len;
+
+    /* 如果提供了 properties，复制到紧随结构体之后的 flexible array */
+    if (len > 0 && props) {
+        memcpy(tool->properties, props, len * sizeof(property_t));
+    }
+
+    if (osip_list_add(&m_mcp_tools_list, tool, -1) < 0){
+        log_info("failed to add mcp tool to list\n");
+        if (tool->description) free(tool->description);
+        free(tool);
+        os_mutex_post(&mutex);
+        return;
+    }
+
+    m_mcp_tools_count++;
+
     os_mutex_post(&mutex);
+    log_info("mcp tool registered successfully, total cnt: %d\n", m_mcp_tools_count);
     return;
 }
 
@@ -94,7 +121,7 @@ static int transmit_mcp(char*id, char *message){
         return -1;
     }
     memset(buf, 0, len);
-    snprintf(buf, len, "{\"jsonrpc\":\"2.0\",\"id\":\"%s\",\"result\":%s}", id, message);
+    snprintf(buf, len -1, "{\"jsonrpc\":\"2.0\",\"id\":\"%s\",\"result\":%s}", id, message);
     
     json_object *root = json_object_new_object();
     json_object *protocol = json_object_new_string("MCP");
@@ -102,10 +129,10 @@ static int transmit_mcp(char*id, char *message){
     
     json_object_object_add(root, "protocol", protocol);
     json_object_object_add(root, "payload", payload);
-    
     const char* json_string = json_object_to_json_string(root);
     transmit_mqtt_message((char*)json_string);
     json_object_put(root);
+    free(buf);
     return 0;
 }
 
@@ -172,40 +199,66 @@ static void handle_tools_list(json_object *request){
         }
     }
     if (start < 0) start = 0;
-
-    // 确保列表初始化
-    if(m_mcp_tools_count < 0){
-        os_mutex_pend(&mutex, 0);
-        osip_list_init(&m_mcp_tools_list);
-        m_mcp_tools_count = 0;
-        os_mutex_post(&mutex);
-    }
+    log_info("tools_list: start=%d, limit=%d, total: %d", start, limit, m_mcp_tools_count);
 
     // 组装结果
     json_object *result = json_object_new_object();
-    json_object *tools_arr = json_object_new_array();
+    json_object *tools = json_object_new_array();
 
     int added = 0;
     for (int i = start; i < m_mcp_tools_count && added < limit; i++) {
         mcp_tool_ptr tool = (mcp_tool_ptr)osip_list_get(&m_mcp_tools_list, i);
         if (!tool) continue;
 
-        // tool_json 应该是一个 JSON 对象字符串
-        json_object *tool_obj = json_tokener_parse(tool->tool_json);
-        if (!tool_obj) {
-            // 兜底：构造一个最小对象
-            tool_obj = json_object_new_object();
-            json_object_object_add(tool_obj, "name", json_object_new_string(tool->name ? tool->name : ""));
-            json_object_object_add(tool_obj, "definition", json_object_new_string(tool->tool_json ? tool->tool_json : "{}"));
-        } else {
-            // 若缺少 name，用注册名补齐
-            json_object *name_field = json_object_object_get(tool_obj, "name");
-            if (!name_field && tool->name) {
-                json_object_object_add(tool_obj, "name", json_object_new_string(tool->name));
+
+        json_object* tool_obj = json_object_new_object();
+        json_object_object_add(tool_obj, "name", json_object_new_string(tool->name ? tool->name : ""));
+        json_object_object_add(tool_obj, "description", json_object_new_string(tool->description ? tool->description : ""));
+        json_object* input_schema = json_object_new_object();
+        json_object_object_add(tool_obj, "inputSchema", input_schema);
+        
+        json_object_object_add(input_schema, "type", json_object_new_string("object"));
+        json_object *required = json_object_new_array();
+        json_object *properties = json_object_new_object();
+        json_object_object_add(input_schema, "properties", properties);
+
+        for (int j = 0; j < tool->property_count; j++) {
+            property_ptr prop = &tool->properties[j];
+            if (!prop) continue;
+
+            json_object* prop_obj = json_object_new_object();
+            switch (prop->type) {
+                case kPropertyTypeBoolean:
+                    json_object_object_add(prop_obj, "type", json_object_new_string("boolean"));
+                    break;
+                case kPropertyTypeInteger:
+                    json_object_object_add(prop_obj, "type", json_object_new_string("integer"));
+                    json_object_object_add(prop_obj, "minimum", json_object_new_int(prop->min_int_value));
+                    json_object_object_add(prop_obj, "maximum", json_object_new_int(prop->max_int_value));
+                    break;
+                case kPropertyTypeString:
+                    json_object_object_add(prop_obj, "type", json_object_new_string("string"));
+                    break;
+                default:
+                    break;
+            }
+            if (prop->description) {
+                json_object_object_add(prop_obj, "description", json_object_new_string(prop->description));
+            }
+            json_object_object_add(properties, prop->name, prop_obj);
+            if (prop->required) {
+                json_object_array_add(required, json_object_new_string(prop->name));
             }
         }
 
-        json_object_array_add(tools_arr, tool_obj);
+        /* 如果 required 数组中有元素，再把它加入 inputSchema；否则释放该空数组 */
+        if (required && json_object_array_length(required) > 0) {
+            json_object_object_add(input_schema, "required", required);
+        } else {
+            if (required) json_object_put(required);
+        }
+        
+        json_object_array_add(tools, tool_obj);
         added++;
     }
 
@@ -216,7 +269,7 @@ static void handle_tools_list(json_object *request){
         json_object_object_add(result, "nextCursor", json_object_new_string(next_buf));
     } 
 
-    json_object_object_add(result, "tools", tools_arr);
+    json_object_object_add(result, "tools", tools);
 
     // 发送响应
     const char* result_str = json_object_to_json_string(result);
@@ -233,6 +286,22 @@ static void handle_tools_list(json_object *request){
 }
 
 
+json_object* make_error_result(u32 code, char* msg){
+    json_object *result = json_object_new_object();
+    json_object *is_error_obj = json_object_new_boolean(true);
+    json_object_object_add(result, "isError", is_error_obj);
+    json_object *content = json_object_new_object();
+    json_object *type = json_object_new_string("text");
+    json_object *message = json_object_new_string(msg ? msg : "unknown error");
+    json_object *code_obj = json_object_new_int((int)code);
+    json_object_object_add(content, "type", type);
+    json_object_object_add(content, "message", message);
+    json_object_object_add(content, "code", code_obj);
+    json_object *contents = json_object_new_array();
+    json_object_array_add(contents, content);
+    json_object_object_add(result, "content", contents);
+    return result;
+}
 
 
 static void do_tool_call(json_object *request){
@@ -270,19 +339,100 @@ static void do_tool_call(json_object *request){
 
     if (!tool) {
         log_info("tool not found: %s\n", tool_name);
-        char resp[64];
-        snprintf(resp, sizeof(resp), "{\"error\":{\"code\":-32601,\"message\":\"Tool not found: %s\"}}", tool_name);
-        transmit_mcp(id, resp);
+        json_object* ret = make_error_result(-32601, "Tool not found");
+        const char* json_string = json_object_to_json_string(ret);
+        transmit_mcp(id, json_string);  
+        json_object_put(ret);
         return;
     }
 
-    // 模拟调用工具，实际应用中应根据工具定义执行相应操作
-    log_info("Invoking tool: %s with definition: %s\n", tool->name, tool->tool_json);
+    json_object *args = json_object_object_get(params, "arguments");
+    int arg_count = 0;
+    property_t *props = NULL;
+    int parsed_count = 0;
 
-    // 构造模拟结果
-    char resp[128];
-    snprintf(resp, sizeof(resp), "{\"output\":\"Tool %s executed successfully.\"}", tool->name);
-    transmit_mcp(id, resp);
+    if (args && json_object_is_type(args, json_type_object)) {
+        arg_count = tool->property_count;
+        if (arg_count > 0) {
+            props = malloc(arg_count * sizeof(property_t));
+            if (!props) {
+                log_info("failed to alloc props for arguments\n");
+                json_object* ret = make_error_result(-32000, "internal error");
+                const char* json_string = json_object_to_json_string(ret);
+                transmit_mcp(id, json_string);  
+                json_object_put(ret);
+                return;
+            }
+            memset(props, 0, arg_count * sizeof(property_t));
+            
+            for (int i = 0; i < tool->property_count; i++) {
+                property_ptr pdef = &tool->properties[i];
+                json_object *valobj = json_object_object_get(args, pdef->name);
+                if (!valobj) continue;
+
+                property_t *p = &props[i];
+                strncpy(p->name, pdef->name, MCP_NAME_LEN - 1);
+                p->name[MCP_NAME_LEN - 1] = '\0';
+                p->type = pdef->type;
+                parsed_count++;
+                if (p->type == kPropertyTypeInteger) {
+                    if (valobj && json_object_is_type(valobj, json_type_int)) {
+                        p->value.int_value = json_object_get_int(valobj);
+                    } 
+                } else if (p->type == kPropertyTypeBoolean) {
+                    if (valobj && json_object_is_type(valobj, json_type_boolean)) {
+                        p->value.bool_value = json_object_get_boolean(valobj) ? 1 : 0;
+                    } 
+                } else {
+
+                    const char *valstr = json_get_string(args, pdef->name);
+                    if (valstr) {
+                        strncpy(p->value.str_value, valstr, sizeof(p->value.str_value) - 1);
+                        p->value.str_value[sizeof(p->value.str_value) - 1] = '\0';
+                    }
+                }
+            }
+        }
+    }else{
+        log_info("no arguments in tool call\n");
+    }
+
+    // 调用工具的回调
+    json_object *out = NULL;
+    if (tool->mcp_call_fn) {
+        out = tool->mcp_call_fn(props, (size_t)parsed_count);
+    }
+    
+    if (!out) {
+        log_info("tool call failed: %s\n", tool->name);
+        json_object* ret = make_error_result(-32000, "internal error");
+        const char* json_string = json_object_to_json_string(ret);
+        transmit_mcp(id, json_string);  
+        json_object_put(ret);
+    } else {
+        
+        json_object *result = json_object_new_object();
+        json_object *is_error = json_object_new_boolean(false);
+        
+        json_object *contents = json_object_new_array();
+        json_object_array_add(contents, out);
+        json_object_object_add(result, "content", contents);
+
+        json_object_object_add(result, "isError", is_error);
+        const char* json_string = json_object_to_json_string(result);
+        transmit_mcp(id, json_string);  
+        log_info("tool call succeeded: %s\n", json_string);
+        json_object_put(result);
+        out = NULL;        
+    }
+    
+    // 释放临时为 arguments 分配的描述字段与数组
+    if (props) {
+        for (int i = 0; i < arg_count; i++) {
+            if (props[i].description) free(props[i].description);
+        }
+        free(props);
+    }
 
     return;
 }
@@ -349,3 +499,67 @@ void handle_received_mcp_request(const char *data, size_t len){
             
 }
 
+
+json_object* mcp_call_get_device_status(property_ptr props, size_t len){
+/*
+     * 返回设备状态JSON
+     * 
+     * 返回的JSON结构如下：
+     * {
+     *     "audio_speaker": {
+     *         "volume": 70
+     *     },
+     *     "screen": {
+     *         "brightness": 100,
+     *         "theme": "light"
+     *     },
+     *     "battery": {
+     *         "level": 50,
+     *         "charging": true
+     *     },
+     *     "network": {
+     *         "type": "wifi",
+     *         "ssid": "Xiaozhi",
+     *         "rssi": -60
+     *     },
+     *     "chip": {
+     *         "temperature": 25
+     *     }
+     * }
+     */
+
+    /* 获取音量和扬声器状态 */
+    int volume = tuoyun_audio_player_get_volume();
+
+    char device_status[64] = {0};
+    snprintf(device_status, sizeof(device_status - 1), "current volume: %d", volume);
+    json_object *result = json_object_new_object();
+    json_object *type = json_object_new_string("text");
+    log_info("mcp_call_get_device_status: %s\n", device_status);
+    json_object *text = json_object_new_string(device_status);
+    
+    json_object_object_add(result, "type", type);
+    json_object_object_add(result, "text", text);
+    return result;
+}
+
+void mcp_init(void *priv){
+    if (os_mutex_create(&mutex) != OS_NO_ERR) {
+        log_error("os_mutex_create mutex fail\n");
+        return;
+    }
+
+    osip_list_init(&m_mcp_tools_list);
+    m_mcp_tools_count = 0;
+
+    add_mcp_tool("get_device_status",
+        "Provides the real-time information of the device, including the current status of the audio speaker, screen, battery, network, etc.\n"
+        "Use this tool for: \n"
+        "1. Answering questions about current condition (e.g. what is the current volume of the audio speaker?)\n"
+        "2. As the first step to control the device (e.g. turn up / down the volume of the audio speaker, etc.)",
+        mcp_call_get_device_status,
+        NULL,
+        0);
+}
+
+__initcall(mcp_init);

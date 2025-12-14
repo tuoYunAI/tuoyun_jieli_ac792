@@ -6,11 +6,13 @@
 #include "system/includes.h"
 #include "app_event.h"
 #include "app_wifi.h"
-#include "protocol.h"
+#include "app_protocol.h"
 #include "session/session.h"
 
 #include "json_c/json_object.h"
 #include "json_c/json_tokener.h"
+
+#include "osipparser2/osip_list.h"
 
 #include "mbedtls/aes.h"
 #include "mbedtls/entropy.h"
@@ -29,8 +31,8 @@
 #define COMMAND_TIMEOUT_MS 30000        //命令超时时间
 #define MQTT_TIMEOUT_MS  30           //接收阻塞时间
 #define MQTT_KEEPALIVE_TIME 30000       //心跳时间
-#define SEND_BUF_SIZE 1024              //接收buf大小
-#define READ_BUF_SIZE 1024              //接收buf大小
+#define SEND_BUF_SIZE 4096              //接收buf大小
+#define READ_BUF_SIZE 2048              //接收buf大小
 static char read_buf[READ_BUF_SIZE];    //接收buf
 static char send_buf[SEND_BUF_SIZE];    //接收buf
 
@@ -59,6 +61,13 @@ void transmit_mqtt_message(char* message){
     mqtt.payloadlen = strlen(message);
     //发布消息
     os_mutex_pend(&mutex, 0);
+    memset(send_buf, 0, sizeof(send_buf));
+    if(!m_mqtt_client.isconnected){
+        log_error("mqtt not online\n");
+        os_mutex_post(&mutex);
+        return;
+    }
+    
     int err = MQTTPublish(&m_mqtt_client, m_mqtt_info->topic_pub, &mqtt);
     if (err != 0) {
         log_info("MQTTPublish fail, err : 0x%x\n", err);
@@ -69,77 +78,94 @@ void transmit_mqtt_message(char* message){
 }
 
 
-void send_mcp_message(char* message){
+static osip_list_t m_received_sip_list;
+static OS_MUTEX m_sip_mutex;
 
-}
-
-
-static char buf[2048];
 //接收回调，当订阅的主题有信息下发时，在这里接收
 static void message_arrived(MessageData *data)
 {
     if (!data || data->topicName == NULL || data->message == NULL){
         log_info("message_arrived data err\n");
         return;
-        
-    }
-    if (data->message->payloadlen > sizeof(buf)-1){
-        log_info("message_arrived message err: %d\n", data->topicName->lenstring.len);
-        return;        
-    }
-    memset(buf, 0, sizeof(buf));
-
-    //strncpy(buf, data->topicName->lenstring.data, data->topicName->lenstring.len);
-    //buf[data->topicName->lenstring.len] = '\0';
-    //log_info("Message arrived on topic (len : %d, topic : %s)\n", data->topicName->lenstring.len, buf);
-
-    memset(buf, 0, sizeof(buf));
-    strncpy(buf, data->message->payload, data->message->payloadlen);
-    buf[data->message->payloadlen] = '\0';
-    //log_info("message (len : %d, payload : %s)\n", data->message->payloadlen, buf);
-
-    json_object *root = json_tokener_parse(buf);
-    if(root != NULL){
-        char protocol[10] = {0};
-        strcpy(protocol, json_get_string(root, "protocol"));
-        char* payload = json_get_string(root, "payload");
-        if (strcmp("SIP", protocol) == 0){
-            handle_received_sip(payload, strlen(payload));
-        }else 
-        if (strcmp("MCP", protocol) == 0){
-            handle_received_mcp_request(payload, strlen(payload));
-        }else{
-            // 测试用 start
-            if (strcmp("call", protocol) == 0){
-                init_call("你好小智");
-            }
-            if (strcmp("info_start", protocol) == 0){
-                send_start_listening();
-            }
-
-            if (strcmp("info_stop", protocol) == 0){
-                send_stop_listening();
-            }
-            if (strcmp("bye", protocol) == 0){
-                finish_call();
-            }
-            // 测试用 end
-            log_info("received invalid protocol: %s", protocol);
-        }
-        
-        json_object_put(root);
-        root = NULL;    
-        
     }
     
+    int len = data->message->payloadlen + 1;
+    u8* buf = malloc(len);
+    if (!buf){
+        log_info("message_arrived malloc err: %d\n", data->message->payloadlen);
+        return;
+    }
+
+    memset(buf, 0, len);
+    strncpy(buf, data->message->payload, len - 1);
+    
+    os_mutex_pend(&m_sip_mutex, 0);
+    
+    if (osip_list_add(&m_received_sip_list, buf, -1) < 0){
+        log_info("failed to add received message to list\n");
+        free(buf);
+        os_mutex_post(&m_sip_mutex);
+        return;
+    }
+    os_mutex_post(&m_sip_mutex);
+    return;   
 }
+
+
+void protocol_mqtt_proc_task(){
+    while (1) {
+        os_mutex_pend(&m_sip_mutex, 0);
+        int list_size = osip_list_size(&m_received_sip_list);
+        if (list_size == 0) {
+            os_mutex_post(&m_sip_mutex);
+            os_time_dly(5);
+            continue;
+        }
+        u8* msg = (char*)osip_list_get(&m_received_sip_list, 0);
+        if (msg) {
+            osip_list_remove(&m_received_sip_list, 0);
+        }
+        os_mutex_post(&m_sip_mutex);
+
+        if (msg) {
+            // 处理接收到的消息
+            json_object *root = json_tokener_parse(msg);
+            if(root != NULL){
+                char protocol[10] = {0};
+                strcpy(protocol, json_get_string(root, "protocol"));
+                char* payload = json_get_string(root, "payload");
+                if (strcmp("SIP", protocol) == 0){
+                    handle_received_sip(payload, strlen(payload));
+                }else 
+                if (strcmp("MCP", protocol) == 0){
+                    handle_received_mcp_request(payload, strlen(payload));
+                }else{
+                    
+                    log_info("received invalid protocol: %s", protocol);
+                }
+                
+                json_object_put(root);
+                root = NULL;    
+                
+            }
+            free(msg);
+        }
+    }
+}
+
 
 
 static Network network;
 
-void protocol_mqtt_task(void)
+void protocol_mqtt_recv_task(void)
 {
     MQTTPacket_connectData connectData = MQTTPacket_connectData_initializer;
+
+    struct app_event event = {
+        .event = APP_EVENT_MQTT_CONNECTION_STATUS,
+        .arg = MQTT_STATUS_INTERRUPTED
+    };
+    
 
     do{
     
@@ -190,8 +216,10 @@ void protocol_mqtt_task(void)
         log_info("MQTTSubscribe success, topic : %s\n", m_mqtt_info->topic_sub);
         //取消主题订阅
         //MQTTUnsubscribe(&client, subscribeTopic);
+        event.arg = MQTT_STATUS_ENSTABLISHED;
+        app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
         send_register();
-        int i = 0;
+
         for (;;) {
 
             os_mutex_pend(&mutex, 0);
@@ -208,16 +236,13 @@ void protocol_mqtt_task(void)
                     network.disconnect(&network);
                 }
                 log_info("MQTT : Reconnecting\n");
+                event.arg = MQTT_STATUS_INTERRUPTED;
+                app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
                 os_mutex_post(&mutex);
                 break;
             }
             os_mutex_post(&mutex);
-            mdelay(1000);
-            i++;
-            if (i >= 20) {
-                log_info("MQTTYield ok\n");
-                i = 0;
-            }
+            os_time_dly(5);
         }
         
     }while (1);
@@ -231,6 +256,10 @@ int start_protocol(mqtt_connection_parameter_ptr mqtt_info_ptr){
         log_info("protocol already inited\n");
         return 0;
     }
+
+    osip_list_init(&m_received_sip_list);
+    os_mutex_create(&m_sip_mutex);
+    os_mutex_create(&mutex);
     m_protocol_inited = 1;
     m_mqtt_info = mqtt_info_ptr;
 
@@ -245,15 +274,21 @@ int start_protocol(mqtt_connection_parameter_ptr mqtt_info_ptr){
 
     log_info("start to init protocol\n");
 
-    if (thread_fork("protocol_session", 22, 2048, 0, NULL, protocol_mqtt_task, NULL) != OS_NO_ERR) {
+    if (thread_fork("protocol_mqtt_receive", 25, 1024, 0, NULL, protocol_mqtt_recv_task, NULL) != OS_NO_ERR) {
+        log_info("thread fork fail\n");
+        return -1;
+    }
+
+    if (thread_fork("protocol_mqtt_proc", 25, 2028, 0, NULL, protocol_mqtt_proc_task, NULL) != OS_NO_ERR) {
         log_info("thread fork fail\n");
         return -1;
     }
     
-
-    sys_timer_add_to_task("protocol_session", NULL, session_checking, 500 * 100);
     
-    sys_timer_add_to_task("protocol_session", NULL, send_register, 20 * 1000);
+
+    sys_timer_add_to_task("protocol_mqtt_proc", NULL, session_checking, 500 * 100);
+    
+    sys_timer_add_to_task("protocol_mqtt_proc", NULL, send_register, 20 * 1000);
 
     return 0;
 }

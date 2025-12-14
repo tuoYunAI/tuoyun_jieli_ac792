@@ -16,7 +16,7 @@
 #include "ui.h"
 #include "lcd_config.h"
 #include "app_event.h"
-#ifdef USE_LVGL_V9_UI_DEMO
+#ifdef USE_LVGL_V9_UI
 
 /*********************
  *      DEFINES

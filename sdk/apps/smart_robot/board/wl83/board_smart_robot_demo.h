@@ -14,6 +14,7 @@
 //#define CONFIG_AUDIO_ENABLE
 #define CONFIG_MEDIA_ENABLE
 //#define CONFIG_UI_ENABLE
+//#define CONFIG_VIDEO_ENABLE
 
 //*********************************************************************************//
 //                                   时钟配置                                      //
@@ -24,7 +25,8 @@
 #define TCFG_HSB_CLK_DIV                    2                 //HSB_CLK = SYS_CLK / HSB_CLK_DIV
 #define TCFG_SFCTZ_CLK                      48000000          //SFC时钟，和加载代码的速度有关
 #define TCFG_SDRAM_CLK                      200000000         //SDRAM/DDR时钟
-
+#define TCFG_VIDEO_CLK                      TCFG_SYS_CLK      //EVA/PUB时钟，240M,192M,160M,120M,96M,80M,64M,60M,48M，其他值时启用SYS_PLL或者DDR_PLL
+#define TCFG_GPU_CLK                        TCFG_SYS_CLK      //GPU时钟，240M,192M,160M,120M,96M,80M,64M,60M,48M，TCFG_SYS_CLK(和cpu同频)
 
 //*********************************************************************************//
 //                                  flash配置                                      //
@@ -75,7 +77,6 @@
 #define TCFG_LOWPOWER_WAKEUP_PORT0_IO       IO_PORTA_01
 #define TCFG_LOWPOWER_WAKEUP_PORT0_EDGE     FALLING_EDGE
 #define TCFG_LOWPOWER_WAKEUP_PORT0_FILTER   PORT_FLT_DISABLE
-
 
 
 
@@ -213,6 +214,79 @@
 #endif
 
 
+
+
+//*********************************************************************************//
+//                                   LCD配置                                       //
+//*********************************************************************************//
+#ifdef CONFIG_UI_ENABLE
+#define TCFG_LCD_ENABLE                     1
+#define TCFG_LCD_INPUT_FORMAT               LCD_IN_RGB565
+#define TCFG_LCD_SUPPORT_MULTI_DRIVER_EN    0 ///< 多屏驱支持(目前仅支持具有相同分辨率的屏, 适用于一个case有多款屏混用的情况，比如因为缺货)
+
+// 屏驱配置使能
+#define TCFG_LCD_MIPI_ST7701S_480x800             1
+#define TCFG_LCD_MIPI_ST7701S_480x800_ROTATE_90   0 ///< mipi ST7701S_480x800竖屏横显的配置
+#include "lcd_board_cfg_template.h"                 ///< WL83开发板标配屏以外的屏驱配置放这里
+
+#if TCFG_LCD_MIPI_ST7701S_480x800
+#define TCFG_LCD_DEVICE_NAME                "MIPI_480x800_ST7701S"
+#define TCFG_LCD_BL_VALUE                   1
+#define TCFG_LCD_RESET_IO                   IO_PORTB_00
+#define TCFG_LCD_BL_IO                      IO_PORTB_01
+#define TCFG_LCD_RS_IO                      -1
+#define TCFG_LCD_CS_IO                      -1
+#define TCFG_LCD_TE_ENABLE                  0
+#define TCFG_LCD_TE_IO                      -1
+#define TCFG_LCD_SPI_INTERFACE              NULL
+#endif
+
+#if TCFG_LCD_MIPI_ST7701S_480x800_ROTATE_90
+#define TCFG_LCD_DEVICE_NAME                "MIPI_480x800_ST7701S_ROTATE90"
+#define TCFG_LCD_BL_VALUE                   1
+#define TCFG_LCD_RESET_IO                   IO_PORTB_00
+#define TCFG_LCD_BL_IO                      IO_PORTB_01
+#define TCFG_LCD_RS_IO                      -1
+#define TCFG_LCD_CS_IO                      -1
+#define TCFG_LCD_TE_ENABLE                  0
+#define TCFG_LCD_TE_IO                      -1
+#define TCFG_LCD_SPI_INTERFACE              NULL
+#endif
+
+
+//*********************************************************************************//
+//                               触摸面板配置                                      //
+//*********************************************************************************//
+#define TCFG_TP_DRIVER_ENABLE               1
+#define TCFG_TP_GT1151_ENABLE               0
+#define TCFG_TP_FT6236_ENABLE               0
+#define TCFG_TP_GT911_ENABLE                0
+#define TCFG_TP_CST3240_ENABLE              1
+#define TCFG_TP_GT9271_ENABLE               0
+
+/*
+ * TP旋转坐标常用的配置参数
+ * ---------------------------------------------------
+ *    配置   |  逆时针90° |  旋转180° |  逆时针270° |
+ * ---------------------------------------------------
+ *  SWAP_X_Y |     1      |     0     |      1      |
+ * ---------------------------------------------------
+ *  X_MIRROR |     0      |     1     |      1      |
+ * ---------------------------------------------------
+ *  Y_MIRROR |     1      |     1     |      0      |
+ * ---------------------------------------------------
+*/
+#define TCFG_TP_SWAP_X_Y                    0///< 是否交换TP的X和Y坐标
+#define TCFG_TP_X_MIRROR                    0///< 是否以TP的X中心轴镜像y坐标。
+#define TCFG_TP_Y_MIRROR                    0///< 是否以TP的Y中心轴镜像x坐标。
+#define TCFG_TP_RST_PIN                     IO_PORTE_06
+#define TCFG_TP_INT_PIN                     IO_PORTA_03
+#define TCFG_TP_COMMUNICATE_IF              "iic0"
+
+#endif
+
+
+
 //*********************************************************************************//
 //                                  AD按键配置                                     //
 //*********************************************************************************//
@@ -264,6 +338,6 @@
 
 #define FIRMWARE_TYPE         "TY_JIELI7926E_DEMO"            //固件的类型, 由平台提供*
 #define FIRMWARE_NAME         "TUOYUN_ROBOT_RUN"              //固件名称
-#define FIRMWARE_VERSION      "1.0.0"                         //固件版本号
+#define FIRMWARE_VERSION      "1.0.2"                         //固件版本号
 
 #endif

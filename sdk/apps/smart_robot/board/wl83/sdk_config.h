@@ -74,12 +74,12 @@
 // ------------功能配置.json------------
 #define TCFG_APP_BT_EN 1 // 蓝牙模式
 #define TCFG_APP_MUSIC_EN 1 // 音乐模式
-#define TCFG_APP_LINEIN_EN 1 // LINEIN模式
+#define TCFG_APP_LINEIN_EN 0 // LINEIN模式
 #define TCFG_APP_NET_MUSIC_EN 1 // 网络播放模式
-#define TCFG_APP_PC_EN 1 // PC模式
+#define TCFG_APP_PC_EN 0// PC模式
 #define TCFG_APP_RECORD_EN 1 // 录音模式
 #define TCFG_APP_USB_HOST_EN 0 // USB_HOST_AUDIO模式
-#define TCFG_MIC_EFFECT_ENABLE 1 // 混响使能
+#define TCFG_MIC_EFFECT_ENABLE 0 // 混响使能
 #define TCFG_MIX_RECORD_ENABLE 0 // 混合录音使能
 #define TCFG_RECORD_AUDIO_REPLAY_EN 0 // 录音回播使能
 #define TCFG_REC_FOLDER_NAME "RECORDER" // 录音文件夹名称
@@ -99,7 +99,7 @@
 
 
 // ------------公共配置.json------------
-#define TCFG_LE_AUDIO_STREAM_ENABLE 1 // 公共配置
+#define TCFG_LE_AUDIO_STREAM_ENABLE 0 // 公共配置
 #if TCFG_LE_AUDIO_STREAM_ENABLE
 #define TCFG_LE_AUDIO_APP_CONFIG (LE_AUDIO_AURACAST_SOURCE_EN | LE_AUDIO_AURACAST_SINK_EN) // le_audio 应用选择
 #define TCFG_LE_AUDIO_CODEC_TYPE 4194304 // 编解码格式
@@ -117,10 +117,10 @@
 // ------------BIS配置.json------------
 #define TCFG_LEA_BIG_CTRLER_TX_EN 0 // 发送使能
 #define TCFG_LEA_BIG_CTRLER_RX_EN 0 // 接收使能
-#define TCFG_LEA_BIG_CUSTOM_DATA_EN 1 // 自定义数据同步
-#define TCFG_LEA_BIG_VOL_SYNC_EN 1 // 音量同步
+#define TCFG_LEA_BIG_CUSTOM_DATA_EN 0 // 自定义数据同步
+#define TCFG_LEA_BIG_VOL_SYNC_EN 0 // 音量同步
 #define TCFG_LEA_BIG_RX_CLOSE_EDR_EN 0 // 接收端关EDR
-#define TCFG_LEA_LOCAL_SYNC_PLAY_EN 1 // 本地同步播放
+#define TCFG_LEA_LOCAL_SYNC_PLAY_EN 0 // 本地同步播放
 #define TCFG_LEA_BIG_FIX_ROLE 0 // 广播角色
 // ------------BIS配置.json------------
 
@@ -136,7 +136,7 @@
 // ------------CIS配置.json------------
 
 // ------------网络配置.json------------
-#define TCFG_IPERF_ENABLE 1 // iperf测试
+#define TCFG_IPERF_ENABLE 0 // iperf测试
 #define TCFG_SERVER_ASSIGN_PROFILE 1 // 第三方平台profile由杰理服务器分配
 #define TCFG_PROFILE_UPDATE 0 // 第三方平台profile更新
 #define TCFG_AI_SERVER TCFG_AI_SERVER_DISABLE // 第三方平台选择
@@ -194,16 +194,16 @@
 #define TCFG_AUDIO_GLOBAL_SAMPLE_RATE 48000 // 全局采样率
 #define TCFG_AEC_TOOL_ONLINE_ENABLE 0 // 手机APP在线调试
 #define TCFG_AUDIO_CVP_SYNC 0 // 通话上行同步
-#define TCFG_AUDIO_DMS_DUT_ENABLE 1 // 通话产测
+#define TCFG_AUDIO_DMS_DUT_ENABLE 0 // 通话产测
 #define TCFG_ESCO_DL_CVSD_SR_USE_16K 0 // 通话下行固定16K
 #define TCFG_TWS_ESCO_MODE TWS_ESCO_MASTER_AND_SLAVE // 通话模式
 #define TCFG_AUDIO_SMS_SEL SMS_TDE // 1mic算法选择
 #define TCFG_AUDIO_SMS_DNS_VERSION SMS_DNS_V100 // 1micDNS算法选择
 #define TCFG_KWS_VOICE_RECOGNITION_ENABLE 0 // 关键词检测KWS
 #define TCFG_KWS_MIC_CHA_SELECT AUDIO_ADC_MIC_0 // 麦克风选择
-#define TCFG_SMART_VOICE_ENABLE 0 // 离线语音识别
+#define TCFG_SMART_VOICE_ENABLE 1 // 离线语音识别
 #define TCFG_SMART_VOICE_USE_AEC 0 // 回音消除使能
-#define TCFG_SMART_VOICE_MIC_CH_SEL AUDIO_ADC_MIC_1 // 麦克风选择
+#define TCFG_SMART_VOICE_MIC_CH_SEL AUDIO_ADC_MIC_0 // 麦克风选择
 #define TCFG_AUDIO_KWS_LANGUAGE_SEL KWS_FAR_CH // 模式选择
 #define TCFG_DEC_WAV_ENABLE 0 // WAV
 #define TCFG_DEC_MP3_ENABLE 1 // MP3
@@ -230,7 +230,7 @@
 #define TCFG_DEC_WTS_ENABLE 0 // WTS
 #define TCFG_ENC_MSBC_SW_ENABLE 0 // MSBC
 #define TCFG_ENC_CVSD_ENABLE 0 // CVSD
-#define TCFG_ENC_OGG_ENABLE 1 // OGG
+#define TCFG_ENC_OGG_ENABLE 0 // OGG
 #define TCFG_ENC_AAC_ENABLE 0 // AAC
 #define TCFG_ENC_SBC_ENABLE 0 // SBC
 #define TCFG_ENC_JLA_ENABLE 0 // JLA

@@ -50,10 +50,15 @@ struct tone_files {
     const char *net_cfg_succ;
     const char *net_cfg_to;
     const char *net_connting;
+    const char *net_connected;
     const char *net_disc;
+    const char *register_success;
+    const char *register_fail;
     const char *net_empty;
     const char *net_mode;
     const char *net_ssid_recv;
+    const char *activating;
+    const char *renewal_overdue;
     const char *rec;
     const char *send;
     const char *bottom;

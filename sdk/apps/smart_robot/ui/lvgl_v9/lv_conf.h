@@ -665,10 +665,10 @@
  *  #define LV_FONT_CUSTOM_DECLARE   LV_FONT_DECLARE(my_font_1) LV_FONT_DECLARE(my_font_2)
  *  @endcode
  */
-#define LV_FONT_CUSTOM_DECLARE
+#define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(hansans)
 
 /** Always set a default font */
-#define LV_FONT_DEFAULT &lv_font_montserrat_14
+#define LV_FONT_DEFAULT &hansans
 
 /*使用 lv_set_scale_base_font(const lv_font_t *font_p)设置缩放基准字号字体;
  *基准字体需要生成完整信息;
@@ -994,7 +994,7 @@
 /*Barcode code library*/
 #define LV_USE_BARCODE 1
 /*FreeType library*/
-#define LV_USE_FREETYPE 1
+#define LV_USE_FREETYPE 0
 #if LV_USE_FREETYPE
 /*Memory used by FreeType to cache characters in kilobytes*/
 #define LV_FREETYPE_CACHE_SIZE 768

@@ -610,20 +610,9 @@ static void wifi_rx_cb(void *rxwi, struct ieee80211_frame *wh, void *data, u32 l
 }
 
 
-
-void enter_wifi_config_mode(void)
-{
-    if (!wifi_is_on()) {
-        log_info("WIFI is OFF, can not enter config mode");
-        return;
-    }
-    g_is_in_config_network_state = 1;
-}
-
 int init_network_connection_timeout(void)
 {
     log_info("init_network_connection_timeout\n");
-    enter_wifi_config_mode();
     struct net_event net = {0};
     net.arg = "net";
     net.event = NET_CONNECT_TIMEOUT_NOT_FOUND_SSID;
@@ -763,6 +752,10 @@ int check_wifi_connected(void){
         
     }
     return 1;
+}
+
+void enter_config_network_state(void){
+    g_is_in_config_network_state = 1;
 }
 
 u8 check_if_in_config_network_state(void){

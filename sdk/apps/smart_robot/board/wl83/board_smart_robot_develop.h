@@ -339,6 +339,6 @@
 
 #define FIRMWARE_TYPE         "TY_JIELI7926F_DEV"             //固件的类型, 由平台提供*
 #define FIRMWARE_NAME         "TUOYUN_ROBOT_RUN"              //固件名称
-#define FIRMWARE_VERSION      "1.0.0"                         //固件版本号
+#define FIRMWARE_VERSION      "1.0.1"                         //固件版本号
 
 #endif

@@ -5,7 +5,7 @@
 #include "system/includes.h"
 #include "app_event.h"
 #include "app_wifi.h"
-#include "protocol.h"
+#include "app_protocol.h"
 #include "session.h"
 #include "sip/sip.h"
 #include "traffic/traffic.h"
@@ -33,7 +33,7 @@
 #define COMMAND_TIMEOUT_MS 30000        //命令超时时间
 #define SESSION_SUPORT_MCP       1       //是否支持MCP扩展
 #define SESSION_OPUS_CBR         1       //opus是否使用cbr编码
-#define SESSION_AUDIO_FRAME_GAP  0       //音频帧间隔ms
+#define SESSION_AUDIO_FRAME_GAP  10      //音频帧间隔ms
 
 extern uint32_t get_system_ms(void);
 static void send_invite_ack();
@@ -195,6 +195,19 @@ static int proc_response_invite(MOVE received_sip_message_ptr message){
                         break;
                     }
                 }
+            }
+        }else{
+            log_info("Invite request rejected with status code: %d\n", message->status_code);
+            if(message->status_code == 403){
+                log_info("Invite request timeout\n");
+                message_notify_event_t notify = {
+                    .event = CTRL_EVENT_EXPIRE
+                };
+                struct app_event event = {
+                    .event = APP_EVENT_SERVER_NOTIFY,
+                    .arg = &notify
+                };
+                app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
             }
         }
 
@@ -376,15 +389,13 @@ static void proc_request_info(MOVE received_sip_message_ptr message){
                 session_event.event = CTRL_EVENT_SHOW_TEXT;
             }else if (strcmp(ev, DEVICE_CTRL_EVENT_SPEAKER) == 0){
                 session_event.event = CTRL_EVENT_SPEAKER;
-            }else if (strcmp(ev, DEVICE_CTRL_EVENT_LLM) == 0){
-                session_event.event = CTRL_EVENT_LLM;
             }else {
                 log_info("unknown event type: %s\n", ev);
                 json_object_put(parse);
                 free(message);
                 return;
             }
-            char st[16] = {0};
+            char st[33] = {0};
             val = json_get_string(parse, "status");
             if (val){
                 strncpy(st, val, sizeof(st)-1);
@@ -397,16 +408,16 @@ static void proc_request_info(MOVE received_sip_message_ptr message){
                 session_event.status = WORKING_STATUS_TEXT;
             }else {
                 session_event.status = WORKING_STATUS_INVALID;
-                log_info("unknown status type: %s\n", st);
+                //log_info("unknown status type: %s\n", st);
             }
             val = json_get_string(parse, "text");
             if (val){
-                strncpy(session_event.text, json_get_string(parse, "text"), sizeof(session_event.text)-1);
+                strncpy(session_event.text, val, sizeof(session_event.text)-1);
             }
             
             val = json_get_string(parse, "emotion");
             if (val){
-                strncpy(session_event.text, json_get_string(parse, "text"), sizeof(session_event.text)-1);
+                strncpy(session_event.emotion, val, sizeof(session_event.emotion)-1);
             }
             struct app_event event = {
                 .event = APP_EVENT_CALL_UPDATED,
@@ -673,10 +684,29 @@ static int send_listening_status(char* status, char* mode){
 void send_start_listening(){
     log_info("send_start_listening");
     send_listening_status(WORKING_STATUS_START_TXT, "auto");
+    message_session_event_t session_event = {
+        .event = CTRL_EVENT_LISTEN, 
+        .status = WORKING_STATUS_START
+    };
+    struct app_event event = {
+        .event = APP_EVENT_CALL_UPDATED,
+        .arg = &session_event
+    };
+    app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
 }
 
 void send_stop_listening(){
     send_listening_status(WORKING_STATUS_STOP_TXT, NULL);
+    message_session_event_t session_event = {
+        .event = CTRL_EVENT_LISTEN, 
+        .status = WORKING_STATUS_STOP
+    };
+
+    struct app_event event = {
+        .event = APP_EVENT_CALL_UPDATED,
+        .arg = &session_event
+    };
+    app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
 }
 
 
