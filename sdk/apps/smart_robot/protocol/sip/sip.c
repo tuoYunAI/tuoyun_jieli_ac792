@@ -1127,6 +1127,22 @@ int sip_parse_incoming_message(const char *raw_msg,  size_t msg_len, received_si
     if (ct && ct->type) {
         strncpy(message->content_type, ct->type, sizeof(message->content_type) - 1);
     }
+
+    // 获取名为 "x-reason-code" 的头部，pos=0 表示获取第一个匹配项
+    message->x_reason_code = 0; // 或其他默认值
+    osip_header_t *reason_header = NULL;
+    int ret = osip_message_header_get_byname(sip, "x-reason-code", 0, &reason_header);
+    
+    if (ret == 0 && reason_header != NULL) {
+        if (reason_header->hvalue != NULL) {
+            log_info("Found x-reason-code: %s", reason_header->hvalue);
+            
+            // 如果需要转为整数
+            message->x_reason_code = atoi(reason_header->hvalue);
+        }
+    } else {
+        log_info("x-reason-code header not found");
+    }
     
     return 0;
 

@@ -10,7 +10,7 @@
 
 #if (defined CONFIG_ASR_ALGORITHM) && (CONFIG_ASR_ALGORITHM == JLKWS_ALGORITHM)
 
-#define LOG_TAG             "[JLKWS]"
+#define LOG_TAG             "[TYJLKWS]"
 #define LOG_ERROR_ENABLE
 #define LOG_WARN_ENABLE
 #define LOG_DEBUG_ENABLE

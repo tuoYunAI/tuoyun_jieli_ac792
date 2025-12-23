@@ -12,7 +12,7 @@
 #include "lwip/netdb.h"
 #include "debug_server.h"
 #include "app_tone.h"
-
+#include "app_event.h"
 
 #define MAX_RECV_BUF_SIZE   50 //单次能接收数据的最大字节数(Bytes)
 
@@ -354,12 +354,21 @@ static void tcp_server_init_task(void *priv)
         idx--;
     }
     
+    struct app_event event = {
+        .event = APP_EVENT_TELNET_DEBUG_STARTED,
+        .arg = NULL
+    };
+
+    app_event_notify(APP_EVENT_FROM_USER, &event);
+
     char* ip = inet_ntoa(netif_info.ip);
     printf("Debug TCP Server started! Listening on %s:%d\n", ip, port);
 
     if (thread_fork("debug_tcp_server_tranmiting", 16, 1024, 0, NULL, debug_server_transmiting, NULL) != OS_NO_ERR) {
         printf("thread fork fail\n");
     }
+
+
 }
 
 void write_debug_data(u8* data, u32 len)

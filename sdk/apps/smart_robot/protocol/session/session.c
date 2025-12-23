@@ -197,17 +197,22 @@ static int proc_response_invite(MOVE received_sip_message_ptr message){
                 }
             }
         }else{
-            log_info("Invite request rejected with status code: %d\n", message->status_code);
+            log_info("Invite request rejected with status code: %d", message->status_code);
             if(message->status_code == 403){
-                log_info("Invite request timeout\n");
-                message_notify_event_t notify = {
-                    .event = CTRL_EVENT_EXPIRE
-                };
-                struct app_event event = {
-                    .event = APP_EVENT_SERVER_NOTIFY,
-                    .arg = &notify
-                };
-                app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
+                log_info("Invite request rejected");
+                if (message->x_reason_code == CALL_ERROR_MEMBERSHIP_INVALID){
+
+                    log_info("Reason: membership expired");
+                    message_notify_event_t notify = {       
+                        .event = CTRL_EVENT_EXPIRE
+                    };
+                    struct app_event event = {
+                        .event = APP_EVENT_SERVER_NOTIFY,
+                        .arg = &notify
+                    };
+                    app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
+                }
+                
             }
         }
 
@@ -373,6 +378,13 @@ static void proc_request_info(MOVE received_sip_message_ptr message){
         return;
     }
 
+    if (strncmp(message->call_id, m_session_state.session_id, sizeof(m_session_state.session_id)) != 0){
+        log_info("Info call_id does not match current session, ignoring\n");
+        os_mutex_post(&mutex);
+        free(message);
+        return;
+    }
+
     if (message->body_length > 0 && message->message_body) {
         // 解析 JSON
         json_object *parse = NULL;
@@ -464,7 +476,7 @@ void send_register(){
 
         uint32_t ms = get_system_ms();
         if (m_session_state.last_keepalive_ms > 0 && (m_session_state.last_keepalive_ms + REGISTER_EXPIRE_SECOND * 1000) > ms){
-            log_info("need to wait more time to register");
+            log_debug("need to wait more time to register");
             break;
         }
                 

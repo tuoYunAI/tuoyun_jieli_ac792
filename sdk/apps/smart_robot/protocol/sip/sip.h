@@ -160,6 +160,11 @@ typedef struct received_sip_message{
   int status_code;
 
   /**
+   * 扩展状态码 如1000以上的自定义状态码, 如果是request消息则该字段为0
+   */
+  int x_reason_code;
+
+  /**
    * 原因短语 如 OK, Not Found 等, 如果是request消息则该字段为空字符串
    */
   char reason_phrase[64];

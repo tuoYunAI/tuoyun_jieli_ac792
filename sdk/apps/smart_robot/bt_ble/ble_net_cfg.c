@@ -465,13 +465,13 @@ static uint16_t att_read_callback(hci_con_handle_t connection_handle, uint16_t a
         if (g_net_cfg_status.last_cmd == ACTION_CMD_GET_UNIQUE_CODE && g_net_cfg_status.get_unique_code_result == 0) {
             int msg_len = sizeof(g_net_cfg_status.unique_code);
             if (buffer == NULL) {
-                return 33;
+                return strnlen(g_net_cfg_status.unique_code, sizeof(g_net_cfg_status.unique_code) - 1);
             }
             if (offset >= msg_len) {
                 break;
             }
 
-            memcpy(buffer, g_net_cfg_status.unique_code, strnlen(g_net_cfg_status.unique_code, sizeof(g_net_cfg_status.unique_code) - 1));
+            strncpy(buffer, g_net_cfg_status.unique_code, strnlen(g_net_cfg_status.unique_code, sizeof(g_net_cfg_status.unique_code) - 1));
             g_net_cfg_status.get_unique_code_result = 1; //只读一次
             return buffer_size;
         }else if (g_net_cfg_status.last_cmd == ACTION_CMD_GET_VENDOR_UID && g_net_cfg_status.get_vendor_uid_result == 0) {

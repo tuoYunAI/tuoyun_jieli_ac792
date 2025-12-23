@@ -212,8 +212,8 @@ void enter_mode_regiter_result(int result){
     
 }
 
-void enter_mode_conntecting_server(void){
-    log_info("enter_mode_connteting_server");
+void enter_mode_connecting_server(void){
+    log_info("enter_mode_connecting_server");
     ui_set_status_text("正在连接服务");
 }
 
@@ -222,8 +222,8 @@ void enter_mode_idle(void){
     ui_set_status_text("待命");
     ui_set_emotion_text("");
     ui_set_content_text("");
-    //jl_kws_speech_recognition_start();
-    //log_info("@@@@@@@@@@@@: jl_kws_speech_recognition_start ---- start");
+    tuoyun_asr_recorder_open();
+    log_info("@@@@@@@@@@@@: tuoyun_asr_recorder_open ---- open");
 }
 void enter_mode_ota(void){
     log_info("enter_mode_ota");
@@ -249,8 +249,8 @@ void enter_mode_renewal_overduep(void){
 void enter_mode_dialog_initiating(void){
     ui_set_status_text("正在呼叫...");
     //jl_kws_speech_recognition_stop();
-
-    //log_info("@@@@@@@@@@@@: jl_kws_speech_recognition_stop ---- stop");
+    tuoyun_asr_recorder_close();
+    log_info("@@@@@@@@@@@@: tuoyun_asr_recorder_close ---- close");
 }
 
 
@@ -340,10 +340,14 @@ static int net_wifi_event_handler(void *evt)
     switch (event->event) {
     case NET_EVENT_CONNECTED:
         log_info("net_wifi_event_handler: NET_EVENT_CONNECTED, note: %s", event->arg);
-        start_register_device();
+#ifdef TELNET_LOG_OUTPUT        
         void start_debug_server();
         start_debug_server();
+#else        
+        start_register_device();
+#endif        
         break;
+
     case NET_CONNECT_TIMEOUT_NOT_FOUND_SSID:
         log_info("net_wifi_event_handler: NET_CONNECT_TIMEOUT_NOT_FOUND_SSID, note: %s", event->arg);
         
@@ -389,19 +393,17 @@ void app_user_event_handler(struct app_event *event)
         log_info("app_user_event_handler: APP_EVENT_WIFI_CFG_FINISH");
         enter_mode_network_config_success();
         break;
+    case APP_EVENT_TELNET_DEBUG_STARTED:
+        log_info("app_user_event_handler: APP_EVENT_TELNET_DEBUG_STARTED");
+#ifdef TELNET_LOG_OUTPUT        
+        start_register_device();
+#endif        
+        break;    
+
     case APP_EVENT_MQTT_CONNECTION_PARAM:
         log_info("app_user_event_handler: APP_EVENT_MQTT_CONNECTION_PARAM");
-        enter_mode_conntecting_server();
+        enter_mode_connecting_server();
         start_protocol(event->arg);
-        break;
-    case APP_EVENT_MQTT_CONNECTION_STATUS:
-        if ((int)(event->arg) == MQTT_STATUS_ENSTABLISHED) {
-            log_info("app_user_event_handler: APP_EVENT_MQTT_CONNECTION_STATUS: ESTABLISHED");
-            enter_mode_idle();
-        } else {
-            log_info("app_user_event_handler: APP_EVENT_MQTT_CONNECTION_STATUS: INTERRUPTED");
-            enter_mode_conntecting_server();
-        }
         break;
     case APP_EVENT_DATA:
         log_info("app_user_event_handler: APP_EVENT_DATA");
@@ -417,11 +419,18 @@ void app_user_event_handler(struct app_event *event)
 
 
 
-
-
 void app_protocol_event_handler(struct app_event *event)
 {
     switch (event->event) {
+    case APP_EVENT_MQTT_CONNECTION_STATUS:
+        if ((int)(event->arg) == MQTT_STATUS_ENSTABLISHED) {
+            log_info("app_user_event_handler: APP_EVENT_MQTT_CONNECTION_STATUS: ESTABLISHED");
+            enter_mode_idle();
+        } else {
+            log_info("app_user_event_handler: APP_EVENT_MQTT_CONNECTION_STATUS: INTERRUPTED");
+            enter_mode_connecting_server();
+        }
+        break;
     case APP_EVENT_SERVER_NOTIFY:
         message_notify_event_t* notify = event->arg;
         log_info("app_user_event_handler: APP_EVENT_SERVER_NOTIFY");
@@ -436,7 +445,6 @@ void app_protocol_event_handler(struct app_event *event)
         break;  
     case APP_EVENT_CALL_ESTABLISHED:
         log_info("app_user_event_handler: APP_EVENT_CALL_ESTABLISHED");
-        tuoyun_asr_recorder_close();
         dialog_audio_init((media_parameter_ptr)event->arg);
         enter_mode_dialog_initiating();
         break;
@@ -509,8 +517,7 @@ void app_protocol_event_handler(struct app_event *event)
         break;
     case APP_EVENT_CALL_SERVER_TERMINATED:
         log_info("app_user_event_handler: APP_EVENT_CALL_SERVER_TERMINATED");
-        dialog_audio_close();
-        tuoyun_asr_recorder_open();
+        dialog_audio_close();        
         enter_mode_idle();
         break;
     case APP_EVENT_CALL_TERMINATE_ACK:
@@ -553,34 +560,19 @@ static void app_default_key_click(struct key_event *key)
     log_info("+++++++key click: %d\n", key->value);
     switch (key->value) {
     case KEY_OK:
-        
         //init_call("你好小智");
         break;
     case KEY_VOLUME_DEC:
     case KEY_UP:
-        int tuoyun_audio_player_get_volume(void);
-         
-        int v = tuoyun_audio_player_get_volume();
-        log_info("current volume: %d\n", v);
         break;
     case KEY_PREV:
-        
         break;
     case KEY_VOLUME_INC:
     case KEY_DOWN:  
-        vol += 10;
-        if (vol > 100) {
-            vol = 100;
-        }
-        void tuoyun_audio_player_set_volume(s16 volume);
-        tuoyun_audio_player_set_volume((s16)vol);
-        log_info("set volume: %d\n", vol);
         break;
     case KEY_NEXT:
-        
         break;
     case KEY_MODE:
-        
         break;
     case KEY_MENU:
     case KEY_POWER:
@@ -607,8 +599,6 @@ static void app_default_key_long(struct key_event *key)
         /* app_mode_change(APP_MODE_BT); */
         /* config_network_start(); */
         break;
-
-
 
     default:
         break;

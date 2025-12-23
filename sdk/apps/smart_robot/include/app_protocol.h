@@ -49,6 +49,9 @@ typedef enum {
     MQTT_STATUS_ENSTABLISHED = 1
 } mqtt_status_t;
 
+typedef enum {
+    CALL_ERROR_MEMBERSHIP_INVALID = 1001
+} session_call_error_t;
 
 typedef struct mqtt_connection_parameter{
     int port;

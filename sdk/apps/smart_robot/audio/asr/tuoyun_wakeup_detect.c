@@ -57,7 +57,7 @@ static OS_MUTEX mutex;
 static void asr_recorder_callback(void *private_data, int event)
 {
     struct jlstream *stream = (struct jlstream *)private_data;
-
+    
     switch (event) {
     case STREAM_EVENT_START:
         log_info("tuoyun asr recorder start");
@@ -69,6 +69,7 @@ static void asr_recorder_callback(void *private_data, int event)
         log_info("tuoyun asr recorder end");
         break;
     default:
+        log_info("***tuoyun asr recorder event: %d", event);
         break;    
 
     }
