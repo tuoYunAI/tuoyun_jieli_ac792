@@ -5,9 +5,9 @@
 #define MCP_NAME_LEN 64
 
 typedef enum property_type {
-    kPropertyTypeBoolean,
-    kPropertyTypeInteger,
-    kPropertyTypeString
+    PROPERTY_TYPE_BOOLEAN = 0,
+    PROPERTY_TYPE_INTEGER,
+    PROPERTY_TYPE_STRING
 }property_type_e;
 
 

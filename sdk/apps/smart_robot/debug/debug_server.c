@@ -72,6 +72,16 @@ static int tcp_recv_data(void *sock_hdl, void *buf, u32 len)
 }
 
 
+static void proc_telnet_cmd(char *cmd)
+{
+    char* version = "version";
+    if (strncmp(cmd, version, strlen(version)) == 0) {
+        dbg_print("Firmware Version: %s\r\n", FIRMWARE_VERSION);
+    }else{
+        //dbg_print("Unknown command: %s", cmd);
+    }
+}
+
 //功  能：tcp_server接收线程，用于接收tcp_client的数据
 //参  数: 无
 //返回值：无
@@ -88,12 +98,21 @@ _reconnect_:
     } while (client_info == NULL);
 
     for (;;) {
+        char cmd[50] = {0};
         if (tcp_recv_data(client_info->fd, recv_buf, sizeof(recv_buf)) > 0) {
             printf("Received data from (ip : %s, port : %d)\r\n", inet_ntoa(client_info->remote_addr.sin_addr), client_info->remote_addr.sin_port);
             printf("recv_buf = %s.\n", recv_buf);
-            memset(recv_buf, 0, sizeof(recv_buf));
             //此处可添加数据处理函数
+            int len = strlen(cmd);
+            strncpy(cmd + len, recv_buf, sizeof(cmd) - (len+1));
             tcp_send_data(client_info->fd, recv_buf, strlen(recv_buf));
+            
+            if (strchr(recv_buf, '\r') || strchr(recv_buf, '\n')) {
+                proc_telnet_cmd(cmd);
+                memset(cmd, 0, sizeof(cmd));
+            }
+            memset(recv_buf, 0, sizeof(recv_buf));
+            
         } else {
             tcp_client_quit(client_info);
             goto _reconnect_;

@@ -140,7 +140,7 @@ static void aisp_task(void *priv)
                     .event = APP_EVENT_WAKEUP_WORD_DETECTED,
                     .arg = (void *)STR_WAKE_UP_WORD_XIAOJIE,
                 };
-                app_event_notify(APP_EVENT_FROM_USER, &event);
+                app_event_notify(APP_EVENT_FROM_AUDIO, &event);
             } else{
                 struct key_event key = {0};
                 if (ret == PLAY_MUSIC_EVENT) {

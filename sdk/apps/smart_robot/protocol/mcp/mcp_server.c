@@ -228,15 +228,15 @@ static void handle_tools_list(json_object *request){
 
             json_object* prop_obj = json_object_new_object();
             switch (prop->type) {
-                case kPropertyTypeBoolean:
+                case PROPERTY_TYPE_BOOLEAN:
                     json_object_object_add(prop_obj, "type", json_object_new_string("boolean"));
                     break;
-                case kPropertyTypeInteger:
+                case PROPERTY_TYPE_INTEGER:
                     json_object_object_add(prop_obj, "type", json_object_new_string("integer"));
                     json_object_object_add(prop_obj, "minimum", json_object_new_int(prop->min_int_value));
                     json_object_object_add(prop_obj, "maximum", json_object_new_int(prop->max_int_value));
                     break;
-                case kPropertyTypeString:
+                case PROPERTY_TYPE_STRING:
                     json_object_object_add(prop_obj, "type", json_object_new_string("string"));
                     break;
                 default:
@@ -375,11 +375,11 @@ static void do_tool_call(json_object *request){
                 p->name[MCP_NAME_LEN - 1] = '\0';
                 p->type = pdef->type;
                 parsed_count++;
-                if (p->type == kPropertyTypeInteger) {
+                if (p->type == PROPERTY_TYPE_INTEGER) {
                     if (valobj && json_object_is_type(valobj, json_type_int)) {
                         p->value.int_value = json_object_get_int(valobj);
                     } 
-                } else if (p->type == kPropertyTypeBoolean) {
+                } else if (p->type == PROPERTY_TYPE_BOOLEAN) {
                     if (valobj && json_object_is_type(valobj, json_type_boolean)) {
                         p->value.bool_value = json_object_get_boolean(valobj) ? 1 : 0;
                     } 

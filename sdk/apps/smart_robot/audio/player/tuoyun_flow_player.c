@@ -148,7 +148,7 @@ int start_player(tuoyun_player_ptr player, const struct stream_file_ops *ops)
         ops = &virtual_dev_ops;
     }
 
-    os_mutex_pend(&__this->mutex, 0);
+    
 
     u16 uuid = jlstream_event_notify(STREAM_EVENT_GET_PIPELINE_UUID, (int)"virtual");
 
@@ -177,7 +177,6 @@ int start_player(tuoyun_player_ptr player, const struct stream_file_ops *ops)
     }
 
     __this->player = player;
-    os_mutex_post(&__this->mutex);
 
     log_info("tuoyun player init success");
     return 0;
@@ -186,7 +185,6 @@ __exit1:
     jlstream_release(player->stream);
 __exit0:
     tuoyuan_player_free(player);
-    os_mutex_post(&__this->mutex);
 
     return err;
 }
@@ -263,7 +261,7 @@ static int player_dev_read(void *file, u8 *buf, int len)
     }
 
     if (rlen == 0 && offset == 0) {
-        //log_info("@@@@@@@++++++++++++@@@@@@@@@@player_dev_read no data");        
+        log_info("@@@@@@@++++++++++++@@@@@@@@@@player_dev_read no data");        
         thread_fork("stop_player", 20, 1024, 0, 0, player_interrupted, NULL);
         return 0;
     }
@@ -273,8 +271,9 @@ static int player_dev_read(void *file, u8 *buf, int len)
 
 static int player_dev_seek(void *file, int offset, int fromwhere)
 {
+    log_info("player_dev_seek offset: %d, fromwhere: %d", offset, fromwhere);
     //tuoyun_player_ptr player = (tuoyun_player_ptr)file;
-    return  0 ;//net_buf_seek(offset, fromwhere, player->file);
+    return  1 ;//net_buf_seek(offset, fromwhere, player->file);
 }
 
 static int player_dev_close(void *file)
@@ -290,27 +289,7 @@ static int player_dev_get_fmt(void *file, struct stream_fmt *fmt)
 
     //需要手动填写解码类型
     fmt->coding_type = player->coding_type;
-    fmt->sample_rate = 24000;   
-    if (fmt->coding_type == AUDIO_CODING_SPEEX) {
-        virtual_dev_ops.seek(player, 0, SEEK_SET);
-        virtual_dev_ops.read(player, buf, 4);
-
-        if ((buf[1] == 0x00) && (buf[3] == 0x00) && (buf[2] == 0x54 || buf[2] == 0x53)) {
-            fmt->with_head_data = 1;
-        }
-        if (fmt->with_head_data) {
-            fmt->sample_rate = buf[2] == 0x54 ? 16000 : 8000;
-        }
-        fmt->channel_mode = AUDIO_CH_MIX;
-        fmt->quality = CONFIG_SPEEX_DEC_FILE_QUALITY;
-        if (!fmt->with_head_data) {
-            fmt->sample_rate = CONFIG_SPEEX_DEC_FILE_SAMPLERATE;
-        }
-        fmt->sample_rate = 24000;   
-        virtual_dev_ops.seek(player, 0, SEEK_SET);
-        return 0;
-    }
-
+    //fmt->sample_rate = 24000;   
     if (fmt->coding_type == AUDIO_CODING_OPUS || fmt->coding_type == AUDIO_CODING_STENC_OPUS) {
         fmt->quality = CONFIG_OPUS_DEC_FILE_TYPE;
         if (fmt->quality == AUDIO_ATTR_OPUS_CBR_PKTLEN_TYPE) {
@@ -396,9 +375,18 @@ int tuoyun_audio_write_data(void *buf, int len)
 
 void tuoyun_audio_player_start(player_event_callback_fn callback)
 {
+    os_mutex_pend(&__this->mutex, 0);
+
+    if (__this->player != NULL) {
+        log_info("tuoyun_audio_player_start err, player exist");
+        os_mutex_post(&__this->mutex);
+        return;
+    }
+    
     tuoyun_player_ptr player  = create_player((FILE *)&g_audio_cache_cbuf, AUDIO_CODING_OPUS);
     if (!player) {
         log_info("virtual_dev_play_callback err");
+        os_mutex_post(&__this->mutex);
         return;
     }
     player->priv        = callback;
@@ -409,6 +397,8 @@ void tuoyun_audio_player_start(player_event_callback_fn callback)
     if (m_volume > 0){
         tuoyun_audio_player_set_volume(m_volume);
     }
+
+    os_mutex_post(&__this->mutex);
 
 }
 
@@ -433,6 +423,11 @@ void tuoyun_audio_player_set_volume(s16 volume){
     int err=jlstream_get_node_param(NODE_UUID_VOLUME_CTRLER, NODE_VOLUME_FLOW, &cfg,    sizeof(struct volume_cfg));
     if(!err){
         log_info("audio_digital_vol_node_name_get err:%x", err);
+        return;
+    }
+
+    if(cfg.cur_vol == volume){
+        log_info("volume no change : %d, %d", volume, cfg.cur_vol);
         return;
     }
 
@@ -519,7 +514,7 @@ static int __player_init(void)
 
     property_t volume_property = {
         .name = "volume",
-        .type = kPropertyTypeInteger,
+        .type = PROPERTY_TYPE_INTEGER,
         .required = 1,
         .max_int_value = 100,
         .min_int_value = 0,

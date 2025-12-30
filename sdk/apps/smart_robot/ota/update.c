@@ -90,7 +90,7 @@ char* json_get_string(struct json_object *jobj, char* key)
 }
 
 
-int register_device(char *mac, char* vendor_uid)
+int register_device(char *mac)
 {
     int ret = 0;
     int err = -1;
@@ -116,7 +116,7 @@ int register_device(char *mac, char* vendor_uid)
     }
     char reg_url[256] = {0};
     strcpy(reg_url, REG_OTA_URL);
-    strcat(reg_url, vendor_uid);
+    strcat(reg_url, PRODUCT_VENDOR_UID);
     ctx->url = reg_url;
     ctx->data_format = "application/json";
     ctx->timeout_millsec = 5000;
@@ -181,7 +181,7 @@ int register_device(char *mac, char* vendor_uid)
             log_info("register_device : httpcli_post fail %d\n", ret);
             break;
         } 
-        log_info("@@@@@@@@@@@@@@@@register_device : httpcli_post success\n");
+        log_info("register_device : httpcli_post success\n");
 
         if (http_body_buf.recv_len > 0) {
             /** 对从服务器收到的json格式的版本信息进行解析，获取其版本号，版本描述信息和升级固件的URL信息*/
@@ -205,7 +205,7 @@ int register_device(char *mac, char* vendor_uid)
                     
                 }
                 char* code = json_get_string(parse, "code");
-                log_info("@@@@@@@@@@@@@register_device, activation: %s", code ? code : "null");
+                log_info("register_device, activation: %s", code ? code : "null");
                 json_object *firmware_info = json_object_object_get(parse, "firmware");
 
                 if (firmware_info != NULL) {
@@ -459,7 +459,7 @@ static int update_module_init(void){
         sprintf(&m_unique_code[i*2], "%02X", uuid[i]);
     }
 
-    log_info("@@@@@@@Device UUID: %s", m_unique_code);
+    log_info("Device UUID: %s", m_unique_code);
     return 0;
 }
 

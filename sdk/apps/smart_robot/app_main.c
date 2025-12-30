@@ -286,7 +286,7 @@ void proc_register_device(void)
              mac[0] & 0xff, mac[1] & 0xff, mac[2] & 0xff,
              mac[3] & 0xff, mac[4] & 0xff, mac[5] & 0xff);
 
-    ret = register_device(mac_str, PRODUCT_VENDOR_UID);
+    ret = register_device(mac_str);
     enter_mode_regiter_result(ret == 0);
 }
 
@@ -404,13 +404,6 @@ void app_user_event_handler(struct app_event *event)
         log_info("app_user_event_handler: APP_EVENT_MQTT_CONNECTION_PARAM");
         enter_mode_connecting_server();
         start_protocol(event->arg);
-        break;
-    case APP_EVENT_DATA:
-        log_info("app_user_event_handler: APP_EVENT_DATA");
-        break;    
-    case APP_EVENT_WAKEUP_WORD_DETECTED:
-        log_info("app_user_event_handler: APP_EVENT_WAKEUP_WORD_DETECTED: %s", (char*)event->arg);
-        init_call((char*)event->arg);
         break;      
     default:
         break;
@@ -523,18 +516,7 @@ void app_protocol_event_handler(struct app_event *event)
     case APP_EVENT_CALL_TERMINATE_ACK:
         log_info("app_user_event_handler: APP_EVENT_CALL_TERMINATE_ACK");
         
-        break;  
-    case APP_EVENT_AUDIO_ENC_NOTIFY:
-        log_info("app_user_event_handler: APP_EVENT_AUDIO_ENC_NOTIFY");
-        char buf[120] = {0};
-        audio_stream_packet_t packet = {
-            .payload_len = 120,
-            .payload = buf
-        };
-        
-        memcpy(packet.payload, event->arg, 120);
-        send_audio(&packet);
-        break;       
+        break;        
     default:
         break;
     }
@@ -549,6 +531,11 @@ void app_audio_event_handler(struct app_event *event)
     case APP_EVENT_AUDIO_PLAY_END_NOTIFY:
         send_start_listening();
         break;  
+    
+    case APP_EVENT_WAKEUP_WORD_DETECTED:
+        log_info("app_user_event_handler: APP_EVENT_WAKEUP_WORD_DETECTED: %s", (char*)event->arg);
+        init_call((char*)event->arg);
+        break;          
     default:
         break;
     }

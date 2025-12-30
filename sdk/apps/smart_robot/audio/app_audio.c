@@ -149,11 +149,6 @@ static void audio_stop_mic(){
 
 
 
-
-/**
- * 对话开始
- * downlink_media_param是个临时变量, 需要自行保存参数
- */
 int dialog_audio_init(media_parameter_ptr downlink_media_param)
 {
     if (downlink_media_param != NULL) {

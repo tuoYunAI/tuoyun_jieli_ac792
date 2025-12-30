@@ -55,135 +55,6 @@ wifi_config_info_t g_wifi_info = {
 static char mac_addr_succ_flag;
 #endif
 
-#ifdef CONFIG_STATIC_IPADDR_ENABLE
-static u8 use_static_ipaddr_flag;
-#endif
-
-
-#ifdef CONFIG_STATIC_IPADDR_ENABLE
-struct sta_ip_info {
-    u8 ssid[33];
-    u32 ip;
-    u32 gw;
-    u32 netmask;
-    u32 dns;
-    u8 gw_mac[6];
-    u8 local_mac[6];
-    u8 chanel;
-};
-
-static void wifi_set_sta_ip_info(void)
-{
-    struct sta_ip_info  sta_ip_info;
-    syscfg_read(VM_STA_IPADDR_INDEX, (char *) &sta_ip_info, sizeof(struct sta_ip_info));
-
-    struct lan_setting lan_setting_info = {
-
-        .WIRELESS_IP_ADDR0  = (u8)(sta_ip_info.ip >> 0),
-        .WIRELESS_IP_ADDR1  = (u8)(sta_ip_info.ip >> 8),
-        .WIRELESS_IP_ADDR2  = (u8)(sta_ip_info.ip >> 16),
-        .WIRELESS_IP_ADDR3  = (u8)(sta_ip_info.ip >> 24),
-
-        .WIRELESS_NETMASK0  = (u8)(sta_ip_info.netmask >> 0),
-        .WIRELESS_NETMASK1  = (u8)(sta_ip_info.netmask >> 8),
-        .WIRELESS_NETMASK2  = (u8)(sta_ip_info.netmask >> 16),
-        .WIRELESS_NETMASK3  = (u8)(sta_ip_info.netmask >> 24),
-
-        .WIRELESS_GATEWAY0   = (u8)(sta_ip_info.gw >> 0),
-        .WIRELESS_GATEWAY1   = (u8)(sta_ip_info.gw >> 8),
-        .WIRELESS_GATEWAY2   = (u8)(sta_ip_info.gw >> 16),
-        .WIRELESS_GATEWAY3   = (u8)(sta_ip_info.gw >> 24),
-    };
-
-    net_set_lan_info(&lan_setting_info);
-}
-
-static int compare_dhcp_ipaddr(void)
-{
-    use_static_ipaddr_flag = 0;
-
-    u8 local_mac[6];
-    u8 gw_mac[6];
-    struct sta_ip_info  sta_ip_info;
-    struct netif_info netif_info;
-    int ret = syscfg_read(VM_STA_IPADDR_INDEX, (char *)&sta_ip_info, sizeof(struct sta_ip_info));
-
-    if (ret < 0) {
-        log_info("compare_dhcp_ipaddr NO VM_STA_IPADDR_INDEX");
-        return -1;
-    }
-
-    lwip_get_netif_info(WIFI_NETIF, &netif_info);
-
-    struct wifi_mode_info info;
-    info.mode = STA_MODE;
-    wifi_get_mode_cur_info(&info);
-
-    wifi_get_bssid(gw_mac);
-    wifi_get_mac(local_mac);
-
-    if (!strcmp(info.ssid, (const char *)sta_ip_info.ssid)
-        && !memcmp(local_mac, sta_ip_info.local_mac, 6)
-        && !memcmp(gw_mac, sta_ip_info.gw_mac, 6)
-        /*&& sta_ip_info.gw==sta_ip_info.dns//如果路由器没接网线/没联网,每次连接都去重新获取DHCP*/
-       ) {
-        use_static_ipaddr_flag = 1;
-        log_info("compare_dhcp_ipaddr Match");
-        return 0;
-    }
-
-    log_info("compare_dhcp_ipaddr not Match!!! [%s][%s],[0x%x,0x%x][0x%x,0x%x],[0x%x]", info.ssid, sta_ip_info.ssid, local_mac[0], local_mac[5], sta_ip_info.local_mac[0], sta_ip_info.local_mac[5], sta_ip_info.dns);
-
-    return -1;
-}
-
-static void store_dhcp_ipaddr(void)
-{
-    struct sta_ip_info  sta_ip_info = {0};
-    u8 sta_channel;
-    u8 local_mac[6];
-    u8 gw_mac[6];
-
-    if (use_static_ipaddr_flag) { //记忆IP匹配成功,不需要重新保存
-        return;
-    }
-
-    struct netif_info netif_info;
-    lwip_get_netif_info(WIFI_NETIF, &netif_info);
-
-    struct wifi_mode_info info;
-    info.mode = STA_MODE;
-    wifi_get_mode_cur_info(&info);
-
-    sta_channel = wifi_get_channel();
-    wifi_get_mac(local_mac);
-    wifi_get_bssid(gw_mac);
-
-    strcpy((char *)sta_ip_info.ssid, info.ssid);
-    memcpy(sta_ip_info.gw_mac, gw_mac, 6);
-    memcpy(sta_ip_info.local_mac, local_mac, 6);
-    sta_ip_info.ip =  netif_info.ip;
-    sta_ip_info.netmask =  netif_info.netmask;
-    sta_ip_info.gw =  netif_info.gw;
-    sta_ip_info.chanel = sta_channel;
-    sta_ip_info.dns = *(u32 *)dns_getserver(0);
-
-    syscfg_write(VM_STA_IPADDR_INDEX, (char *) &sta_ip_info, sizeof(struct sta_ip_info));
-
-    log_info("store_dhcp_ipaddr");
-}
-
-void dns_set_server(u32 *dnsserver)
-{
-    struct sta_ip_info  sta_ip_info;
-    if (syscfg_read(VM_STA_IPADDR_INDEX, (char *) &sta_ip_info, sizeof(struct sta_ip_info)) < 0) {
-        *dnsserver = 0;
-    } else {
-        *dnsserver = sta_ip_info.dns;
-    }
-}
-
-#endif
 
 u32 get_wifi_ip(){
 
@@ -221,28 +92,12 @@ static void wifi_sta_save_current_ssid(void)
     if (!g_wifi_info.update) {
         return;
     }
-
-    g_wifi_info.update = 0;
-    wifi_set_sta_connect_best_ssid(1); //自动连接保存过的最佳WIFI
+    log_info("wifi_sta_save_current_ssid: ssid %s pwd %s\r\n", info.ssid, info.pwd);
+    
     wifi_store_mode_info(STA_MODE, info.ssid, info.pwd);
+    g_wifi_info.update = 0;
 }
 
-void wifi_return_sta_mode(void)
-{
-    if (!wifi_is_on()) {
-        return;
-    }
-    struct wifi_mode_info info;
-    info.mode = STA_MODE;
-    int ret = wifi_get_mode_stored_info(&info);
-    if (ret) {//如果没保存过SSID
-        info.ssid = g_wifi_info.ssid;
-        info.pwd = g_wifi_info.pwd;
-    }
-    wifi_clear_scan_result(); //根据扫描结果连接信号最优ssid之前先清除之前结果,防止之前最优信号的ssid已下线
-    wifi_set_sta_connect_best_ssid(1); //自动连接保存过的最佳WIFI
-    wifi_enter_sta_mode(info.ssid, info.pwd);
-}
 
 void wifi_sta_connect(char *ssid, char *pwd)
 {
@@ -294,40 +149,15 @@ static int wifi_event_callback(void *network_ctx, enum WIFI_EVENT event)
         
         wifi_set_sta_connect_timeout(30);   //配置STA模式连接超时后事件回调通知时间
 
+        struct wifi_store_info wifi_default_mode_parm = {
+            .mode = STA_MODE,
+            .connect_best_network = CONNECT_BEST_SSID            
+        };
+        wifi_set_default_mode(&wifi_default_mode_parm, FORCE_DEFAULT_MODE, wifi_default_mode_parm.mode == STA_MODE); //配置STA模式情况下,把默认配置SSID也存储起来,以后即使保存过其他SSID,也不会覆盖丢失,使用连接最优信号SSID策略的情况下可以匹配连接
         break;
 
     case WIFI_EVENT_MODULE_START:
         log_info("network_user_callback->WIFI_EVENT_MODULE_START");
-
-        struct wifi_stored_sta_info wifi_stored_sta_info[32];
-        int cnt = get_stored_sta_list(wifi_stored_sta_info);
-
-        /*
-        strcpy((char *)wifi_stored_sta_info[0].ssid, "0812");
-        strcpy((char *)wifi_stored_sta_info[0].pwd, "SSPY0812");
-        cnt = 1;
-        */
-        if (cnt > 0) {
-            strncpy((char *)g_wifi_info.ssid, (const char *)wifi_stored_sta_info[0].ssid, sizeof(g_wifi_info.ssid) - 1);
-            strncpy((char *)g_wifi_info.pwd, (const char *)wifi_stored_sta_info[0].pwd, sizeof(g_wifi_info.pwd) - 1);
-        }else{
-            net.event = NET_CONNECT_TIMEOUT_NOT_FOUND_SSID;
-            net_event_notify(NET_EVENT_FROM_USER, &net);
-        } 
-
-        struct wifi_store_info wifi_default_mode_parm;
-        memset(&wifi_default_mode_parm, 0, sizeof(struct wifi_store_info));
-        wifi_default_mode_parm.mode = STA_MODE;
-        strncpy((char *)wifi_default_mode_parm.pwd[wifi_default_mode_parm.mode - STA_MODE],
-                (const char *)g_wifi_info.pwd,
-                sizeof(wifi_default_mode_parm.pwd[wifi_default_mode_parm.mode - STA_MODE]) - 1);
-
-        wifi_default_mode_parm.connect_best_network = CONNECT_BEST_SSID;
-
-        wifi_set_default_mode(&wifi_default_mode_parm, FORCE_DEFAULT_MODE, wifi_default_mode_parm.mode == STA_MODE); //配置STA模式情况下,把默认配置SSID也存储起来,以后即使保存过其他SSID,也不会覆盖丢失,使用连接最优信号SSID策略的情况下可以匹配连接
-        
-
-        
         u32  tx_rate_control_tab = // 不需要哪个速率就删除掉,可以动态设定
                 0
                 | BIT(0) //0:CCK 1M
@@ -387,13 +217,6 @@ static int wifi_event_callback(void *network_ctx, enum WIFI_EVENT event)
 
         net.event = NET_EVENT_DISCONNECTED;
         net_event_notify(NET_EVENT_FROM_USER, &net);
-
-#ifndef WIFI_MODE_CYCLE_TEST
-        //if (!request_connect_flag) { //如果是应用程序主动请求连接导致断线就不需要发送重连事件, 否则像信号不好导致断线的原因就发送重连事件
-            // net.event = NET_EVENT_DISCONNECTED_AND_REQ_CONNECT;
-            // net_event_notify(NET_EVENT_FROM_USER, &net);
-        //}
-#endif
         break;
 
     case WIFI_EVENT_STA_SCANNED_SSID:
@@ -420,19 +243,6 @@ static int wifi_event_callback(void *network_ctx, enum WIFI_EVENT event)
     case WIFI_EVENT_STA_CONNECT_SUCC:
         log_info("network_user_callback->WIFI_STA_CONNECT_SUCC,CH=%d", wifi_get_channel());
         /*wifi_rxfilter_cfg(3);    //过滤not_my_bssid,如果需要使用扫描空中SSID就不要过滤*/
-#ifdef CONFIG_STATIC_IPADDR_ENABLE
-        if (0 == compare_dhcp_ipaddr()) {
-            wifi_set_sta_ip_info();
-            ret = 1;
-        }
-#endif
-
-#if 0
-        u8 txop_limit, cwmin, cwmax, aifsn;
-        wifi_edca_parm_get(0, &txop_limit, &cwmin, &cwmax, &aifsn);
-        printf("txop_limit: %d, cwmin: %d, cwmax: %d, aifsn: %d\n", txop_limit, cwmin, cwmax, aifsn);
-        wifi_edca_parm_set(0, 30, 4, 10, 2);
-#endif
         break;
 
     case WIFI_EVENT_MP_TEST_START:
@@ -465,16 +275,7 @@ static int wifi_event_callback(void *network_ctx, enum WIFI_EVENT event)
         void connect_broadcast(void);
         connect_broadcast();
         wifi_sta_connected(); 
-#ifdef CONFIG_ASSIGN_MACADDR_ENABLE
-        if (!is_server_assign_macaddr_ok()) { //如果使用服务器分配MAC地址的情况,需要确认MAC地址有效才发送连接成功事件到APP层,否则先访问服务器分配mac地址
-            server_assign_macaddr(wifi_return_sta_mode);
-            break;
-        }
-        mac_addr_succ_flag = 1;
-#endif
-#ifdef CONFIG_STATIC_IPADDR_ENABLE
-        store_dhcp_ipaddr();
-#endif       
+      
         break;
     case WIFI_EVENT_STA_NETWORK_STACK_DHCP_TIMEOUT:
         log_info("etwork_user_callback->WIFI_EVENT_STA_NETWPRK_STACK_DHCP_TIMEOUT");
@@ -488,13 +289,9 @@ static int wifi_event_callback(void *network_ctx, enum WIFI_EVENT event)
         break;
     case WIFI_EVENT_SMP_CFG_TIMEOUT:
         log_info("network_user_callback->WIFI_EVENT_SMP_CFG_TIMEOUT");
-        net.event = NET_EVENT_SMP_CFG_TIMEOUT;
-        net_event_notify(NET_EVENT_FROM_USER, &net);
         break;
     case WIFI_EVENT_SMP_CFG_COMPLETED:
         log_info("network_user_callback->WIFI_EVENT_SMP_CFG_COMPLETED");
-        net.event = NET_SMP_CFG_COMPLETED;
-        net_event_notify(NET_EVENT_FROM_USER, &net);
         break;
 
     case WIFI_EVENT_AP_ON_ASSOC:
@@ -547,68 +344,6 @@ static int wifi_event_callback(void *network_ctx, enum WIFI_EVENT event)
     return ret;
 }
 
-static void wifi_rx_cb(void *rxwi, struct ieee80211_frame *wh, void *data, u32 len, void *priv)
-{
-    char *str_frm_type;
-
-    switch (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) {
-    case IEEE80211_FC0_TYPE_MGT:
-        switch (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) {
-        case IEEE80211_FC_STYPE_ASSOC_REQ:
-            str_frm_type = "association req";
-            break;
-        case IEEE80211_FC_STYPE_ASSOC_RESP:
-            str_frm_type = "association resp";
-            break;
-        case IEEE80211_FC_STYPE_REASSOC_REQ:
-            str_frm_type = "reassociation req";
-            break;
-        case IEEE80211_FC_STYPE_REASSOC_RESP:
-            str_frm_type = "reassociation resp";
-            break;
-        case IEEE80211_FC_STYPE_PROBE_REQ:
-            str_frm_type = "probe req";
-            break;
-        case IEEE80211_FC_STYPE_PROBE_RESP:
-            str_frm_type = "probe resp";
-            break;
-        case IEEE80211_FC_STYPE_BEACON:
-            str_frm_type = "beacon";
-            break;
-        case IEEE80211_FC_STYPE_ATIM:
-            str_frm_type = "atim";
-            break;
-        case IEEE80211_FC_STYPE_DISASSOC:
-            str_frm_type = "disassociation";
-            break;
-        case IEEE80211_FC_STYPE_AUTH:
-            str_frm_type = "authentication";
-            break;
-        case IEEE80211_FC_STYPE_DEAUTH:
-            str_frm_type = "deauthentication";
-            break;
-        case IEEE80211_FC_STYPE_ACTION:
-            str_frm_type = "action";
-            break;
-        default:
-            str_frm_type = "unknown mgmt";
-            break;
-        }
-        break;
-    case IEEE80211_FC0_TYPE_CTL:
-        str_frm_type = "control";
-        break;
-    case IEEE80211_FC0_TYPE_DATA:
-        str_frm_type = "data";
-        break;
-    default:
-        str_frm_type = "unknown";
-        break;
-    }
-
-    log_info("wifi recv:%s", str_frm_type);
-}
-
 
 int init_network_connection_timeout(void)
 {
@@ -624,33 +359,37 @@ int start_wifi_network(void)
 {
     wifi_set_store_ssid_cnt(NETWORK_SSID_INFO_CNT);
     wifi_set_event_callback(wifi_event_callback);
-
+    log_info("start_wifi_network: wifi on");
     wifi_on();
     wifi_set_long_retry(4);
     wifi_set_short_retry(7);
 
     wifi_get_mac(g_mac_addr);
-    log_info("WIFI MAC: %02x:%02x:%02x:%02x:%02x:%02x", g_mac_addr[0], g_mac_addr[1], g_mac_addr[2], g_mac_addr[3], g_mac_addr[4], g_mac_addr[5]);
 
-    //wifi_on之后即可初始化服务器类型的网络应用程序
-#ifdef CONFIG_IPERF_ENABLE
-    extern void iperf_test(void);
-    iperf_test();
-#endif
+    struct wifi_stored_sta_info wifi_stored_sta_info[32];
+    int cnt = get_stored_sta_list(wifi_stored_sta_info);
 
-
-    g_wifi_connection_timer = sys_timeout_add_to_task("sys_timer", NULL, init_network_connection_timeout, 60000); // 60秒后如果还连不上就进入配置网络状态
+    /*
+    strcpy((char *)wifi_stored_sta_info[0].ssid, "0812");
+    strcpy((char *)wifi_stored_sta_info[0].pwd, "SSPY0812");
+    cnt = 1;
+    */
+   
+    if (cnt > 0) {
+        strncpy((char *)g_wifi_info.ssid, (const char *)wifi_stored_sta_info[0].ssid, sizeof(g_wifi_info.ssid) - 1);
+        strncpy((char *)g_wifi_info.pwd, (const char *)wifi_stored_sta_info[0].pwd, sizeof(g_wifi_info.pwd) - 1);
+        
+        log_info("try to connect to ssid=%s, pwd=%s", g_wifi_info.ssid, g_wifi_info.pwd);
+        g_wifi_connection_timer = sys_timeout_add_to_task("sys_timer", NULL, init_network_connection_timeout, 60000); // 60秒后如果还连不上就进入配置网络状态
     
-    log_info("start_wifi_network, ssid=%s, pwd=%s", g_wifi_info.ssid, g_wifi_info.pwd);
-    wifi_sta_connect(g_wifi_info.ssid, g_wifi_info.pwd);
-    log_info("start_wifi_network: done");
-
-    //wifi raw 测试
-    //wifi_raw_test();
-    //while (1) {
-    //    os_time_dly(50 * 100);
-    //}
-  
+        wifi_sta_connect(g_wifi_info.ssid, g_wifi_info.pwd);
+    }else{
+        struct net_event net = {0};
+        net.arg = "net";
+        net.event = NET_CONNECT_TIMEOUT_NOT_FOUND_SSID;
+        net_event_notify(NET_EVENT_FROM_USER, &net);
+    } 
+    
     return 0;
 }
 
@@ -660,24 +399,10 @@ void wifi_status(void)
 {
     
     if (wifi_is_on()) {
-        /* stats_display(); //LWIP stats */
         log_info("WIFI U= %d KB/s, D= %d KB/s", wifi_get_upload_rate() / 1024, wifi_get_download_rate() / 1024);
 
         log_info("Router_RSSI=%d,Quality=%d", wifi_get_rssi(), wifi_get_cqi()); //侦测路由器端信号质量
-/*
-        int ret = wifi_scan_req();
-        if (ret == 0) {
-            printf("WIFI SCANing");
-        } else if (ret == -1) {
-            printf("WIFI SCAN Busy");
-        } */
     }
-/*
-    struct app_event event = {
-        .event = APP_EVENT_DATA,
-        .arg = "wifi"
-    };
-    app_event_notify(APP_EVENT_FROM_USER, &event);*/
 }
 
 
