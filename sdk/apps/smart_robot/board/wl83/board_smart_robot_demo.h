@@ -327,17 +327,17 @@
 #define OTA_PROTOCOL_VERSION  2                               //ota升级协议版本
 #define APP_LANGUAGE          "zh-CN"                         //中文语言包
 #define REG_OTA_URL           "https://ota.lovaiot.com/ota/v2/"  //ota升级服务器地址
-#define PRODUCT_VENDOR_UID    "5137786831399878656"           //设备厂商的UID, 由平台提供
+#define PRODUCT_VENDOR_UID    "{请登录https://agent.lovaiot.com创建}"           //设备厂商的UID, 由平台提供
 
-#define PRODUCT_TYPE          "JIELI7926E_PRODUCT_DEMO"       //产品的类型, 需要在平台上注册*
-#define PRODUCT_NAME          "TUOYUN_ROBOT"                  //产品名称
+#define PRODUCT_TYPE          "{请登录https://agent.lovaiot.com创建}"       //产品的类型, 需要在平台上注册*
+#define PRODUCT_NAME          "{请登录https://agent.lovaiot.com创建}"                  //产品名称
 
-#define BOARD_TYPE            "JIELI7926E_DEMO"               //控制板的类型, 由平台提供*
-#define BOARD_NAME            "jieli-ai-dev"                  //控制板的名称, 由平台提供
+#define BOARD_TYPE            "{请登录https://agent.lovaiot.com创建}"               //控制板的类型, 由平台提供*
+#define BOARD_NAME            "{请登录https://agent.lovaiot.com创建}"                  //控制板的名称, 由平台提供
 
 
-#define FIRMWARE_TYPE         "TY_JIELI7926E_DEMO"            //固件的类型, 由平台提供*
-#define FIRMWARE_NAME         "TUOYUN_ROBOT_RUN"              //固件名称
-#define FIRMWARE_VERSION      "1.0.3"                         //固件版本号
+#define FIRMWARE_TYPE         "{请登录https://agent.lovaiot.com创建}"            //固件的类型, 由平台提供*
+#define FIRMWARE_NAME         "{请登录https://agent.lovaiot.com创建}"            //固件名称
+#define FIRMWARE_VERSION      "1.0.3"                                          //固件版本号
 
 #endif
