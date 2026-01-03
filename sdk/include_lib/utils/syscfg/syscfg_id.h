@@ -230,7 +230,7 @@ typedef enum JL_CONFIG_ERR_TABLE {
 #define    VM_BLE_MESH_IDX_END         179
 
 //WIFI类配置项[180 ~ 250]
-#define    NETWORK_SSID_INFO_CNT       6 //配置VM里面保存多少个路由器信息, 如果不需要写0
+#define    NETWORK_SSID_INFO_CNT       3 //配置VM里面保存多少个路由器信息, 如果不需要写0
 #define    WIFI_STA_INFO_IDX_START     180
 #define    WIFI_STA_INFO_IDX_END       (WIFI_STA_INFO_IDX_START+NETWORK_SSID_INFO_CNT)
 #define    VM_WIFI_RF_INIT_INFO        187

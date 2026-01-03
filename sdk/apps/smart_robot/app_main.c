@@ -6,6 +6,7 @@
 #include "wifi/wifi_connect.h"
 #include "net/config_network.h"
 #include "key_event.h"
+#include "app.h"
 #include "app_msg.h"
 #include "app_tone.h"
 #include "app_event.h"
@@ -39,6 +40,15 @@ extern void printf_buf(u8 *buf, u32 len);
 #include "system/debug.h"
 
 
+typedef struct device_status {
+    int ble_inited;
+    app_status_t network_status; //0:未连接网络 1:已连接网络
+} device_status_t, *device_status_ptr;
+
+static device_status_t g_device_status = {
+    .ble_inited = 0,
+    .network_status = APP_NOT_INIT,
+};
 
 /*中断列表 */
 const struct irq_info irq_info_table[] = {
@@ -168,12 +178,19 @@ const struct task_info task_info_table[] = {
 
     {0, 0},
 };
+void enter_mode_connecting_wifi(char* ssid){
 
-void enter_mode_network_interrupted(void){
-
-    play_tone_file(get_tone_files()->net_disc);
     log_info("enter_idle_mode");
-    ui_set_status_text("网络断开");
+    if (ssid == NULL) {
+        ssid = "未知网络";
+    }
+    ui_set_status_text(ssid);
+}
+void enter_mode_network_interrupted(void){
+    g_device_status.network_status = APP_INTERRUPTED;
+    play_tone_file(get_tone_files()->net_disc);
+    log_info("enter_mode_network_interrupted");
+    ui_set_status_text("网络断开, 正在重新连接...");
 }
 void enter_mode_activation(void){
 
@@ -206,10 +223,7 @@ void enter_mode_regiter_result(int result){
     }else{
         ui_set_status_text("注册成功");
         play_tone_file(get_tone_files()->register_success);
-        //jl_kws_speech_recognition_open();
-        //os_time_dly(100);
     }
-    
 }
 
 void enter_mode_connecting_server(void){
@@ -225,6 +239,7 @@ void enter_mode_idle(void){
     tuoyun_asr_recorder_open();
     log_info("@@@@@@@@@@@@: tuoyun_asr_recorder_open ---- open");
 }
+
 void enter_mode_ota(void){
     log_info("enter_mode_ota");
     ui_set_status_text("正在升级中...");
@@ -238,7 +253,6 @@ void enter_mode_ota_end(int result ){
         log_info("enter_mode_ota_end: failed"); 
         ui_set_status_text("升级失败");
     }
-    
 }
 
 void enter_mode_renewal_overduep(void){
@@ -248,11 +262,9 @@ void enter_mode_renewal_overduep(void){
 
 void enter_mode_dialog_initiating(void){
     ui_set_status_text("正在呼叫...");
-    //jl_kws_speech_recognition_stop();
     tuoyun_asr_recorder_close();
     log_info("@@@@@@@@@@@@: tuoyun_asr_recorder_close ---- close");
 }
-
 
 void enter_mode_dialog_listening(void){
     ui_set_status_text("聆听中");
@@ -262,14 +274,6 @@ void enter_mode_dialog_speaking(void){
     ui_set_status_text("讲话中");
 }
 
-
-void start_network(void)
-{
-    
-    thread_fork("wifi_init_task", 25, 4000, 0, 0, start_wifi_network, NULL);
-    u16 id = sys_timer_add_to_task("sys_timer", NULL, wifi_status, 20 * 1000);
-    return;
-}
 
 void proc_register_device(void)
 {
@@ -307,6 +311,9 @@ static int poweron_tone_play_end_callback(void *priv, enum stream_event event)
     return 0;
 }
 
+app_status_t get_network_status(){
+    return g_device_status.network_status;
+}
 
 /*
  * 应用程序主函数
@@ -319,20 +326,13 @@ void app_main(void)
     if (ret) {
         poweron_tone_play_end_callback(NULL, STREAM_EVENT_STOP);
     }
-    
 
-    start_network();
+    thread_fork("wifi_init_task", 25, 4000, 0, 0, start_wifi_network, NULL);
 
-
-    //int lvgl_main_task_init(void);
-    //lvgl_main_task_init();
-    //int lvgl_main_task_init(void);
-    //lvgl_main_task_init();
     return;
 }
 
 
-static int ble_inited = 0;
 static int net_wifi_event_handler(void *evt)
 {
     struct net_event *event = (struct net_event *)evt;
@@ -340,26 +340,37 @@ static int net_wifi_event_handler(void *evt)
     switch (event->event) {
     case NET_EVENT_CONNECTED:
         log_info("net_wifi_event_handler: NET_EVENT_CONNECTED, note: %s", event->arg);
-#ifdef TELNET_LOG_OUTPUT        
-        void start_debug_server();
-        start_debug_server();
-#else        
-        start_register_device();
+        g_device_status.network_status = APP_RUNNING;
+
+#ifdef TELNET_LOG_OUTPUT    
+        if (event->arg == 0) {
+            void start_debug_server();
+            start_debug_server();
+        }else{
+            enter_mode_idle();
+        }
+        
+#else    
+        if (event->arg == 0) {
+            start_register_device();
+        }else{
+            enter_mode_idle();
+        }    
 #endif        
         break;
 
     case NET_CONNECT_TIMEOUT_NOT_FOUND_SSID:
         log_info("net_wifi_event_handler: NET_CONNECT_TIMEOUT_NOT_FOUND_SSID, note: %s", event->arg);
-        
-        if (!ble_inited) {
-            ble_inited = 1;
+        g_device_status.network_status = APP_INTERRUPTED;
+        if (!g_device_status.ble_inited) {
+            g_device_status.ble_inited = 1;
             bt_ble_module_init();
             enter_config_network_state();
             enter_mode_network_configuring();
         }/*
         没有网络时, 会进入配网模式, 不需要提示网络断开
         else {
-            enter_mode_network_interrupted();
+            
         }*/
         break;
     default:
@@ -373,14 +384,23 @@ static int net_wifi_event_handler(void *evt)
 void app_user_event_handler(struct app_event *event)
 {
     switch (event->event) {
+    case APP_EVENT_CONNECTING_TO_WIFI:
+        enter_mode_connecting_wifi(event->arg);
+        break;
+    case APP_EVENT_WIFI_DISCONNECTED:
+        
+        enter_mode_network_interrupted();
+        start_wifi_network();
+        break;    
     case APP_EVENT_ACTIVATION:
         log_info("app_user_event_handler: APP_EVENT_ACTIVATION");
         
-        ble_inited = 1;
+        g_device_status.ble_inited = 1;
         bt_ble_module_init();
         enter_config_network_state();
         enter_mode_activation();
         break;
+    
     case APP_EVENT_OTA_START:
         log_info("app_user_event_handler: APP_EVENT_OTA_START");
         enter_mode_ota();
@@ -428,8 +448,8 @@ void app_protocol_event_handler(struct app_event *event)
         message_notify_event_t* notify = event->arg;
         log_info("app_user_event_handler: APP_EVENT_SERVER_NOTIFY");
         if (notify) {
-            log_info("notify event: %d, status: %s, message: %s, emotion: %s\n",
-                     notify->event, notify->status, notify->message, notify->emotion);
+            log_info("notify event: %d, command: %s, message: %s, emotion: %s\n",
+                     notify->event, notify->command, notify->message, notify->emotion);
             if (notify->event == CTRL_EVENT_EXPIRE) {
                 enter_mode_renewal_overduep();   
             }     

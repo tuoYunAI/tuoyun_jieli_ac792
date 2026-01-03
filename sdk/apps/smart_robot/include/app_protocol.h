@@ -18,10 +18,10 @@
 #define DEVICE_CTRL_EVENT_SPEAKER     "speaker"
 
 
-#define WORKING_STATUS_START_TXT      "start"
-#define WORKING_STATUS_STOP_TXT       "stop"
-#define WORKING_STATUS_TEXT_TXT       "text"
-#define WORKING_STATUS_SENTENCE_START   "sentence_start"
+#define WORKING_CMD_START        "start"
+#define WORKING_CMD_STOP         "stop"
+#define WORKING_CMD_TEXT         "text"
+#define WORKING_CMD_SENTENCE_START   "sentence_start"
 
 /**
  * Device control events corresponding to the definition of which sent by the server, 
@@ -129,7 +129,7 @@ typedef struct  {
  */
 typedef struct {
     device_ctrl_event_t event;
-    char status[10];
+    char command[10];
     char message[64];
     char emotion[32];
 }message_notify_event_t, *message_notify_event_ptr;

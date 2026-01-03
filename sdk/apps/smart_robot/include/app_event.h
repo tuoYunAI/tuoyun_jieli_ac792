@@ -34,11 +34,26 @@ enum app_event_from {
  * Definition of user defined events.
  */
 typedef enum {
+    
+    /**
+     * Notification of starting to connect to WiFi, used to notify the application 
+     * layer the target WiFi SSID.
+     */
+    APP_EVENT_CONNECTING_TO_WIFI,
+    
+
+    /**
+     * Notification of connection to WiFi interruption, used to notify the application
+     * layer that the WiFi connection has been interrupted.
+     */
+    APP_EVENT_WIFI_DISCONNECTED,
+
     /**
      * Device inactive notification, indicating the device is successfully 
      * bound to the user account and cannot perform normal business operations.
      */
     APP_EVENT_ACTIVATION,
+    
     /**
      * OTA upgrade start notification, used to notify the application
      * layer to enter the OTA upgrade process.

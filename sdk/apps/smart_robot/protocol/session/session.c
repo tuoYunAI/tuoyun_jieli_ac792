@@ -264,6 +264,54 @@ static void proc_response_bye(MOVE received_sip_message_ptr message){
     return;
 }
 
+static void proc_message(json_object* parse, message_notify_event_ptr notify){
+
+    char ev[16] = {0};
+    strncpy(ev, json_get_string(parse, "event"), sizeof(ev)-1);
+    char *val = json_get_string(parse, "command");
+    if (val){
+        strncpy(notify->command, val, sizeof(notify->command)-1);
+    }
+    val = json_get_string(parse, "text");
+    if (val){
+        strncpy(notify->message, val, sizeof(notify->message)-1);
+    }
+    val = json_get_string(parse, "emotion");
+    if (val){
+        strncpy(notify->emotion, val, sizeof(notify->emotion)-1);
+    }
+
+    log_info("Parsed MESSAGE - event: %d, status: %s, message: %s, emotion: %s\n",
+                        notify->event, notify->command, notify->message, notify->emotion);
+    app_event_t event = {
+        .event = APP_EVENT_SERVER_NOTIFY,
+        .arg = notify
+    };
+    app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
+}
+
+static void proc_message_alert(json_object* data){
+    message_notify_event_t notify = {
+        .event = CTRL_EVENT_ALERT
+    };
+    proc_message(data, &notify);
+}
+
+static void proc_message_activate(json_object* data){
+    message_notify_event_t notify = {
+        .event = CTRL_EVENT_ACTIVATE
+    };
+    proc_message(data, &notify);
+}
+
+
+static void proc_message_expire(json_object* data){
+    message_notify_event_t notify = {
+        .event = CTRL_EVENT_EXPIRE
+    };
+    proc_message(data, &notify);
+}
+
 static void proc_request_message(MOVE received_sip_message_ptr  message){
     log_info("Received MESSAGE request\n");
     
@@ -279,36 +327,18 @@ static void proc_request_message(MOVE received_sip_message_ptr  message){
             char ev[16] = {0};
             strncpy(ev, json_get_string(parse, "event"), sizeof(ev)-1);
             if (strcmp(ev, DEVICE_CTRL_EVENT_ALERT) == 0){
-                notify.event = CTRL_EVENT_ALERT;
+                proc_message_alert(parse);
             }else if (strcmp(ev, DEVICE_CTRL_EVENT_ACTIVATE) == 0){ 
-                notify.event = CTRL_EVENT_ACTIVATE;
+                proc_message_activate(parse);
             }else if (strcmp(ev, DEVICE_CTRL_EVENT_EXPIRE) == 0){
-                notify.event = CTRL_EVENT_EXPIRE;
+                proc_message_expire(parse);
             }else {     
                 log_info("unknown event type: %s\n", ev);                    
                 json_object_put(parse);
                 free(message);
                 return;
             }
-            char *val = json_get_string(parse, "status");
-            if (val){
-                strncpy(notify.status, val, sizeof(notify.status)-1);
-            }
-            val = json_get_string(parse, "message");
-            if (val){
-                strncpy(notify.message, val, sizeof(notify.message)-1);
-            }
-            val = json_get_string(parse, "emotion");
-            if (val){
-                strncpy(notify.emotion, val, sizeof(notify.emotion)-1);
-            }
-            log_info("Parsed MESSAGE - event: %d, status: %s, message: %s, emotion: %s\n",
-                        notify.event, notify.status, notify.message, notify.emotion);
-            struct app_event event = {
-                .event = APP_EVENT_SERVER_NOTIFY,
-                .arg = &notify
-            };
-            app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
+            
             json_object_put(parse);
 
             char *out_msg = NULL;
@@ -325,7 +355,6 @@ static void proc_request_message(MOVE received_sip_message_ptr  message){
         }else{
             log_info("failed to parse MESSAGE body to JSON\n");
         }
-        
     }
     free(message);
     return;
@@ -408,15 +437,15 @@ static void proc_request_info(MOVE received_sip_message_ptr message){
                 return;
             }
             char st[33] = {0};
-            val = json_get_string(parse, "status");
+            val = json_get_string(parse, "command");
             if (val){
                 strncpy(st, val, sizeof(st)-1);
             }
-            if (strcmp(st, WORKING_STATUS_START_TXT) == 0){
+            if (strcmp(st, WORKING_CMD_START) == 0){
                 session_event.status = WORKING_STATUS_START;
-            }else if (strcmp(st, WORKING_STATUS_STOP_TXT) == 0){
+            }else if (strcmp(st, WORKING_CMD_STOP) == 0){
                 session_event.status = WORKING_STATUS_STOP;
-            }else if (strcmp(st, WORKING_STATUS_TEXT_TXT) == 0 || strcmp(st, WORKING_STATUS_SENTENCE_START) == 0){
+            }else if (strcmp(st, WORKING_CMD_TEXT) == 0 || strcmp(st, WORKING_CMD_SENTENCE_START) == 0){
                 session_event.status = WORKING_STATUS_TEXT;
             }else {
                 session_event.status = WORKING_STATUS_INVALID;
@@ -632,16 +661,16 @@ cleanup:
     return;
 }
 
-static int send_listening_status(char* status, char* mode){
+static int send_listening_status(char* cmd, char* mode){
 
-    if(!status || (strcmp(status, WORKING_STATUS_START_TXT) != 0 && strcmp(status, WORKING_STATUS_STOP_TXT) != 0)){
-        log_info("invalid listening status: %s", status ? status : "null");
+    if(!cmd || (strcmp(cmd, WORKING_CMD_START) != 0 && strcmp(cmd, WORKING_CMD_STOP) != 0)){
+        log_info("invalid listening status: %s", cmd ? cmd : "null");
         return -1;
     }
     info_param_t info = {0};
     strncpy(info.event, "listen", sizeof(info.event)-1);
-    if (status && strlen(status) > 0){
-        strncpy(info.status, status, sizeof(info.status)-1);
+    if (cmd && strlen(cmd) > 0){
+        strncpy(info.command, cmd, sizeof(info.command)-1);
     }
     if (mode && strlen(mode) > 0){
         strncpy(info.mode, mode, sizeof(info.mode)-1);
@@ -695,7 +724,7 @@ static int send_listening_status(char* status, char* mode){
 
 void send_start_listening(){
     log_info("send_start_listening");
-    send_listening_status(WORKING_STATUS_START_TXT, "auto");
+    send_listening_status(WORKING_CMD_START, "auto");
     message_session_event_t session_event = {
         .event = CTRL_EVENT_LISTEN, 
         .status = WORKING_STATUS_START
@@ -708,7 +737,7 @@ void send_start_listening(){
 }
 
 void send_stop_listening(){
-    send_listening_status(WORKING_STATUS_STOP_TXT, NULL);
+    send_listening_status(WORKING_CMD_STOP, NULL);
     message_session_event_t session_event = {
         .event = CTRL_EVENT_LISTEN, 
         .status = WORKING_STATUS_STOP
