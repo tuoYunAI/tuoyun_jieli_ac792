@@ -99,7 +99,7 @@
 
 ![添加固件](docs/tuoyun/add_firmware.png)
 
-## 开发板介绍
+## tuoyun_jieli_ac792 杰理开发板介绍
 
 tuoyun_jieli_ac792 是北京拓云基于杰理 792 系列芯片开发语音对话开发板，
 目前实现的功能：
