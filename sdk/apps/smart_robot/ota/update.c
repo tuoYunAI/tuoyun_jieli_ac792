@@ -90,6 +90,37 @@ char* json_get_string(struct json_object *jobj, char* key)
 }
 
 
+static int version_compare(const char *v1, const char *v2)
+{
+    int v1_nums[3] = {0};
+    int v2_nums[3] = {0};
+    
+    // Parse v1
+    const char *p = v1;
+    for (int i = 0; i < 3; i++) {
+        v1_nums[i] = atoi(p);
+        p = strchr(p, '.');
+        if (!p) break;
+        p++;
+    }
+
+    // Parse v2
+    p = v2;
+    for (int i = 0; i < 3; i++) {
+        v2_nums[i] = atoi(p);
+        p = strchr(p, '.');
+        if (!p) break;
+        p++;
+    }
+
+    for (int i = 0; i < 3; i++) {
+        if (v1_nums[i] > v2_nums[i]) return 1;
+        if (v1_nums[i] < v2_nums[i]) return -1;
+    }
+    
+    return 0;
+}
+
 int register_device(char *mac)
 {
     int ret = 0;
@@ -214,7 +245,7 @@ int register_device(char *mac)
                     strcpy(ota_version, json_get_string(firmware_info, "version"));
                     strcpy(http_ota_url, json_get_string(firmware_info, "url"));
 
-                    if(strcmp(ota_version, FIRMWARE_VERSION) > 0 && strlen(http_ota_url) > 0){
+                    if(version_compare(ota_version, FIRMWARE_VERSION) > 0 && strlen(http_ota_url) > 0){
                         log_info("try to upgrade from %s to %s.\n", FIRMWARE_VERSION, ota_version);
                         http_create_download_task();
                         break;

@@ -28,22 +28,35 @@
 
 #define WIFI_SSID_LEN        32
 #define WIFI_PWD_LEN         63
+
+typedef struct {
+    char ssid[WIFI_SSID_LEN + 1];
+    char pwd[WIFI_PWD_LEN + 1];
+} wifi_credential_t, *wifi_credential_ptr;
+
 typedef struct  {
+    int inited;                     //是否初始化
+    int total_cnt;                  //备选的SSID总数
+    int current_idx;                //当前连接的SSID索引
+    int is_in_config_network_state; //是否处于配置网络状态
+    int updated;                    // 1:有更新, 0:无更新
+    int interruption_cnt;           //连接中断计数
     enum WIFI_MODE mode;
-    int update;   // 1:有更新, 0:无更新
-    char ssid[WIFI_SSID_LEN+1];
-    char pwd[WIFI_PWD_LEN+1];
+    u8 mac_addr[6];
+    wifi_credential_t ssid_pwd[NETWORK_SSID_INFO_CNT];
 } wifi_config_info_t, *wifi_config_info_ptr;
 
 static u16 g_wifi_connection_timer = 0;
-static u8 g_is_in_config_network_state = 0; //是否处于配置网络状态
 
-static u8 g_mac_addr[6] = {0};
 wifi_config_info_t g_wifi_info = {
+    .inited = 0,
+    .total_cnt = 0,
+    .current_idx = 0,
+    .is_in_config_network_state = 0,
+    .updated = 0,
+    .interruption_cnt = 0,
     .mode = STA_MODE,
-    .update = 0,
-    .ssid = "",
-    .pwd = "",
+    .mac_addr = {0}
 };
 
 #define FORCE_DEFAULT_MODE 0 //配置wifi_on之后的模式,0为使用最后记忆的模式, 1为强制默认模式, 3-200为STA连接超时时间多少秒,如果超时都连接不上就连接最后记忆的或者最优网络
@@ -84,18 +97,24 @@ static void wifi_sta_save_current_ssid(void)
     info.mode = STA_MODE;
     wifi_get_mode_cur_info(&info);
     if (!info.ssid || !info.pwd) {
+        log_info("@@@@@@@@wifi_sta_save_current_ssid: ssid or pwd is NULL\r\n");
         return;
     }
-    if (strncmp(info.ssid, g_wifi_info.ssid, WIFI_SSID_LEN) != 0 || strncmp(info.pwd, g_wifi_info.pwd, WIFI_PWD_LEN) != 0) {
+    wifi_credential_ptr credential = &g_wifi_info.ssid_pwd[g_wifi_info.current_idx];
+    if (strncmp(info.ssid, credential->ssid, WIFI_SSID_LEN) != 0 || strncmp(info.pwd, credential->pwd, WIFI_PWD_LEN) != 0) {
+        log_info("@@@@@@@@wifi_sta_save_current_ssid: ssid or pwd changed\r\n");
         return;
     }
-    if (!g_wifi_info.update) {
+
+    if (!g_wifi_info.updated) {
+        log_info("@@@@@@@@wifi_sta_save_current_ssid: no update\r\n");
         return;
     }
-    log_info("wifi_sta_save_current_ssid: ssid %s pwd %s\r\n", info.ssid, info.pwd);
+    wifi_del_stored_sta_info(info.ssid);
+    log_info("@@@@@@@wifi_sta_save_current_ssid: ssid %s pwd %s\r\n", info.ssid, info.pwd);
     
     wifi_store_mode_info(STA_MODE, info.ssid, info.pwd);
-    g_wifi_info.update = 0;
+    g_wifi_info.updated = 0;
 }
 
 
@@ -122,13 +141,13 @@ void wifi_sta_connected(void)
     }
 
     wifi_sta_save_current_ssid();    
-    if (g_is_in_config_network_state == 0) {
+    if (g_wifi_info.is_in_config_network_state == 0) {
         struct net_event net = {0};
-        net.arg = "net";
+        net.arg = g_wifi_info.interruption_cnt;
         net.event = NET_EVENT_CONNECTED;
         net_event_notify(NET_EVENT_FROM_USER, &net);
     }else{
-        g_is_in_config_network_state = 0;
+        g_wifi_info.is_in_config_network_state = 0;
         struct app_event event = {
             .event = APP_EVENT_WIFI_CFG_FINISH,
             .arg = NULL
@@ -214,9 +233,12 @@ static int wifi_event_callback(void *network_ctx, enum WIFI_EVENT event)
             break;
         }
 #endif
-
-        net.event = NET_EVENT_DISCONNECTED;
-        net_event_notify(NET_EVENT_FROM_USER, &net);
+        g_wifi_info.interruption_cnt++;
+        app_event_t ev = {
+            .event = APP_EVENT_WIFI_DISCONNECTED,
+            .arg = NULL
+        };
+        app_event_notify(APP_EVENT_FROM_USER, &ev);
         break;
 
     case WIFI_EVENT_STA_SCANNED_SSID:
@@ -345,51 +367,92 @@ static int wifi_event_callback(void *network_ctx, enum WIFI_EVENT event)
 }
 
 
-int init_network_connection_timeout(void)
-{
-    log_info("init_network_connection_timeout\n");
-    struct net_event net = {0};
-    net.arg = "net";
-    net.event = NET_CONNECT_TIMEOUT_NOT_FOUND_SSID;
-    net_event_notify(NET_EVENT_FROM_USER, &net);
-    return 0;
+
+static void connect_to_wifi(int index){
+    if (index < 0 || index >= g_wifi_info.total_cnt) {
+        log_info("connect_to_wifi: index %d out of range", index);
+        return;
+    }
+    wifi_credential_ptr credential = &g_wifi_info.ssid_pwd[index];
+    log_info("connect_to_wifi: ssid=%s, pwd=%s", credential->ssid, credential->pwd);
+
+    app_event_t event = {
+        .event = APP_EVENT_CONNECTING_TO_WIFI,
+        .arg = credential->ssid
+    };
+    app_event_notify(APP_EVENT_FROM_USER, &event);
+    
+    wifi_set_sta_connect_best_ssid(0);
+    wifi_enter_sta_mode(credential->ssid, credential->pwd);
+    
 }
 
-int start_wifi_network(void)
+
+
+int init_network_connection_timeout(void)
 {
-    wifi_set_store_ssid_cnt(NETWORK_SSID_INFO_CNT);
-    wifi_set_event_callback(wifi_event_callback);
-    log_info("start_wifi_network: wifi on");
-    wifi_on();
-    wifi_set_long_retry(4);
-    wifi_set_short_retry(7);
-
-    wifi_get_mac(g_mac_addr);
-
-    struct wifi_stored_sta_info wifi_stored_sta_info[32];
-    int cnt = get_stored_sta_list(wifi_stored_sta_info);
-
-    /*
-    strcpy((char *)wifi_stored_sta_info[0].ssid, "0812");
-    strcpy((char *)wifi_stored_sta_info[0].pwd, "SSPY0812");
-    cnt = 1;
-    */
-   
-    if (cnt > 0) {
-        strncpy((char *)g_wifi_info.ssid, (const char *)wifi_stored_sta_info[0].ssid, sizeof(g_wifi_info.ssid) - 1);
-        strncpy((char *)g_wifi_info.pwd, (const char *)wifi_stored_sta_info[0].pwd, sizeof(g_wifi_info.pwd) - 1);
-        
-        log_info("try to connect to ssid=%s, pwd=%s", g_wifi_info.ssid, g_wifi_info.pwd);
-        g_wifi_connection_timer = sys_timeout_add_to_task("sys_timer", NULL, init_network_connection_timeout, 60000); // 60秒后如果还连不上就进入配置网络状态
-    
-        wifi_sta_connect(g_wifi_info.ssid, g_wifi_info.pwd);
-    }else{
+    if (g_wifi_info.current_idx <= 0){
+        log_info("init_network_connection_timeout\n");
         struct net_event net = {0};
         net.arg = "net";
         net.event = NET_CONNECT_TIMEOUT_NOT_FOUND_SSID;
         net_event_notify(NET_EVENT_FROM_USER, &net);
-    } 
+
+        sys_timer_del(g_wifi_connection_timer);
+        g_wifi_connection_timer = 0;    
+        return 0;
+    }
+
+    g_wifi_info.current_idx--;
+    connect_to_wifi(g_wifi_info.current_idx);    
+}
+
+
+int start_wifi_network(void)
+{
+    if (!g_wifi_info.inited) {
+        wifi_set_store_ssid_cnt(NETWORK_SSID_INFO_CNT);
+        wifi_set_event_callback(wifi_event_callback);
+        log_info("start_wifi_network: wifi on");
+        wifi_on();
+        wifi_set_long_retry(4);
+        wifi_set_short_retry(7);
+
+        wifi_get_mac(g_wifi_info.mac_addr);
+
+        struct wifi_stored_sta_info wifi_stored_sta_info[NETWORK_SSID_INFO_CNT+3];
+        int cnt = get_stored_sta_list(wifi_stored_sta_info);
+
+        if (cnt > 0) {
+            g_wifi_info.total_cnt = cnt > NETWORK_SSID_INFO_CNT ? NETWORK_SSID_INFO_CNT : cnt;
+            for (int i = 0; i < g_wifi_info.total_cnt; i++) {
+                strncpy(g_wifi_info.ssid_pwd[i].ssid, (const char *)wifi_stored_sta_info[i].ssid, WIFI_SSID_LEN);
+                strncpy(g_wifi_info.ssid_pwd[i].pwd, (const char *)wifi_stored_sta_info[i].pwd, WIFI_PWD_LEN);
+            }
+        }
+        g_wifi_info.inited = 1;
+
+        u16 id = sys_timer_add_to_task("sys_timer", NULL, wifi_status, 20 * 1000);
+    }
     
+    if (g_wifi_info.total_cnt <= 0) {
+
+        struct net_event net = {0};
+        net.arg = "net";
+        net.event = NET_CONNECT_TIMEOUT_NOT_FOUND_SSID;
+        net_event_notify(NET_EVENT_FROM_USER, &net);
+        return 0;
+    }
+    
+    log_info("start_connecting_procedure\n");
+    if (g_wifi_connection_timer) {
+        sys_timeout_del(g_wifi_connection_timer);
+        g_wifi_connection_timer = 0;    
+    }
+    g_wifi_info.current_idx = g_wifi_info.total_cnt - 1;
+    connect_to_wifi(g_wifi_info.current_idx);
+    g_wifi_connection_timer = sys_timer_add_to_task("sys_timer", NULL, init_network_connection_timeout, 20000); 
+
     return 0;
 }
 
@@ -397,10 +460,8 @@ int start_wifi_network(void)
 
 void wifi_status(void)
 {
-    
     if (wifi_is_on()) {
         log_info("WIFI U= %d KB/s, D= %d KB/s", wifi_get_upload_rate() / 1024, wifi_get_download_rate() / 1024);
-
         log_info("Router_RSSI=%d,Quality=%d", wifi_get_rssi(), wifi_get_cqi()); //侦测路由器端信号质量
     }
 }
@@ -425,32 +486,54 @@ struct wifi_scan_ssid_info *get_wifi_scan_result(u32 *ssid_cnt){
 
 int config_wifi_param(char *ssid, char *pwd){
     if (strlen(ssid) > WIFI_SSID_LEN || strlen(pwd) > WIFI_PWD_LEN) {
+        log_info("config_wifi_param: ssid or pwd length error");
         return -1;
     }
-    if (strcmp(ssid, g_wifi_info.ssid) == 0 && strcmp(pwd, g_wifi_info.pwd) == 0) {
+    int found = 0;
+    for (int i = 0; i < g_wifi_info.total_cnt; i++) {
+        if (strncmp(ssid, g_wifi_info.ssid_pwd[i].ssid, WIFI_SSID_LEN) == 0) {
+            found = 1;
+            g_wifi_info.current_idx = i;
+            break;
+        }
+    }
+
+    if (found && strncmp(pwd, g_wifi_info.ssid_pwd[g_wifi_info.current_idx].pwd, WIFI_PWD_LEN) == 0) {
+        log_info("config_wifi_param: ssid and pwd no change");
         return 0;
     }
 
-    strncpy(g_wifi_info.ssid, ssid, WIFI_SSID_LEN);
-    g_wifi_info.ssid[WIFI_SSID_LEN] = 0;
-    strncpy(g_wifi_info.pwd, pwd, WIFI_PWD_LEN);
-    g_wifi_info.pwd[WIFI_PWD_LEN] = 0;
-    g_wifi_info.update = 1;
+    if (!found) {
+        if (g_wifi_info.total_cnt < NETWORK_SSID_INFO_CNT) {
+            g_wifi_info.current_idx = g_wifi_info.total_cnt;
+            g_wifi_info.total_cnt++;
+        }else{
+            g_wifi_info.current_idx = 0;  
+        }
+    }    
+
+    wifi_credential_ptr credential = &g_wifi_info.ssid_pwd[g_wifi_info.current_idx];
+    strncpy(credential->ssid, ssid, WIFI_SSID_LEN);
+    credential->ssid[WIFI_SSID_LEN] = 0;
+    strncpy(credential->pwd, pwd, WIFI_PWD_LEN);
+    credential->pwd[WIFI_PWD_LEN] = 0;
+    g_wifi_info.updated = 1;
+    log_info("config_wifi_param: ssid %s pwd %s, save to index: %d", credential->ssid, credential->pwd, g_wifi_info.current_idx);
     return 0;
 }
 
 int comfirm_wifi_param(void){
-    if (g_wifi_info.update == 0) {
+    if (g_wifi_info.updated == 0) {
         enum wifi_sta_connect_state status = wifi_get_sta_connect_state();
         if(status == WIFI_STA_NETWORK_STACK_DHCP_SUCC || status == WIFI_STA_CONNECT_SUCC) {
             log_info("comfirm_wifi_param: already connecting or connected");
             return 0;
         }
     }
-
-    log_info("comfirm_wifi_param: ssid=%s, pwd=%s", g_wifi_info.ssid, g_wifi_info.pwd);
+    wifi_credential_ptr credential = &g_wifi_info.ssid_pwd[g_wifi_info.current_idx];
+    log_info("comfirm_wifi_param: ssid=%s, pwd=%s", credential->ssid, credential->pwd);
     wifi_set_sta_connect_best_ssid(0);
-    wifi_enter_sta_mode(g_wifi_info.ssid, g_wifi_info.pwd);
+    wifi_enter_sta_mode(credential->ssid, credential->pwd);
     return 0;
 }
 
@@ -466,7 +549,7 @@ int check_wifi_connected(void){
             struct wifi_mode_info info;
             info.mode = STA_MODE;
             wifi_get_mode_cur_info(&info);
-            if (strncmp(info.ssid, g_wifi_info.ssid, WIFI_SSID_LEN) == 0) {
+            if (strncmp(info.ssid, g_wifi_info.ssid_pwd[g_wifi_info.current_idx].ssid, WIFI_SSID_LEN) == 0) {
                 return 0;
             }    
             log_info("connected to other ssid=%s", info.ssid);
@@ -480,12 +563,12 @@ int check_wifi_connected(void){
 }
 
 void enter_config_network_state(void){
-    g_is_in_config_network_state = 1;
+    g_wifi_info.is_in_config_network_state = 1;
 }
 
 u8 check_if_in_config_network_state(void){
-    log_info("check_if_in_config_network_state=%d", g_is_in_config_network_state);
-    return g_is_in_config_network_state;
+    log_info("check_if_in_config_network_state=%d", g_wifi_info.is_in_config_network_state);
+    return g_wifi_info.is_in_config_network_state;
 }
 
 #endif

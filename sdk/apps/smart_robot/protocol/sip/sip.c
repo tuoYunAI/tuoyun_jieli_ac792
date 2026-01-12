@@ -836,9 +836,9 @@ int build_listen_info(
     json_object *event = json_object_new_string(info->event);
     json_object_object_add(root, "event", event);
 
-    if (strlen(info->status) > 0){
-        json_object *status = json_object_new_string(info->status); 
-        json_object_object_add(root, "status", status);
+    if (strlen(info->command) > 0){
+        json_object *command = json_object_new_string(info->command); 
+        json_object_object_add(root, "command", command);
     }
     if (strlen(info->mode) > 0){
         json_object *mode = json_object_new_string(info->mode); 

@@ -222,7 +222,7 @@ typedef struct received_sip_message{
 
 typedef struct info_param{
   char event[32];
-  char status[32]; 
+  char command[32]; 
   char mode[32];
 }info_param_t, *info_param_ptr;
 
