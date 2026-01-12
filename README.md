@@ -215,6 +215,13 @@ tuoyun_jieli_ac792 是北京拓云基于杰理 792 系列芯片开发语音对�
   - **流式传输**:  实时发送录音数据包，并接收播放数据包。
   - **状态管理**:  维护麦克风和扬声器的工作状态（Start/Stop/Pending）。
 
+## 原理图
+
+项目原理图和 PCB 文件位于 [hardware](hardware/) 目录，主要文件包括：
+
+- [AC7923A_AI.sch](hardware/AC7923A_AI.sch)
+- [AC7923A_AI.pcb](hardware/AC7923A_AI.pcb)
+
 ## 用户 UI
 
 开发中...
