@@ -141,7 +141,7 @@ typedef struct{
     device_ctrl_event_t event;
     device_working_status_t status;
     char emotion[32];
-    char text[256];
+    char text[1024];
 }message_session_event_t, *message_session_event_ptr;
 
 

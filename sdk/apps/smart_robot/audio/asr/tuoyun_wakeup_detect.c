@@ -128,6 +128,7 @@ void tuoyun_asr_recorder_open()
     struct stream_fmt fmt = {0};
     struct encoder_fmt enc_fmt = {0};
     vad_node_priv_t vad = {0};
+    log_info("tuoyun_asr_recorder_open ---- open");
 
     os_mutex_pend(&mutex, 0);
     if (g_tuoyun_asr_recorder) {
@@ -226,6 +227,7 @@ __exit0:
 
 int tuoyun_asr_recorder_close()
 {
+    log_info("tuoyun_asr_recorder_close ---- close");
     aisp_suspend();
     os_mutex_pend(&mutex, 0);
     if (!g_tuoyun_asr_recorder) {
@@ -245,9 +247,28 @@ int tuoyun_asr_recorder_close()
     return 0;
 }
 
+static void aisp_keep_alive_worker(void *priv)
+{
+    extern void aisp_close();
+    aisp_close();
+    log_info("@@++@@ close aisp closed");
+    os_time_dly(10);
+    extern int aisp_open();
+    log_info("@@++@@ close aisp started");
+    aisp_open();
 
+    os_mutex_pend(&mutex, 0);
+    if (!g_tuoyun_asr_recorder || !g_tuoyun_asr_recorder->inited) {
+        aisp_suspend();
+    }
+    os_mutex_post(&mutex);
+}
 
-
+static void aisp_keeper(void *priv)
+{
+    thread_fork("aisp_keep_alive_worker", 25, 8000, 0, 0, aisp_keep_alive_worker, NULL);
+    return;
+}
 
 static void asr_init(void *priv)
 {
@@ -258,6 +279,12 @@ static void asr_init(void *priv)
 
     extern int aisp_open();
     aisp_open();
+
+    /**
+     * 每10分钟重启一次aisp
+     */
+    sys_timer_add_to_task("sys_timer", NULL, aisp_keeper, 10 * 60 * 1000);
+
 }
 
 

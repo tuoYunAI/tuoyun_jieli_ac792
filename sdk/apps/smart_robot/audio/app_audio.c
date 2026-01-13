@@ -85,6 +85,11 @@ static void audio_start_speaker(){
     log_info("@@@@@ Please listen...");
     m_speaker_status = WORKING_STATUS_START;
     if (!m_speaker_inited && m_audio_received_frame >= MAX_CACHED_FRAME){
+        app_event_t ev = {
+            .event = APP_EVENT_AUDIO_SPEAK_BEFORE_OPEN,
+            .arg = NULL
+        };
+        app_event_notify(APP_EVENT_FROM_AUDIO, &ev);
         tuoyun_audio_player_start(tuoyun_player_event_callback);
         m_speaker_inited = 1;
     }
@@ -110,7 +115,7 @@ static void audio_start_mic(){
     if (m_mic_status == WORKING_STATUS_START){
         log_info("mic status already open");
         return;
-    }
+    }    
     log_info("@@@@@ Please start speak...");
     tuoyun_voice_param_t param = {0};
     param.code_type = AUDIO_CODING_OPUS;
@@ -128,7 +133,7 @@ static void audio_start_mic(){
     /**
      * 通知服务器, 麦克风打开, 扬声器关闭
      */
-    audio_event_t event = {
+    app_event_t event = {
         .event = APP_EVENT_AUDIO_PLAY_END_NOTIFY,
         .arg = NULL
     };
@@ -141,9 +146,9 @@ static void audio_stop_mic(){
         log_info("mic status already muted");
         return;
     }
+
     tuoyun_voice_recorder_close();
     m_mic_status = WORKING_STATUS_STOP;
-
     log_info("mic status mute");
 }
 
@@ -173,6 +178,7 @@ int dialog_audio_close(void)
 
 
 int dialog_proc_speak_status(device_working_status_t  status){
+    
     if(status == WORKING_STATUS_START){
         audio_start_speaker();
         audio_stop_mic();
@@ -186,6 +192,11 @@ int dialog_proc_speak_status(device_working_status_t  status){
     }
 }
 
+int dialog_proc_interrupt_speak(void){
+    log_info("dialog_proc_interrupt_speak");
+    audio_stop_speaker(false);
+    return 0;   
+}
 
 static int tuoyun_player_event_callback(enum stream_event event)
 {
@@ -198,11 +209,19 @@ static int tuoyun_player_event_callback(enum stream_event event)
         log_info("tuoyun_player_event_callback: stop speaker: %d", m_speaker_status);
         m_speaker_inited = 0;
         if (m_speaker_status == WORKING_STATUS_STOP_PENDING){
+            app_event_t ev = {
+                .event = APP_EVENT_AUDIO_SPEAK_BEFORE_CLOSE,
+                .arg = NULL
+            };
+            app_event_notify(APP_EVENT_FROM_AUDIO, &ev);
+            
             m_speaker_status = WORKING_STATUS_STOP;
             tuoyun_audio_player_clear();
             audio_start_mic();
             m_audio_received_frame = 0;
             log_info("tuoyun_player_event_callback: switch to mic");
+            ev.event = APP_EVENT_AUDIO_SPEAK_AFTER_CLOSE;
+            app_event_notify(APP_EVENT_FROM_AUDIO, &ev);
         }
         break;
     case STREAM_EVENT_END:
@@ -229,7 +248,7 @@ int dialog_audio_dec_frame_write(audio_stream_packet_ptr packet){
      * 启动播放器时，必须确保缓存中有数据，否则会出现读不到数据超时导致播放失败的问题
      */
     if(!m_speaker_inited && m_speaker_status != WORKING_STATUS_STOP && m_audio_received_frame >= MAX_CACHED_FRAME){
-        log_info("**********audio player start");
+        log_info("@TIMING@ 4 **********audio player start");
         m_speaker_inited = 1;
         tuoyun_audio_player_start(tuoyun_player_event_callback);
     }

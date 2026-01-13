@@ -5,13 +5,6 @@
 #include "os/os_api.h"
 #include "app_protocol.h"
 
-/**
- * Audio module event
- */
-typedef struct{
-    int event;
-    void *arg;
-}audio_event_t, *audio_event_ptr;
 
 /**
  * @brief  Initialize network audio module. Call this function when creating a session.
@@ -38,6 +31,8 @@ int dialog_audio_close(void);
  * @note 
  */
 int dialog_proc_speak_status(device_working_status_t  status);
+
+int dialog_proc_interrupt_speak(void);
 
 /**
  * @brief  Write decrypted audio frame data

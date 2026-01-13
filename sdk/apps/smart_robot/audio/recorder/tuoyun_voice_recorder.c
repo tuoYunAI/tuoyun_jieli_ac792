@@ -7,6 +7,7 @@
 #include "jlstream.h"
 #include "encoder_fmt.h"
 #include "vad_node.h"
+#include "app_event.h"
 #include "tuoyun_voice_recorder.h"
 
 
@@ -58,8 +59,10 @@ static int vad_callback(enum vad_event event)
 {
     switch (event) {
     case VAD_EVENT_SPEAK_START:
+        log_info("@TIMING@ 0 VAD_EVENT_SPEAK_START");
         break;
     case VAD_EVENT_SPEAK_STOP:
+        log_info("@TIMING@ 1 VAD_EVENT_SPEAK_STOP");
         break;
     }
 
@@ -73,6 +76,14 @@ void tuoyun_voice_recorder_open(struct tuoyun_voice_param *param)
     struct encoder_fmt enc_fmt = {0};
     vad_node_priv_t vad = {0};
 
+    app_event_t ev = {
+        .event = APP_EVENT_AUDIO_MIC_BEFORE_OPEN,
+        .arg = NULL
+    };
+    app_event_notify(APP_EVENT_FROM_AUDIO, &ev);
+    extern void tuoyun_asr_recorder_close();
+    tuoyun_asr_recorder_close();
+    
     u16 uuid = jlstream_event_notify(STREAM_EVENT_GET_PIPELINE_UUID, (int)"ai_voice");
     if (uuid == 0) {
         return;
@@ -174,6 +185,10 @@ void tuoyun_voice_recorder_open(struct tuoyun_voice_param *param)
         goto __exit1;
     }
     log_info("tuoyun voice recorder init success");
+
+
+    ev.event = APP_EVENT_AUDIO_MIC_AFTER_OPEN;
+    app_event_notify(APP_EVENT_FROM_AUDIO, &ev);
     return;
 
 __exit1:
@@ -191,6 +206,12 @@ int tuoyun_voice_recorder_close()
         return 0;
     }
 
+    app_event_t ev = {
+        .event = APP_EVENT_AUDIO_MIC_BEFORE_CLOSE,
+        .arg = NULL
+    };
+    app_event_notify(APP_EVENT_FROM_AUDIO, &ev);
+
     jlstream_stop(g_tuoyun_voice_recorder->stream, 0);
     jlstream_release(g_tuoyun_voice_recorder->stream);
 
@@ -199,6 +220,9 @@ int tuoyun_voice_recorder_close()
 
     jlstream_event_notify(STREAM_EVENT_CLOSE_RECORDER, (int)"ai_voice");
 
+    os_time_dly(10); //确保资源释放完毕
+    ev.event = APP_EVENT_AUDIO_MIC_AFTER_CLOSE;
+    app_event_notify(APP_EVENT_FROM_AUDIO, &ev);
     return 0;
 }
 

@@ -148,7 +148,19 @@ typedef enum{
      * Audio playback end notification, used to notify the application layer that the current 
      * audio playback has ended and the server can be notified to enter the dictation state.
      */
-    APP_EVENT_AUDIO_PLAY_END_NOTIFY
+    APP_EVENT_AUDIO_PLAY_END_NOTIFY,
+
+
+    APP_EVENT_AUDIO_SPEAK_BEFORE_OPEN,
+    APP_EVENT_AUDIO_SPEAK_AFTER_OPEN,
+    APP_EVENT_AUDIO_SPEAK_BEFORE_CLOSE,
+    APP_EVENT_AUDIO_SPEAK_AFTER_CLOSE,
+
+
+    APP_EVENT_AUDIO_MIC_BEFORE_OPEN,
+    APP_EVENT_AUDIO_MIC_AFTER_OPEN,
+    APP_EVENT_AUDIO_MIC_BEFORE_CLOSE,
+    APP_EVENT_AUDIO_MIC_AFTER_CLOSE,
 }audio_event_type_t;
 
 

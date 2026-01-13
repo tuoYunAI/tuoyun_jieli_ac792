@@ -19,6 +19,7 @@
 #include "network_download/net_audio_buf.h"
 #include "file_player.h"
 #include "volume_node.h"
+#include "app_event.h"
 
 #include "syscfg/syscfg_id.h"
 #include "app_mcp_server.h"
@@ -260,8 +261,7 @@ static int player_dev_read(void *file, u8 *buf, int len)
         }
     }
 
-    if (rlen == 0 && offset == 0) {
-        log_info("@@@@@@@++++++++++++@@@@@@@@@@player_dev_read no data");        
+    if (rlen == 0 && offset == 0) {      
         thread_fork("stop_player", 20, 1024, 0, 0, player_interrupted, NULL);
         return 0;
     }
@@ -271,7 +271,6 @@ static int player_dev_read(void *file, u8 *buf, int len)
 
 static int player_dev_seek(void *file, int offset, int fromwhere)
 {
-    log_info("player_dev_seek offset: %d, fromwhere: %d", offset, fromwhere);
     //tuoyun_player_ptr player = (tuoyun_player_ptr)file;
     return  1 ;//net_buf_seek(offset, fromwhere, player->file);
 }
@@ -330,6 +329,11 @@ static int player_decode_event_callback(void *priv, int parm, enum stream_event 
         break;
     case STREAM_EVENT_START:
         log_info("STREAM_EVENT_START");
+        app_event_t ev = {
+            .event = APP_EVENT_AUDIO_SPEAK_AFTER_OPEN,
+            .arg = NULL
+        };
+        app_event_notify(APP_EVENT_FROM_AUDIO, &ev);
         break;
     case STREAM_EVENT_STOP:
         log_info("STREAM_EVENT_STOP");
@@ -403,7 +407,7 @@ void tuoyun_audio_player_start(player_event_callback_fn callback)
 }
 
 void tuoyun_audio_player_clear(void)
-{
+{    
     player_dev_stop();
     cbuf_clear(&g_audio_cache_cbuf);
     log_info("clear the tuoyun player");

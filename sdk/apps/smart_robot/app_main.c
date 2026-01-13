@@ -41,13 +41,16 @@ extern void printf_buf(u8 *buf, u32 len);
 
 
 typedef struct device_status {
+    overall_state_t overall_state;
     int ble_inited;
     app_status_t network_status; //0:未连接网络 1:已连接网络
 } device_status_t, *device_status_ptr;
 
 static device_status_t g_device_status = {
+    .overall_state = OVERALL_STATE_POWER_ON,
     .ble_inited = 0,
     .network_status = APP_NOT_INIT,
+
 };
 
 /*中断列表 */
@@ -159,7 +162,6 @@ const struct task_info task_info_table[] = {
     { "key_tone",            25,     256,     32 },
     { "cvp_ref",             24,     256,    128 },
     { "CVP_RefTask",         26,     256,    128 },
-    { "audio_transmitter",   20,     512,    128 },
 #endif	 
 #ifdef CONFIG_WIFI_ENABLE
     {"iperf_test",          15,     1024,   0     },
@@ -178,42 +180,56 @@ const struct task_info task_info_table[] = {
 
     {0, 0},
 };
+
+overall_state_t get_overall_state(){
+    return g_device_status.overall_state;
+}
+
 void enter_mode_connecting_wifi(char* ssid){
 
-    log_info("enter_idle_mode");
+    log_info("enter_mode_connecting_wifi");
     if (ssid == NULL) {
         ssid = "未知网络";
     }
     ui_set_status_text(ssid);
+    g_device_status.overall_state = OVERALL_STATE_CONNECTING_WIFI;  
 }
 void enter_mode_network_interrupted(void){
     g_device_status.network_status = APP_INTERRUPTED;
     play_tone_file(get_tone_files()->net_disc);
     log_info("enter_mode_network_interrupted");
     ui_set_status_text("网络断开, 正在重新连接...");
+
+    g_device_status.overall_state = OVERALL_STATE_NETWORK_INTERRUPTED;  
 }
 void enter_mode_activation(void){
 
     log_info("enter_mode_activation");
     play_tone_file(get_tone_files()->activating);
     ui_set_status_text("设备正在激活...");
+
+    g_device_status.overall_state = OVERALL_STATE_ACTIVATION;
 }
 void enter_mode_network_configuring(void){
     play_tone_file(get_tone_files()->net_cfg_enter);
     log_info("enter_mode_network_configuring");
     ui_set_status_text("进入配网模式");
+    
+    g_device_status.overall_state = OVERALL_STATE_NETWORK_CONFIGURING;
 }
 
 void enter_mode_network_config_success(void){
     play_tone_file(get_tone_files()->net_cfg_succ);
     log_info("enter_mode_network_config_success");
     ui_set_status_text("网络配置成功，重启中...");
+    g_device_status.overall_state = OVERALL_STATE_NETWORK_CONFIGURING;
 }
 
 void enter_mode_regitering(void){
 
     play_tone_file(get_tone_files()->net_connected);
     ui_set_status_text("正在注册...");
+    g_device_status.overall_state = OVERALL_STATE_REGISTERING;
 }
 
 void enter_mode_regiter_result(int result){
@@ -229,6 +245,8 @@ void enter_mode_regiter_result(int result){
 void enter_mode_connecting_server(void){
     log_info("enter_mode_connecting_server");
     ui_set_status_text("正在连接服务");
+
+    g_device_status.overall_state = OVERALL_STATE_REGISTERING;
 }
 
 void enter_mode_idle(void){
@@ -237,12 +255,15 @@ void enter_mode_idle(void){
     ui_set_emotion_text("");
     ui_set_content_text("");
     tuoyun_asr_recorder_open();
-    log_info("@@@@@@@@@@@@: tuoyun_asr_recorder_open ---- open");
+
+    g_device_status.overall_state = OVERALL_STATE_IDLE;
 }
 
 void enter_mode_ota(void){
     log_info("enter_mode_ota");
     ui_set_status_text("正在升级中...");
+
+    g_device_status.overall_state = OVERALL_STATE_OTA_UPGRADING;
 }
 
 void enter_mode_ota_end(int result ){
@@ -258,20 +279,24 @@ void enter_mode_ota_end(int result ){
 void enter_mode_renewal_overduep(void){
     play_tone_file(get_tone_files()->renewal_overdue);
     ui_set_status_text("您还未购买服务或服务已过期");
+
+    g_device_status.overall_state = OVERALL_STATE_RENEWAL_OVERDUE;
 }
 
 void enter_mode_dialog_initiating(void){
     ui_set_status_text("正在呼叫...");
     tuoyun_asr_recorder_close();
-    log_info("@@@@@@@@@@@@: tuoyun_asr_recorder_close ---- close");
+    g_device_status.overall_state = OVERALL_STATE_DIALOG_INITIATING;
 }
 
 void enter_mode_dialog_listening(void){
     ui_set_status_text("聆听中");
+    g_device_status.overall_state = OVERALL_STATE_DIALOG_LISTENING;
 }
 
 void enter_mode_dialog_speaking(void){
     ui_set_status_text("讲话中");
+    g_device_status.overall_state = OVERALL_STATE_DIALOG_SPEAKING;
 }
 
 
@@ -445,8 +470,8 @@ void app_protocol_event_handler(struct app_event *event)
         }
         break;
     case APP_EVENT_SERVER_NOTIFY:
-        message_notify_event_t* notify = event->arg;
         log_info("app_user_event_handler: APP_EVENT_SERVER_NOTIFY");
+        message_notify_event_t* notify = event->arg;
         if (notify) {
             log_info("notify event: %d, command: %s, message: %s, emotion: %s\n",
                      notify->event, notify->command, notify->message, notify->emotion);
@@ -470,68 +495,62 @@ void app_protocol_event_handler(struct app_event *event)
         enter_mode_idle();
         break;  
     case APP_EVENT_CALL_UPDATED:
-        log_info("app_user_event_handler: APP_EVENT_CALL_UPDATED");
         message_session_event_t* session_event = event->arg;
         if (session_event) {
-            log_info("session event: %d, status: %d, text: %s\n",
+            log_info("APP_EVENT_CALL_UPDATED session event: %d, status: %d, text: %s\n",
                      session_event->event, session_event->status, session_event->text?session_event->text:"");
-        }
-        switch (session_event->event)
-        {
-        case CTRL_EVENT_ALERT:
-        
-            /* code */
-            break;
-        case CTRL_EVENT_ACTIVATE:
-            /* code */
-            break;
-        case CTRL_EVENT_EXPIRE:
-            /* code */
-            break;
-        case CTRL_EVENT_SHOW_TEXT:
-            log_info("Received text to speak: %s\n", session_event->text?session_event->text:"NULL");
-            if(session_event->text) {
-                ui_set_content_text(session_event->text);
-            }
-            /* code */
-            break;
-        case CTRL_EVENT_SPEAKER:
-            if (session_event->status == WORKING_STATUS_TEXT) {
-                log_info("Received text to speak: %s\n", session_event->text?session_event->text:"NULL");
-                dialog_proc_speak_status(WORKING_STATUS_START);
+
+            switch (session_event->event)
+            {
+            case CTRL_EVENT_ALERT:
+            
+                /* code */
+                break;
+            case CTRL_EVENT_ACTIVATE:
+                /* code */
+                break;
+            case CTRL_EVENT_EXPIRE:
+                /* code */
+                break;
+            case CTRL_EVENT_SHOW_TEXT:
+                log_info("@TIMING@ 2 Received stt: %s\n", session_event->text?session_event->text:"NULL");
                 if(session_event->text) {
                     ui_set_content_text(session_event->text);
                 }
-                return;
-            }
-            dialog_proc_speak_status(session_event->status);
-            if (session_event->status == WORKING_STATUS_START) {
-                enter_mode_dialog_speaking();
-            } else if (session_event->status == WORKING_STATUS_STOP) {
-                enter_mode_dialog_listening();
-            }
-            
-            if (strnlen(session_event->emotion, sizeof(session_event->emotion)) > 0) {
-                ui_set_emotion_text(session_event->emotion);
-            }
-            /* code */
-            break;
-        case CTRL_EVENT_LISTEN:
-            if (session_event->status == WORKING_STATUS_START) {
-                enter_mode_dialog_listening();
-            } else if (session_event->status == WORKING_STATUS_STOP) {
-                enter_mode_dialog_speaking();
-            }
-            break;
-        default:
-            break;
+                /* code */
+                break;
+            case CTRL_EVENT_SPEAKER:
+                
+                if (session_event->status == WORKING_STATUS_TEXT) {
+                    log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", "TEXT");
+                    dialog_proc_speak_status(WORKING_STATUS_START);
+                    if(session_event->text) {
+                        ui_set_content_text(session_event->text);
+                    }
+                    return;
+                }
+                log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", session_event->status == WORKING_STATUS_START ? "START" : "STOP");
+                dialog_proc_speak_status(session_event->status);
+                if (session_event->status == WORKING_STATUS_START) {
+                    enter_mode_dialog_speaking();
+                } else if (session_event->status == WORKING_STATUS_STOP) {
+                    enter_mode_dialog_listening();
+                }
+                
+                if (strnlen(session_event->emotion, sizeof(session_event->emotion)) > 0) {
+                    ui_set_emotion_text(session_event->emotion);
+                }
+                break;
+            default:
+                break;
+            }         
         }
-        
+    
         break;
     case APP_EVENT_CALL_SERVER_TERMINATED:
         log_info("app_user_event_handler: APP_EVENT_CALL_SERVER_TERMINATED");
-        dialog_audio_close();        
-        enter_mode_idle();
+        dialog_audio_close();  
+        enter_mode_idle();      
         break;
     case APP_EVENT_CALL_TERMINATE_ACK:
         log_info("app_user_event_handler: APP_EVENT_CALL_TERMINATE_ACK");
@@ -549,13 +568,49 @@ void app_audio_event_handler(struct app_event *event)
 {
     switch (event->event) {
     case APP_EVENT_AUDIO_PLAY_END_NOTIFY:
-        send_start_listening();
+        log_info("app_audio_event_handler: APP_EVENT_AUDIO_PLAY_END_NOTIFY, overall_state=%d", g_device_status.overall_state);
+        if (g_device_status.overall_state > OVERALL_STATE_IDLE){
+            send_start_listening();
+            enter_mode_dialog_listening();
+        }
         break;  
     
     case APP_EVENT_WAKEUP_WORD_DETECTED:
-        log_info("app_user_event_handler: APP_EVENT_WAKEUP_WORD_DETECTED: %s", (char*)event->arg);
-        init_call((char*)event->arg);
-        break;          
+        log_info("app_audio_event_handler: APP_EVENT_WAKEUP_WORD_DETECTED: %s", (char*)event->arg);
+        if (g_device_status.overall_state == OVERALL_STATE_IDLE){
+            log_info("@TIMING@ 0 Wake Word Detected, init call: %s", (char*)event->arg);
+            init_call((char*)event->arg);
+        } else{
+            log_info("@TIMING@ 5 Wake Word Detected, interrupting...");
+            tuoyun_asr_recorder_close();
+            dialog_proc_interrupt_speak();
+            send_abort_speaking(ABORT_REASON_WAKE_WORD_DETECTED);
+        }
+        
+        break;   
+    case APP_EVENT_AUDIO_SPEAK_BEFORE_OPEN:
+        break;
+    case APP_EVENT_AUDIO_SPEAK_AFTER_OPEN:
+        break;
+    case APP_EVENT_AUDIO_SPEAK_BEFORE_CLOSE:
+        
+        break;
+    case APP_EVENT_AUDIO_SPEAK_AFTER_CLOSE:
+        break;
+    case APP_EVENT_AUDIO_MIC_BEFORE_OPEN:
+        log_info("app_audio_event_handler: APP_EVENT_AUDIO_MIC_BEFORE_OPEN");
+        
+        break;
+    case APP_EVENT_AUDIO_MIC_AFTER_OPEN:
+        break;
+    case APP_EVENT_AUDIO_MIC_BEFORE_CLOSE:
+        break;
+    case APP_EVENT_AUDIO_MIC_AFTER_CLOSE:
+        log_info("app_audio_event_handler: APP_EVENT_AUDIO_MIC_AFTER_CLOSE");
+        if(g_device_status.overall_state != OVERALL_STATE_IDLE){
+            tuoyun_asr_recorder_open();
+        }        
+        break;         
     default:
         break;
     }

@@ -220,7 +220,7 @@ int aisp_open()
     cbuf_init(&__this->mic_cbuf, __this->mic_buf, sizeof(__this->mic_buf));
     os_sem_create(&__this->sem, 0);
 
-    return thread_fork("aisp", 3, 1024, 0, &__this->pid, aisp_task, __this);
+    return thread_fork("aisp", 16, 1024, 0, &__this->pid, aisp_task, __this);
 }
 
 void aisp_suspend(void)

@@ -20,7 +20,7 @@
 #define MOVE 
 
 
-#define LOG_TAG             "[SESION]"
+#define LOG_TAG             "[SESSION]"
 #define LOG_ERROR_ENABLE
 #define LOG_DEBUG_ENABLE
 #define LOG_INFO_ENABLE
@@ -420,16 +420,17 @@ static void proc_request_info(MOVE received_sip_message_ptr message){
         parse = json_tokener_parse(message->message_body);
         //log_info("INFO body, len: %d: %s\n", out_body_len, out_body);
         if (parse) {
-            message_session_event_t session_event = {0};
+            message_session_event_ptr session_event = malloc(sizeof(message_session_event_t));
+            memset(session_event, 0, sizeof(message_session_event_t));
             char ev[16] = {0};
             char* val = json_get_string(parse, "event");
             if (val){
                 strncpy(ev, val, sizeof(ev)-1);
             }
             if (strcmp(ev, DEVICE_CTRL_EVENT_STT) == 0){
-                session_event.event = CTRL_EVENT_SHOW_TEXT;
+                session_event->event = CTRL_EVENT_SHOW_TEXT;
             }else if (strcmp(ev, DEVICE_CTRL_EVENT_SPEAKER) == 0){
-                session_event.event = CTRL_EVENT_SPEAKER;
+                session_event->event = CTRL_EVENT_SPEAKER;
             }else {
                 log_info("unknown event type: %s\n", ev);
                 json_object_put(parse);
@@ -442,27 +443,27 @@ static void proc_request_info(MOVE received_sip_message_ptr message){
                 strncpy(st, val, sizeof(st)-1);
             }
             if (strcmp(st, WORKING_CMD_START) == 0){
-                session_event.status = WORKING_STATUS_START;
+                session_event->status = WORKING_STATUS_START;
             }else if (strcmp(st, WORKING_CMD_STOP) == 0){
-                session_event.status = WORKING_STATUS_STOP;
+                session_event->status = WORKING_STATUS_STOP;
             }else if (strcmp(st, WORKING_CMD_TEXT) == 0 || strcmp(st, WORKING_CMD_SENTENCE_START) == 0){
-                session_event.status = WORKING_STATUS_TEXT;
+                session_event->status = WORKING_STATUS_TEXT;
             }else {
-                session_event.status = WORKING_STATUS_INVALID;
+                session_event->status = WORKING_STATUS_INVALID;
                 //log_info("unknown status type: %s\n", st);
             }
             val = json_get_string(parse, "text");
             if (val){
-                strncpy(session_event.text, val, sizeof(session_event.text)-1);
+                strncpy(session_event->text, val, sizeof(session_event->text)-1);
             }
             
             val = json_get_string(parse, "emotion");
             if (val){
-                strncpy(session_event.emotion, val, sizeof(session_event.emotion)-1);
+                strncpy(session_event->emotion, val, sizeof(session_event->emotion)-1);
             }
             struct app_event event = {
                 .event = APP_EVENT_CALL_UPDATED,
-                .arg = &session_event
+                .arg = session_event
             };
             app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
             json_object_put(parse);
@@ -478,6 +479,8 @@ static void proc_request_info(MOVE received_sip_message_ptr message){
             transmit_sip(out_msg);
             free_sip_message(out_msg);
             out_msg = NULL;
+            free(session_event);
+            session_event = NULL;
         }else{
             log_info("failed to parse INFO body to JSON\n");
         }
@@ -499,13 +502,13 @@ void send_register(){
     do{
 
         if (m_session_state.session_status > SESSION_STATUS_REGISTERING){
-            log_info("send_register client is busy");
+            //log_info("send_register client is busy");
             break;
         }
 
         uint32_t ms = get_system_ms();
         if (m_session_state.last_keepalive_ms > 0 && (m_session_state.last_keepalive_ms + REGISTER_EXPIRE_SECOND * 1000) > ms){
-            log_debug("need to wait more time to register");
+            //log_debug("need to wait more time to register");
             break;
         }
                 
@@ -722,39 +725,64 @@ static int send_listening_status(char* cmd, char* mode){
 
 }
 
+
+void send_abort_speaking(abort_reason_t reason){
+
+    info_param_t info = {0};
+    strncpy(info.event, "listen", sizeof(info.event)-1);
+    strncpy(info.command, "interrupt", sizeof(info.command)-1);
+
+    os_mutex_pend(&mutex, 0);
+
+    do{
+
+        if (m_session_state.session_status != SESSION_STATUS_IN_CALL){
+            log_info("call status is incorrect: %d", m_session_state.session_status);
+            break;
+        }
+        
+        if (!m_session_state.invite_200_ok_resp_message){
+            log_info("no 200 ok response message");
+            break;
+        }
+
+        char* message = NULL;
+        size_t message_len = 0;           
+        int ret = build_listen_info(
+            m_session_state.invite_200_ok_resp_message,
+            m_session_state.uid, 
+            m_session_state.device_ip,
+            m_session_state.seq, 
+            &info,
+            &message, 
+            &message_len);
+        if (ret != 0){
+            log_info("build info fail\n");  
+            break;
+        }    
+        //log_info("info msg:\n%s\n", message);
+
+        uint32_t ms = get_system_ms();
+        m_session_state.last_req_message_ms = ms;
+        m_session_state.last_req_message_seq = m_session_state.seq;
+        m_session_state.seq++;
+        transmit_sip(message);
+        free_sip_message(message);                     
+
+    }while(0);
+    
+    os_mutex_post(&mutex);
+    return;
+}
+
+
 void send_start_listening(){
-    log_info("send_start_listening");
     send_listening_status(WORKING_CMD_START, "auto");
-    message_session_event_t session_event = {
-        .event = CTRL_EVENT_LISTEN, 
-        .status = WORKING_STATUS_START
-    };
-    struct app_event event = {
-        .event = APP_EVENT_CALL_UPDATED,
-        .arg = &session_event
-    };
-    app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
 }
 
 void send_stop_listening(){
     send_listening_status(WORKING_CMD_STOP, NULL);
-    message_session_event_t session_event = {
-        .event = CTRL_EVENT_LISTEN, 
-        .status = WORKING_STATUS_STOP
-    };
-
-    struct app_event event = {
-        .event = APP_EVENT_CALL_UPDATED,
-        .arg = &session_event
-    };
-    app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
 }
-
-
-void send_abort_speaking(abort_reason_t reason){
-
-}
-
 
 
 // 使用示例
