@@ -1,6 +1,8 @@
 #ifndef __SESSION_H__
 #define __SESSION_H__
-#include "sip/sip.h"
+#include "sip/osip_adapter.h"
+
+
 
 typedef enum {
     SESSION_STATUS_IDLE = 0,
@@ -27,9 +29,8 @@ typedef struct {
 
 int check_if_session_in_call();
 
-void send_register();
+void send_register(void * param);
 
-void session_checking();
+void session_checking(void * param);
 
-void init_session_module(char* uid, char* device_ip);
 #endif

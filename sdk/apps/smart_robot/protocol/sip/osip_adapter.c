@@ -1,30 +1,21 @@
-#include "app_config.h"
-#include "system/includes.h"
-#include "os/os_api.h"
+#include "adapter.h"
 #include "osipparser2/osip_message.h"
 #include "osipparser2/osip_parser.h"
 #include "osipparser2/sdp_message.h"
-#include "sip.h"
-#include "json_c/json_object.h"
-#include "json_c/json_tokener.h"
+#include "osip_adapter.h"
 
 
-#define LOG_TAG             "[SIP]"
-#define LOG_ERROR_ENABLE
-#define LOG_DEBUG_ENABLE
-#define LOG_INFO_ENABLE
-#define LOG_DUMP_ENABLE
-#define LOG_CLI_ENABLE
-#include "system/debug.h"
+#define TAG             "[SIP]"
 
 
 #define SIP_VERSION "SIP/2.0"
 #define SERVER_HOST "server.lovaiot.com"
 #define USER_AGENT  "TUOYUN-AI-TOY/1.0"
 
-
 // 简单的错误处理宏
-#define CHECK_RET(expr) do { int __rc = (expr); if (__rc != 0) { log_info("check err ret: %d", __rc);goto fail; } } while (0)
+#define CHECK_RET(expr) do { int __rc = (expr); if (__rc != 0) { goto fail; } } while (0)
+
+
 
 
 void free_sip_message(char* sip){
@@ -116,7 +107,6 @@ int hex_string_to_array(const char *hex_str, uint8_t *hex_array, size_t array_si
 
         // 验证字符是否为有效的十六进制字符
         if (!isxdigit(high_char) || !isxdigit(low_char)) {
-            log_info("Invalid hex character at position %zu\n", i);
             return -1;
         }
 
@@ -149,7 +139,6 @@ int array_to_hex_string(const uint8_t *hex_array, size_t array_len,
     size_t required_size = array_len * 2 + 1; // +1 for '\0'
 
     if (str_size < required_size) {
-        log_info("String buffer too small: need %zu, got %zu\n", required_size, str_size);
         return -1;
     }
 
@@ -204,7 +193,7 @@ static inline void sip_generate_branch(char *out,
 {
     if (!out || out_sz == 0) return;
 
-    uint32_t ticks = (uint32_t)get_system_ms();
+    uint32_t ticks = (uint32_t)adapter_get_system_ms();
 
     uint32_t h = sip_branch_hash(uid, device_ip, cseq, ticks);
     // 确保以 RFC3261 魔法串开头
@@ -223,7 +212,7 @@ static inline void sip_generate_tag(char *out,
 {
     if (!out || out_sz == 0) return;
 
-    uint32_t ticks = (uint32_t)get_system_ms();
+    uint32_t ticks = (uint32_t)adapter_get_system_ms();
 
     uint32_t h1 = sip_branch_hash(uid, device_ip, cseq, ticks);
     uint32_t h2 = h1 ^ (call_id ? sip_rotl32(sip_fnv1a32(call_id, (uint32_t)strlen(call_id)), 7) : 0xA5A5A5A5u);
@@ -276,8 +265,8 @@ int build_register(sip_register_param_ptr param, char **out_msg, size_t *out_len
     CHECK_RET(osip_from_init(&msg->from));
     char tag[33]; // 16 hex + 16 hex + '\0'，我们只用 16（%08X%08X）
     char call_id[36] = {0};
-    uint32_t ms = get_system_ms();
-    sprintf(call_id, "%d@%s", ms, param->device_ip);  
+    uint32_t ms = adapter_get_system_ms();
+    sprintf(call_id, "%ld@%s", ms, param->device_ip);  
     sip_generate_tag(tag, sizeof(tag), param->uid, param->device_ip, call_id, (uint32_t)param->cseq_num);
     snprintf(buf, sizeof(buf), "<sip:%s@%s>;tag=%s", param->uid, SERVER_HOST, tag);
     CHECK_RET(osip_from_parse(msg->from, buf));
@@ -328,12 +317,12 @@ static int make_sdp(uplink_sdp_parameter_ptr param, char *dst, size_t dst_sz)
 {
     if (!dst || dst_sz == 0 || !param || !param->uid || !param->device_ip || !param->codec) return -1;
 
-    uint32_t version = (uint32_t)get_system_ms();
+    uint32_t version = (uint32_t)adapter_get_system_ms();
     char call_id[36] = {0};
-    sprintf(call_id, "%d@%s", version, param->device_ip);  
+    sprintf(call_id, "%ld@%s", version, param->device_ip);  
     int n = snprintf(dst, dst_sz,
         "v=0\r\n"
-        "o=%s %s %u IN IP4 %s\r\n"
+        "o=%s %s %ld IN IP4 %s\r\n"
         "s=AI-Session\r\n"
         "c=IN IP4 %s\r\n"
         "t=0 0\r\n"
@@ -451,7 +440,6 @@ int parse_sdp(const char *sdp_buf, downlink_sdp_parameter_ptr param)
     return 0;
 
 fail:
-    log_info("failed to parse sdp message: %s\n", sdp_buf);
     if (sdp) sdp_message_free(sdp);
     return -1;    
 }
@@ -487,9 +475,9 @@ int build_invite(sip_invite_param_ptr param, char **out_msg, size_t *out_len)
     // Max-Forwards: 70
     CHECK_RET(osip_message_set_header(msg, "Max-Forwards", "70"));
 
-    uint32_t ms = get_system_ms();
+    uint32_t ms = adapter_get_system_ms();
     char call_id[36] = {0};
-    sprintf(call_id, "%d@%s", ms, param->device_ip);    
+    sprintf(call_id, "%ld@%s", ms, param->device_ip);    
 
     // From: <sip:{uid}@server.lovaiot.com>;tag=<动态生成>
     CHECK_RET(osip_from_init(&msg->from));
@@ -590,7 +578,6 @@ static int build_response(int status_code,
 {
     if (!reason_phrase || !via_header || !from_header || !to_header || 
         !call_id || !cseq_header || !out_msg || !out_len) {
-        log_info("build_response invalid params");
         return -1;
     }
 
@@ -674,10 +661,8 @@ fail:
 int build_200_ok_response(received_sip_message_ptr request, char **out_msg, size_t *out_len)
 {
     if (!request || !out_msg || !out_len){
-        log_info("build_200_ok_response invalid request params ");
         return -1;
     }
-    //log_info("building 200_ok_response");
 
     return build_response(200, "OK", request->via_header, request->from_header, request->to_header, NULL,
                          request->call_id_header, request->cseq_header, request->contact_header, NULL, NULL, 0,
@@ -712,7 +697,7 @@ int build_ack(received_sip_message_ptr response, const char *uid, const char *de
     //    协议承载在 MQTT 上，沿用栈中示例格式
     char via_hdr[128] = {0};
     snprintf(via_hdr, sizeof(via_hdr), "SIP/2.0/MQTT %s;branch=z9hG4bK-ack%u",
-             device_ip, (unsigned)(get_system_ms() & 0xFFFF));
+             device_ip, (unsigned)(adapter_get_system_ms() & 0xFFFF));
 
     osip_via_t *via = NULL;
     osip_via_init(&via);
@@ -832,22 +817,19 @@ int build_listen_info(
     CHECK_RET(osip_message_set_header(msg, "Content-Type", "application/json"));
 
     // Body: JSON 内容
-    json_object *root = json_object_new_object();
-    json_object *event = json_object_new_string(info->event);
-    json_object_object_add(root, "event", event);
+    void *root = adapter_create_json_object();
+    adapter_put_json_string_value(root, "event", info->event);
 
     if (strlen(info->command) > 0){
-        json_object *command = json_object_new_string(info->command); 
-        json_object_object_add(root, "command", command);
+        adapter_put_json_string_value(root, "command", info->command);
     }
     if (strlen(info->mode) > 0){
-        json_object *mode = json_object_new_string(info->mode); 
-        json_object_object_add(root, "mode", mode);
+        adapter_put_json_string_value(root, "mode", info->mode);
     }
     
-    const char* json_string = json_object_to_json_string(root);
+    char* json_string = adapter_serialize_json_to_string(root);
     if (!json_string) {
-        json_object_put(root);
+        adapter_delete_json_object(root);
         goto fail;
     }
 
@@ -856,12 +838,12 @@ int build_listen_info(
 
     // Content-Length: 自动计算设置
     snprintf(buf, sizeof(buf), "%d", json_len);
-    CHECK_RET(osip_message_set_content_length(msg, osip_strdup(buf)));
+    CHECK_RET(osip_message_set_content_length(msg, buf));
 
     // 序列化为最终字符串
     CHECK_RET(osip_message_to_str(msg, out_msg, out_len));
     osip_message_free(msg);
-    json_object_put(root);
+    adapter_delete_json_object(root);
     return 0;
 
 fail:
@@ -974,24 +956,18 @@ fail:
 int sip_parse_incoming_message(const char *raw_msg,  size_t msg_len, received_sip_message_ptr *msg_info)
 {
     if (!raw_msg || msg_len == 0 || !msg_info) {
-        log_info("Invalid input parameters\n");
         return -1;
     }
-
-    //log_info("Received SIP message (%d bytes):\n", msg_len);
-    //log_info("%.512s%s\n", raw_msg, msg_len > 512 ? "..." : "");
 
     // 初始化 osip 消息结构
     osip_message_t* sip = NULL;
     if (0 != osip_message_init(&sip)) {
-        log_info("Failed to initialize osip message\n");
         return -1;
     }
 
     // 解析 SIP 消息
     int rc = osip_message_parse(sip, raw_msg, msg_len);
     if (rc != 0) {
-        log_info("Failed to parse SIP message: %d\n", rc);
         goto cleanup;
     }
 
@@ -999,21 +975,18 @@ int sip_parse_incoming_message(const char *raw_msg,  size_t msg_len, received_si
 
     // 基本验证
     if (!sip->call_id || !sip->call_id->number) {
-        log_info("Missing Call-ID\n");
         goto cleanup;
     }
 
     if (!sip->cseq || !sip->cseq->number || !sip->cseq->method) {
-        log_info("Missing or invalid CSeq\n");
         goto cleanup;
     }
 
     if (!sip->from || !sip->to) {
-        log_info("Missing From or To header\n");
         goto cleanup;
     }
 
-    int body_length = 0;
+    size_t body_length = 0;
     char *body_content = NULL;
 
     // 消息体
@@ -1032,7 +1005,6 @@ int sip_parse_incoming_message(const char *raw_msg,  size_t msg_len, received_si
          */
         *msg_info = malloc(body_length + 1 + sizeof(received_sip_message_t)); 
         if (!*msg_info) {
-            log_info("Memory allocation failed for message body\n");
             goto cleanup;
         }
         memset(*msg_info, 0, sizeof(received_sip_message_t) + body_length + 1);
@@ -1044,7 +1016,6 @@ int sip_parse_incoming_message(const char *raw_msg,  size_t msg_len, received_si
     } else {
         *msg_info = malloc(sizeof(received_sip_message_t));
         if (!*msg_info) {
-            log_info("Memory allocation failed for message\n"); 
             goto cleanup;
         }
         memset(*msg_info, 0, sizeof(received_sip_message_t));
@@ -1061,7 +1032,6 @@ int sip_parse_incoming_message(const char *raw_msg,  size_t msg_len, received_si
         
         //strncpy(message->from_header, "<sip:5442993809231380480@server.lovaiot.com>;tag=srvtg1763532272424", sizeof(message->from_header) - 1);
         if (OSIP_SUCCESS != osip_from_to_str(sip->from, &from_str) || !from_str) {
-            log_info("osip_to_to_str failed");
             goto cleanup;
         }
         strncpy(message->from_header, from_str, sizeof(message->from_header) - 1);
@@ -1071,7 +1041,6 @@ int sip_parse_incoming_message(const char *raw_msg,  size_t msg_len, received_si
     if (sip->to){
         char *to_str = NULL;
         if (OSIP_SUCCESS != osip_to_to_str(sip->to, &to_str)){
-            log_info("osip_to_to_str failed");
             goto cleanup;
         }
         strncpy(message->to_header, to_str, sizeof(message->to_header) - 1);
@@ -1082,7 +1051,6 @@ int sip_parse_incoming_message(const char *raw_msg,  size_t msg_len, received_si
         osip_via_t *via = (osip_via_t *)osip_list_get(&sip->vias, 0);
         char *via_header = NULL;
         if (OSIP_SUCCESS != osip_via_to_str(via, &via_header)) {
-            log_info("osip_via_to_str failed");
             goto cleanup;
         }
         strncpy(message->via_header, via_header, sizeof(message->via_header) - 1);
@@ -1092,7 +1060,6 @@ int sip_parse_incoming_message(const char *raw_msg,  size_t msg_len, received_si
     if (sip->call_id){
         char* call_id = NULL;
         if (OSIP_SUCCESS != osip_call_id_to_str(sip->call_id, &call_id)){
-            log_info("osip_call_id_to_str failed");
             goto cleanup;
         }
         strncpy(message->call_id_header, call_id, sizeof(message->call_id_header) - 1);
@@ -1104,7 +1071,6 @@ int sip_parse_incoming_message(const char *raw_msg,  size_t msg_len, received_si
     if (sip->cseq){
         char* cseq_header = NULL;
         if (OSIP_SUCCESS != osip_cseq_to_str(sip->cseq, &cseq_header)){
-            log_info("osip_call_id_to_str failed");
             goto cleanup;
         }
         strncpy(message->cseq_header, cseq_header, sizeof(message->cseq_header) - 1);
@@ -1134,15 +1100,11 @@ int sip_parse_incoming_message(const char *raw_msg,  size_t msg_len, received_si
     int ret = osip_message_header_get_byname(sip, "x-reason-code", 0, &reason_header);
     
     if (ret == 0 && reason_header != NULL) {
-        if (reason_header->hvalue != NULL) {
-            log_info("Found x-reason-code: %s", reason_header->hvalue);
-            
+        if (reason_header->hvalue != NULL) {            
             // 如果需要转为整数
             message->x_reason_code = atoi(reason_header->hvalue);
         }
-    } else {
-        log_info("x-reason-code header not found");
-    }
+    } 
     
     return 0;
 
@@ -1159,7 +1121,6 @@ cleanup:
 
 void init_sip(void) {
     parser_init();
-    log_info("osip_init done\n");
 }
 
 

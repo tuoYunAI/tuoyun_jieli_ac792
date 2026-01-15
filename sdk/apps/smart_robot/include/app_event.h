@@ -112,12 +112,6 @@ typedef enum{
     APP_EVENT_CALL_REJECTED,
 
     /**
-     * Session no answer notification, indicating that the terminal initiated the session but 
-     * timed out waiting for the other party to answer.
-     */
-    APP_EVENT_CALL_NO_ANSWER,
-
-    /**
      * Session status update notification, used to notify the application layer of the current 
      * session status changes, such as start/stop dictation, etc.
      */

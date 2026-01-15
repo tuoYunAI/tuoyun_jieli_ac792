@@ -25,15 +25,9 @@
 
 int tuoyun_player_event_callback(enum stream_event event);
 
-media_parameter_t g_audio_enc_media_param = {
-    .codec = "opus",
-    .sample_rate = 16000,
-    .channels = 1,
-    .frame_duration = 60,
-    .encryption = "aes-128-cbc"
-};
+extern media_parameter_t g_audio_enc_media_param;
 
-media_parameter_t g_audio_dec_media_param;
+extern media_parameter_t g_audio_dec_media_param;
 
 static m_audio_received_frame = 0;
 static MAX_CACHED_FRAME = 1;

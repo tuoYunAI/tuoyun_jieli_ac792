@@ -12,8 +12,6 @@
 #include "json_c/json_object.h"
 #include "json_c/json_tokener.h"
 
-#include "osipparser2/osip_list.h"
-
 #include "mbedtls/aes.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
@@ -42,10 +40,6 @@ static int m_protocol_inited = 0;
 static mqtt_connection_parameter_ptr m_mqtt_info = NULL;
 
 static Client m_mqtt_client;
-
-extern uint32_t get_system_ms(void);
-
-
 
 void transmit_mqtt_message(char* message){
     
@@ -78,9 +72,6 @@ void transmit_mqtt_message(char* message){
 }
 
 
-static osip_list_t m_received_sip_list;
-static OS_MUTEX m_sip_mutex;
-
 //接收回调，当订阅的主题有信息下发时，在这里接收
 static void message_arrived(MessageData *data)
 {
@@ -89,68 +80,8 @@ static void message_arrived(MessageData *data)
         return;
     }
     
-    int len = data->message->payloadlen + 1;
-    u8* buf = malloc(len);
-    if (!buf){
-        log_info("message_arrived malloc err: %d\n", data->message->payloadlen);
-        return;
-    }
-
-    memset(buf, 0, len);
-    strncpy(buf, data->message->payload, len - 1);
-    
-    os_mutex_pend(&m_sip_mutex, 0);
-    
-    if (osip_list_add(&m_received_sip_list, buf, -1) < 0){
-        log_info("failed to add received message to list\n");
-        free(buf);
-        os_mutex_post(&m_sip_mutex);
-        return;
-    }
-    os_mutex_post(&m_sip_mutex);
+    handle_received_mqtt_message(data->message->payload, data->message->payloadlen);
     return;   
-}
-
-
-void protocol_mqtt_proc_task(){
-    while (1) {
-        os_mutex_pend(&m_sip_mutex, 0);
-        int list_size = osip_list_size(&m_received_sip_list);
-        if (list_size == 0) {
-            os_mutex_post(&m_sip_mutex);
-            os_time_dly(5);
-            continue;
-        }
-        u8* msg = (char*)osip_list_get(&m_received_sip_list, 0);
-        if (msg) {
-            osip_list_remove(&m_received_sip_list, 0);
-        }
-        os_mutex_post(&m_sip_mutex);
-
-        if (msg) {
-            // 处理接收到的消息
-            json_object *root = json_tokener_parse(msg);
-            if(root != NULL){
-                char protocol[10] = {0};
-                strcpy(protocol, json_get_string(root, "protocol"));
-                char* payload = json_get_string(root, "payload");
-                if (strcmp("SIP", protocol) == 0){
-                    handle_received_sip(payload, strlen(payload));
-                }else 
-                if (strcmp("MCP", protocol) == 0){
-                    handle_received_mcp_request(payload, strlen(payload));
-                }else{
-                    
-                    log_info("received invalid protocol: %s", protocol);
-                }
-                
-                json_object_put(root);
-                root = NULL;    
-                
-            }
-            free(msg);
-        }
-    }
 }
 
 
@@ -218,7 +149,6 @@ void protocol_mqtt_recv_task(void)
         //MQTTUnsubscribe(&client, subscribeTopic);
         event.arg = MQTT_STATUS_ENSTABLISHED;
         app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
-        send_register();
 
         for (;;) {
 
@@ -256,9 +186,7 @@ int start_protocol(mqtt_connection_parameter_ptr mqtt_info_ptr){
         log_info("protocol already inited\n");
         return 0;
     }
-
-    osip_list_init(&m_received_sip_list);
-    os_mutex_create(&m_sip_mutex);
+    log_info("start to init protocol\n");
     os_mutex_create(&mutex);
     m_protocol_inited = 1;
     m_mqtt_info = mqtt_info_ptr;
@@ -269,26 +197,12 @@ int start_protocol(mqtt_connection_parameter_ptr mqtt_info_ptr){
         return -1;
     }
     const char *str = inet_ntoa(addr);
-    
     init_session_module(m_mqtt_info->user_name, str);
-
-    log_info("start to init protocol\n");
 
     if (thread_fork("protocol_mqtt_receive", 25, 1024, 0, NULL, protocol_mqtt_recv_task, NULL) != OS_NO_ERR) {
         log_info("thread fork fail\n");
         return -1;
     }
-
-    if (thread_fork("protocol_mqtt_proc", 25, 2028, 0, NULL, protocol_mqtt_proc_task, NULL) != OS_NO_ERR) {
-        log_info("thread fork fail\n");
-        return -1;
-    }
-    
-    
-
-    sys_timer_add_to_task("protocol_mqtt_proc", NULL, session_checking, 500 * 100);
-    
-    sys_timer_add_to_task("protocol_mqtt_proc", NULL, send_register, 20 * 1000);
 
     return 0;
 }

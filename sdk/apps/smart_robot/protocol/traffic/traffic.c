@@ -1,7 +1,6 @@
-#include "system/includes.h"
-#include "traffic.h"
+#include "adapter.h"
 #include "app_protocol.h"
-#include "app_event.h"
+#include "traffic.h"
 #include "mbedtls/aes.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
@@ -45,7 +44,7 @@ static void traffic_uplink_empty_task();
 
 
 void test_print_traffic_state(){
-    log_info(
+    printf(
         "+++++++++++++++++++++traffic status+++++++++++++++\r\n"
         "        media_param.ip: %s\r\n"
         "        media_param.port: %d\r\n"
@@ -105,7 +104,6 @@ int sample_rate_to_audio_packet_len(int sample_rate){
         case 64000:
             return 480; // 48kbps
         default:
-            log_info("unsupported sample rate: %d", sample_rate);
             return -1;
     }
 }
@@ -122,15 +120,13 @@ int clear_traffic_tunnel(){
 
 int start_traffic_tunnel(media_parameter_ptr param){
     if (!param){
-        log_info("invalid media param\n");
         return -1;
     }
     if (param->ip[0]== '\0' || param->port == 0){
-        log_info("invalid remote host: %s, %d", param->ip, param->port);
         return -1;
     }
     memcpy(&m_traffic_state.media_param, param, sizeof(media_parameter_t));
-    log_info("start_traffic_tunnel, media param: ip=%s, port=%d, codec=%s, transport=%s, sample_rate=%d, channels=%d, frame_duration=%d\n",
+    printf("start_traffic_tunnel, media param: ip=%s, port=%d, codec=%s, transport=%s, sample_rate=%d, channels=%d, frame_duration=%d\n",
             m_traffic_state.media_param.ip,
             m_traffic_state.media_param.port,
             m_traffic_state.media_param.codec,
@@ -142,7 +138,6 @@ int start_traffic_tunnel(media_parameter_ptr param){
 
     m_traffic_state.downlink_audio_packet_len = sample_rate_to_audio_packet_len(m_traffic_state.media_param.sample_rate);
     if (m_traffic_state.downlink_audio_packet_len <= 0){
-        log_info("unsupported sample rate: %d", m_traffic_state.media_param.sample_rate);
         return -1;
     }
 
@@ -171,14 +166,14 @@ int start_traffic_tunnel(media_parameter_ptr param){
         }
 
         audio_transmission_started = 0;
-        if (thread_fork("protocol_audio_demo", 16, 1024, 0, NULL, traffic_uplink_empty_task, NULL) != OS_NO_ERR) {
+        if (adapter_start_thread(traffic_uplink_empty_task, "protocol_audio_demo", 1024, 16) != true) {
             log_info("thread audio demo fork fail\n");
         }
-        if (thread_fork("protocol_audio", 28, 1024, 0, NULL, traffic_receive_task, NULL) != OS_NO_ERR) {
+        if (adapter_start_thread(traffic_receive_task, "protocol_audio", 1024, 28) != true) {
             log_info("thread audio receive fork fail\n");
             break;
         }
-        if (thread_fork("traffic_receive_monitor_task", 20, 1024, 0, NULL, traffic_receive_monitor_task, NULL) != OS_NO_ERR) {
+        if (adapter_start_thread(traffic_receive_monitor_task, "traffic_receive_monitor_task", 1024, 20) != true) {
             log_info("thread audio receive fork fail\n");
             break;
         }
@@ -258,25 +253,21 @@ int send_audio(audio_stream_packet_ptr packet){
 /**
  * 通道建立时发送空包, 创建上下行UDP通道
  */
-static void traffic_uplink_empty_task(){
+static void traffic_uplink_empty_task(void* arg){
     char buf[2] = {0x58, 0x00};
     audio_stream_packet_t packet = {
             .payload_len = 120,
             .payload = buf
         };
-    log_info("traffic demo task start\n");    
     while (audio_transmission_started == 0)
     {
 
         if (!check_if_session_in_call() || !m_traffic_state.udp_fd){
-            log_info("demo task exit\n");
             return;
         } 
 
-        //log_info("send demo audio packet\n");
         send_audio(&packet);
-        os_time_dly(20);
-        /* code */
+        adapter_task_delay(200);
     }
     
 }
@@ -297,7 +288,7 @@ uint32_t m_timeout_cnt = 0;
 static OS_MUTEX mutex;
 
 
-static void traffic_receive_task(){
+static void traffic_receive_task(void *arg){
     int recv_len;
     struct sockaddr_in s_addr = {0};
     socklen_t len = sizeof(s_addr);
@@ -309,21 +300,18 @@ static void traffic_receive_task(){
     int buf_len = 8*1024;
     u8* udp_recv_buf = malloc(buf_len);
     if(!udp_recv_buf){
-        log_info("failed to alloc mem for udp recv buf");
         return;
     }
 
     audio_stream_packet_t audio_pack = {0};
     audio_pack.payload = malloc(m_traffic_state.downlink_audio_packet_len);
     if(!audio_pack.payload){
-        log_info("failed to alloc mem for received data");
         return;
     }
     audio_pack.payload_len = m_traffic_state.downlink_audio_packet_len;
     uint8_t ctr_block[nonce_size];
     uint8_t stream_block[nonce_size];
 
-    log_info("traffic receive task start, buffer size: %d\n", buf_len);
     m_traffic_state.rx_seq = 0;
     
     m_cache_block = calloc(REORDER_WINDOW, sizeof(reorder_entry_t));
@@ -344,17 +332,15 @@ static void traffic_receive_task(){
     for(;;){
         
         if(!check_if_session_in_call() || !m_traffic_state.udp_fd){
-            log_info("traffic receive task exit\n");
+            printf("traffic receive task exit\n");
             clear_traffic_tunnel();
             break;
         }
         
         recv_len = sock_recvfrom(m_traffic_state.udp_fd, udp_recv_buf, buf_len, 0, 
                                                         (struct sockaddr *)&s_addr, &len);
-
-        //log_info("@@@@@@++++++++@@@@@@@@received %d Bytes\n", recv_len);
+                                                        
         if(recv_len <= nonce_size){
-            log_info("received %d Bytes", recv_len);
             continue;
         }
         
@@ -392,7 +378,6 @@ static void traffic_receive_task(){
                                             audio_pack.payload);
 
             if (ret != 0) {
-                log_info("AES decryption failed: %d\n", ret);
                 offset += packet_len;
                 continue;
             }
@@ -474,7 +459,7 @@ static void traffic_receive_task(){
 }
 
 
-static void traffic_receive_monitor_task(){
+static void traffic_receive_monitor_task(void *arg){
 
     audio_stream_packet_t audio_pack = {0};
     audio_pack.payload = malloc(m_traffic_state.downlink_audio_packet_len);

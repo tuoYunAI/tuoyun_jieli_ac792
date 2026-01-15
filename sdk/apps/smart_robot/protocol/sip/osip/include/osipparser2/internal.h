@@ -77,7 +77,9 @@
 #endif
 #endif
 #endif
-
+#elif defined(FREE_RTOS)
+#define HAVE_CTYPE_H 1
+#define HAVE_SYS_TIME_H 1
 #endif
 
 #if defined(HAVE_STRING_H)

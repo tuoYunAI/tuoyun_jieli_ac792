@@ -497,6 +497,28 @@ json_object* mcp_call_set_volume(property_ptr props, size_t len) {
     return result;
 }
 
+/**
+ * 需要延时注册mcp tool, 确保在mcp server初始化完成后
+ */
+static void reg_module_mcp_tools(void){
+
+    property_t volume_property = {
+        .name = "volume",
+        .type = PROPERTY_TYPE_INTEGER,
+        .required = 1,
+        .max_int_value = 100,
+        .min_int_value = 0,
+        .description = "Volume level from 0 to 100"
+    };
+    
+
+    add_mcp_tool("set_volume", 
+        "Set the volume of the audio speaker. If the current volume is unknown, you must call `get_device_status` tool first and then call this tool.",
+        mcp_call_set_volume,
+        &volume_property, 
+        1);
+}
+
 static int __player_init(void)
 {
     os_mutex_create(&__this->mutex);
@@ -514,23 +536,9 @@ static int __player_init(void)
     int ret = syscfg_read(CFG_MUSIC_VOL, &vol, 2);
     if (ret > 0) {
         m_volume = vol;
-    }
+    }    
 
-    property_t volume_property = {
-        .name = "volume",
-        .type = PROPERTY_TYPE_INTEGER,
-        .required = 1,
-        .max_int_value = 100,
-        .min_int_value = 0,
-        .description = "Volume level from 0 to 100"
-    };
-    
-    add_mcp_tool("set_volume", 
-        "Set the volume of the audio speaker. If the current volume is unknown, you must call `get_device_status` tool first and then call this tool.",
-        mcp_call_set_volume,
-        &volume_property, 
-        1);
-
+    sys_timeout_add_to_task("sys_timer", NULL, reg_module_mcp_tools, 3000);
     return 0;
 }
 

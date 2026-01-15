@@ -1,5 +1,31 @@
-#ifndef __SIP_H__
-#define __SIP_H__
+#ifndef __OSIP_ADAPTER_H__
+#define __OSIP_ADAPTER_H__
+
+#include "adapter.h"
+
+/**
+ * OPUS audio frame duration of this device, unit: ms
+ */
+#define OPUS_FRAME_DURATION_MS 60
+
+/**
+
+ * Device control event name in SIP message payload
+ */
+#define DEVICE_CTRL_EVENT_ALERT       "alert"
+#define DEVICE_CTRL_EVENT_ACTIVATE    "activate"
+#define DEVICE_CTRL_EVENT_EXPIRE      "expire"
+#define DEVICE_CTRL_EVENT_STT         "stt"
+#define DEVICE_CTRL_EVENT_LISTEN      "listen"
+#define DEVICE_CTRL_EVENT_SPEAKER     "speaker"
+
+
+#define WORKING_CMD_START        "start"
+#define WORKING_CMD_STOP         "stop"
+#define WORKING_CMD_TEXT         "text"
+#define WORKING_CMD_SENTENCE_START   "sentence_start"
+
+
 
 /**
  * 设备发起SIP REGISTER参数结构体
@@ -143,7 +169,7 @@ typedef struct sip_invite_param{
   /**
    * SDP内容
    */
-  uplink_sdp_parameter_ptr* sdp;
+  uplink_sdp_parameter_ptr sdp;
 }sip_invite_param_t, *sip_invite_param_ptr;
 
 /**
@@ -226,10 +252,6 @@ typedef struct info_param{
   char mode[32];
 }info_param_t, *info_param_ptr;
 
-/**
- * SIP模块初始化, 使用sip模块前必须调用该函数，只需调用一次
- */
-void init_sip();
 
 
 /**
@@ -265,11 +287,14 @@ int build_listen_info(
                info_param_ptr info,
                char **out_msg,
                size_t *out_len);    
-               
-
-              
+       
 int sip_parse_incoming_message(const char *raw_msg, size_t msg_len, received_sip_message_ptr *msg_info);
 
 void free_sip_message(char* sip);
-                                               
+   
+
+/**
+ * SIP模块初始化, 使用sip模块前必须调用该函数，只需调用一次
+ */
+void init_sip();
 #endif

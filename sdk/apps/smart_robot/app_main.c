@@ -455,7 +455,65 @@ void app_user_event_handler(struct app_event *event)
     }
 }
 
+static void proc_server_notify(server_message_notify_ptr event)
+{
+    log_info("proc_server_notify");
+}
 
+static void proc_call_rejected(session_call_error_event_ptr notify)
+{
+    if (!notify) {
+        return;
+    }
+
+    log_info("proc_call_rejected, event: %d, message: %s", notify->event, notify->message);
+    if (notify->event == CALL_ERROR_MEMBERSHIP_INVALID) {
+        enter_mode_renewal_overduep();   
+    } 
+    enter_mode_idle();
+}
+
+static void proc_session_update_event(message_session_event_ptr notify)
+{
+    log_info("APP_EVENT_CALL_UPDATED session event: %d, status: %d, text: %s\n",
+                    notify->event, notify->status, notify->text?notify->text:"");
+
+    session_update_cmd_t event = notify->event;
+    switch (event)
+    {
+    case CTRL_EVENT_USER_TEXT:
+        log_info("@TIMING@ 2 Received stt: %s\n", notify->text?notify->text:"NULL");
+        if(notify->text) {
+            ui_set_content_text(notify->text);
+        }
+        break;
+    case CTRL_EVENT_SPEAKER:
+        log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", notify->status == WORKING_STATUS_START ? "START" : "STOP");
+        dialog_proc_speak_status(notify->status);
+
+        if (notify->status == WORKING_STATUS_TEXT) {
+            log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", "TEXT");
+            dialog_proc_speak_status(WORKING_STATUS_START);
+            
+        }
+        else if (notify->status == WORKING_STATUS_START) {
+            enter_mode_dialog_speaking();
+        } else if (notify->status == WORKING_STATUS_STOP) {
+            enter_mode_dialog_listening();
+        }
+
+        if(notify->text) {
+            ui_set_content_text(notify->text);
+        }
+        if (strnlen(notify->emotion, sizeof(notify->emotion)) > 0) {
+            ui_set_emotion_text(notify->emotion);
+        }
+        break;
+    default:
+        break;
+    } 
+         
+}
 
 void app_protocol_event_handler(struct app_event *event)
 {
@@ -470,82 +528,17 @@ void app_protocol_event_handler(struct app_event *event)
         }
         break;
     case APP_EVENT_SERVER_NOTIFY:
-        log_info("app_user_event_handler: APP_EVENT_SERVER_NOTIFY");
-        message_notify_event_t* notify = event->arg;
-        if (notify) {
-            log_info("notify event: %d, command: %s, message: %s, emotion: %s\n",
-                     notify->event, notify->command, notify->message, notify->emotion);
-            if (notify->event == CTRL_EVENT_EXPIRE) {
-                enter_mode_renewal_overduep();   
-            }     
-        }
-    
+         proc_server_notify((server_message_notify_ptr)event->arg);
         break;  
     case APP_EVENT_CALL_ESTABLISHED:
-        log_info("app_user_event_handler: APP_EVENT_CALL_ESTABLISHED");
         dialog_audio_init((media_parameter_ptr)event->arg);
         enter_mode_dialog_initiating();
         break;
     case APP_EVENT_CALL_REJECTED:
-        log_info("app_user_event_handler: APP_EVENT_CALL_REJECTED");
-        enter_mode_idle();
+        proc_call_rejected((session_call_error_event_ptr)event->arg);
         break;
-    case APP_EVENT_CALL_NO_ANSWER:
-        log_info("app_user_event_handler: APP_EVENT_CALL_NO_ANSWER");  
-        enter_mode_idle();
-        break;  
     case APP_EVENT_CALL_UPDATED:
-        message_session_event_t* session_event = event->arg;
-        if (session_event) {
-            log_info("APP_EVENT_CALL_UPDATED session event: %d, status: %d, text: %s\n",
-                     session_event->event, session_event->status, session_event->text?session_event->text:"");
-
-            switch (session_event->event)
-            {
-            case CTRL_EVENT_ALERT:
-            
-                /* code */
-                break;
-            case CTRL_EVENT_ACTIVATE:
-                /* code */
-                break;
-            case CTRL_EVENT_EXPIRE:
-                /* code */
-                break;
-            case CTRL_EVENT_SHOW_TEXT:
-                log_info("@TIMING@ 2 Received stt: %s\n", session_event->text?session_event->text:"NULL");
-                if(session_event->text) {
-                    ui_set_content_text(session_event->text);
-                }
-                /* code */
-                break;
-            case CTRL_EVENT_SPEAKER:
-                
-                if (session_event->status == WORKING_STATUS_TEXT) {
-                    log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", "TEXT");
-                    dialog_proc_speak_status(WORKING_STATUS_START);
-                    if(session_event->text) {
-                        ui_set_content_text(session_event->text);
-                    }
-                    return;
-                }
-                log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", session_event->status == WORKING_STATUS_START ? "START" : "STOP");
-                dialog_proc_speak_status(session_event->status);
-                if (session_event->status == WORKING_STATUS_START) {
-                    enter_mode_dialog_speaking();
-                } else if (session_event->status == WORKING_STATUS_STOP) {
-                    enter_mode_dialog_listening();
-                }
-                
-                if (strnlen(session_event->emotion, sizeof(session_event->emotion)) > 0) {
-                    ui_set_emotion_text(session_event->emotion);
-                }
-                break;
-            default:
-                break;
-            }         
-        }
-    
+        proc_session_update_event((message_session_event_ptr)event->arg);
         break;
     case APP_EVENT_CALL_SERVER_TERMINATED:
         log_info("app_user_event_handler: APP_EVENT_CALL_SERVER_TERMINATED");
@@ -570,7 +563,7 @@ void app_audio_event_handler(struct app_event *event)
     case APP_EVENT_AUDIO_PLAY_END_NOTIFY:
         log_info("app_audio_event_handler: APP_EVENT_AUDIO_PLAY_END_NOTIFY, overall_state=%d", g_device_status.overall_state);
         if (g_device_status.overall_state > OVERALL_STATE_IDLE){
-            send_start_listening();
+            send_start_listening(LISTENING_MODE_AUTO_STOP);
             enter_mode_dialog_listening();
         }
         break;  

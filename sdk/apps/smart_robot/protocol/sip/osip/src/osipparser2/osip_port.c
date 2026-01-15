@@ -194,7 +194,7 @@ static unsigned int osip_fallback_random_number()
     gettimeofday(&tv, NULL);
     ticks = (unsigned int) (tv.tv_sec + tv.tv_usec);
     fd = -1;//open("/dev/urandom", O_RDONLY);
-
+/*
     if (fd > 0) {
       unsigned int r;
       int i;
@@ -206,7 +206,7 @@ static unsigned int osip_fallback_random_number()
 
       close(fd);
     }
-
+*/
 #endif
 
 #ifdef HAVE_LRAND48

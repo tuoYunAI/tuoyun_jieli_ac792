@@ -1,5 +1,6 @@
 #ifndef __MCP_SERVER_H__
 #define __MCP_SERVER_H__
+#include "adapter.h"
 #include "app_protocol.h"
 
 #define MCP_NAME_LEN 64
@@ -46,5 +47,7 @@ typedef char *(*mcp_call_fn)(property_ptr props, size_t len);
 void add_mcp_tool(char* name, char* description, mcp_call_fn callback, property_ptr props, size_t len);
 
 void handle_received_mcp_request(const char *data, size_t len);
+
+void mcp_init(void *priv);
 
 #endif
