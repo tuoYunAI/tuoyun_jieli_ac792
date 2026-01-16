@@ -328,17 +328,68 @@
 #define OTA_PROTOCOL_VERSION  2                               //ota升级协议版本
 #define APP_LANGUAGE          "zh-CN"                         //中文语言包
 #define REG_OTA_URL           "https://ota.lovaiot.com/ota/v2/"  //ota升级服务器地址
-#define PRODUCT_VENDOR_UID    "{请登录https://agent.lovaiot.com创建}"           //设备厂商的UID, 由平台提供
 
-#define PRODUCT_TYPE          "{请登录https://agent.lovaiot.com创建}"        //产品的类型, 需要在平台上注册*
-#define PRODUCT_NAME          "{请登录https://agent.lovaiot.com创建}"                  //产品名称
+/*
+以下信息均可登录https://agent.lovaiot.com创建产品后获取。如果所填写的信息未在平台上注册，将无法通过
+认证，设备无法上线使用
+配置完成后,请删除#error提示
+*/
+#error "请登录https://agent.lovaiot.com创建产品后，替换下面的产品信息宏定义 PLEASE REMOVE THIS LINE AFTER CONFIGURATION"
 
-#define BOARD_TYPE            "{请登录https://agent.lovaiot.com创建}"                //控制板的类型, 由平台提供*
-#define BOARD_NAME            "{请登录https://agent.lovaiot.com创建}"                  //控制板的名称, 由平台提供
+/**
+ * 贵公司在拓云平台的UID信息, 由平台提供。
+ * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【企业信息】页面中, 查看【组织UID】字段内容, 
+ * 复制替换下面的宏定义
+ */
+#define PRODUCT_VENDOR_UID    "{请登录https://agent.lovaiot.com创建}"
+
+/**
+ * 产品编码。
+ * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【玩具型号】页面的表中, 选择对应
+ * 的产品, 查看【编码】字段内容, 复制替换下面的宏定义
+ */
+#define PRODUCT_TYPE          "{请登录https://agent.lovaiot.com创建}"     
+
+/**
+ * 产品名称, 以下是默认名称, 你可以自行定义, 或从平台中获取。
+ * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【玩具型号】页面的表中, 选择对应
+ * 的产品, 查看【物料名称】字段内容, 复制替换下面的宏定义
+ */
+#define PRODUCT_NAME          "杰理"PRODUCT_TYPE 
+
+/**
+ * 控制板编码。
+ * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【控制板型号】页面的表中, 选择对应
+ * 的控制板, 查看【编码】字段内容, 复制替换下面的宏定义
+ */
+#define BOARD_TYPE            "{请登录https://agent.lovaiot.com创建}"  
+/**
+ * 控制板名称, 以下是默认名称, 你可以自行定义, 或从平台中获取。
+ * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【控制板型号】页面的表中, 选择对应
+ * 的控制板, 查看【控制板物料名】字段内容, 复制替换下面的宏定义
+ */
+#define BOARD_NAME            "杰理"BOARD_TYPE 
 
 
-#define FIRMWARE_TYPE         "{请登录https://agent.lovaiot.com创建}"             //固件的类型, 由平台提供*
-#define FIRMWARE_NAME         "{请登录https://agent.lovaiot.com创建}"              //固件名称
-#define FIRMWARE_VERSION      "1.0.1"                         //固件版本号
+/**
+ * 固件编码。
+ * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【固件】页面的表中, 选择对应
+ * 的固件, 查看【编码】字段内容, 复制替换下面的宏定义
+ */
+#define FIRMWARE_TYPE         "{请登录https://agent.lovaiot.com创建}"            //固件的类型, 由平台提供*
+
+/**
+ * 固件名称, 以下是默认名称, 你可以自行定义, 或从平台中获取。
+ * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【固件】页面的表中, 选择对应
+ * 的固件, 查看【固件名称】字段内容, 复制替换下面的宏定义
+ */
+#define FIRMWARE_NAME         "jieli_"FIRMWARE_TYPE
+
+/**
+ * 固件版本号。OTA功能通过比较这个版本号与平台上的版本号来决定是否升级。
+ * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【固件】页面的表中, 选择对应
+ * 的固件, 点击左侧"+"展开, 可以上传新版固件。上传时的固件版本号即为下面宏定义要填写的内容。
+ */
+#define FIRMWARE_VERSION      "1.0.3"
 
 #endif

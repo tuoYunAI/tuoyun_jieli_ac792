@@ -474,9 +474,11 @@
 <Unit filename="../../../../apps/smart_robot/include/app_audio.h" />
 <Unit filename="../../../../apps/smart_robot/include/app_ui.h" />
 <Unit filename="../../../../apps/smart_robot/ota/update.c"><Option compilerVer="CC"/></Unit>
+<Unit filename="../../../../apps/smart_robot/protocol/adapter.h" />
+<Unit filename="../../../../apps/smart_robot/protocol/adapter.c"><Option compilerVer="CC"/></Unit>
 <Unit filename="../../../../apps/smart_robot/protocol/protocol.c"><Option compilerVer="CC"/></Unit>
-<Unit filename="../../../../apps/smart_robot/protocol/sip/sip.h" />
-<Unit filename="../../../../apps/smart_robot/protocol/sip/sip.c"><Option compilerVer="CC"/></Unit>
+<Unit filename="../../../../apps/smart_robot/protocol/sip/osip_adapter.h" />
+<Unit filename="../../../../apps/smart_robot/protocol/sip/osip_adapter.c"><Option compilerVer="CC"/></Unit>
 <Unit filename="../../../../apps/smart_robot/protocol/session/session.h" />
 <Unit filename="../../../../apps/smart_robot/protocol/session/session.c"><Option compilerVer="CC"/></Unit>
 <Unit filename="../../../../apps/smart_robot/protocol/traffic/traffic.h" />
