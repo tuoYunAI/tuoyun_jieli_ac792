@@ -140,13 +140,11 @@ tuoyun_jieli_ac792 是北京拓云基于杰理 792 系列芯片开发语音对�
 - **头文件**: /smar_robot/include/app_event.h
 - **模块目录**： /smar_robot/event
 - **模块接口**:
-
   - 定义了统一的事件结构体  `struct app_event`。
   - 支持不同应用层模块来源  (`enum app_event_from`)  的事件通知。
   - 提供  `app_event_notify`  接口，允许模块发送系统级事件，由主循环或特定任务进行处理。
 
 - **说明**
-
   - 根据测试，SDK 的时间分发机制的处理是同步的，所以时间处理函数中不应该有阻塞或长耗时操作。
 
 #### 蓝牙配网
@@ -158,7 +156,6 @@ tuoyun_jieli_ac792 是北京拓云基于杰理 792 系列芯片开发语音对�
 - **头文件**: /smar_robot/include/app_ble.h
 - **模块目录**：/smart_robot/bt_ble，/smart_robot/wifi
 - **模块接口**:
-
   - 蓝牙配网初始化:   初始化蓝牙配网模块，进入配网模式。
 
 #### OTA 升级
@@ -171,7 +168,6 @@ tuoyun_jieli_ac792 是北京拓云基于杰理 792 系列芯片开发语音对�
 
 - **模块目录**：/smart_robot/ota
 - **模块接口**:
-
   - 开机注册:   设备开机后需要调用注册函数，向平台注册设备，获取通讯接入参数。
 
 #### 会话协议
@@ -210,12 +206,31 @@ tuoyun_jieli_ac792 是北京拓云基于杰理 792 系列芯片开发语音对�
 - **模块目录**：/smart_robot/protocol
 
 - **功能**:
-
   - **音频采集**:  使用  `tuoyun_voice_recorder`  模块采集麦克风数据。
   - **音频播放**:  使用  `tuoyun_flow_player`  模块播放网络下发的音频流。
   - **编解码**:  支持  Opus  编码格式  (`g_audio_enc_media_param`)，采样率  16kHz。
   - **流式传输**:  实时发送录音数据包，并接收播放数据包。
   - **状态管理**:  维护麦克风和扬声器的工作状态（Start/Stop/Pending）。
+
+#### 项目编译
+
+- **环境准备**
+  请按照杰理官方 SDK 文档配置好开发环境：
+  [杰理 SDK 环境安装指南](https://doc.zh-jieli.com/AC792/zh-cn/wifi_video_master/getting_started/environmental_install/index.html)
+- **参数修改**
+  - **1** 打开 [board_smart_robot_demo.h](sdk/apps/smart_robot/board/wl83/board_smart_robot_demo.h)
+    找到‘产品信息配置’ 按照 注释配置好配置项：
+
+    `#error "请选择所使用的板子配置 Please select the board config"`
+
+    最后记得注释调：`#error "请登录https://agent.lovaiot.com创建产品后，替换下面的产品信息宏定义 PLEASE REMOVE THIS LINE AFTER CONFIGURATION" `这一行
+
+  - **2** 打开 [board_config.h](sdk/apps/smart_robot/board/wl83/board_config.h)
+    注释调这一行：
+    `#error "请选择所使用的板子配置 Please select the board config"`
+
+    并确认定义了：
+    `define CONFIG_BOARD_SMART_ROBOT_DEMO`
 
 #### 原理图
 
