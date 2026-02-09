@@ -4,17 +4,20 @@
 //                                功能模块配置                                     //
 //*********************************************************************************//
 #define CONFIG_SFC_ENABLE
+#define TCFG_SPI_ENABLE
 // #define CONFIG_NO_SDRAM_ENABLE                             //关闭sdram
 // #define CONFIG_EXFLASH_ENABLE                              //外挂资源flash
 // #define CONFIG_SDFILE_EXT_ENABLE                           //外挂隐藏sdfile区的支持
 // #define CONFIG_DMSDX_ENABLE                                //msd多分区显示支持
 
+
+
 #define CONFIG_NET_ENABLE
 #define CONFIG_BT_ENABLE
 // #define CONFIG_AUDIO_ENABLE
 #define CONFIG_MEDIA_ENABLE
-// #define CONFIG_UI_ENABLE
-// #define CONFIG_VIDEO_ENABLE
+#define CONFIG_UI_ENABLE
+//#define CONFIG_VIDEO_ENABLE
 
 //*********************************************************************************//
 //                                   时钟配置                                      //
@@ -213,9 +216,9 @@
 #define TCFG_LCD_SUPPORT_MULTI_DRIVER_EN 0 ///< 多屏驱支持(目前仅支持具有相同分辨率的屏, 适用于一个case有多款屏混用的情况，比如因为缺货)
 
 // 屏驱配置使能
-#define TCFG_LCD_MIPI_ST7701S_480x800 1
+#define TCFG_LCD_MIPI_ST7701S_480x800 0
 #define TCFG_LCD_MIPI_ST7701S_480x800_ROTATE_90 0 ///< mipi ST7701S_480x800竖屏横显的配置
-#define TCFG_LCD_SPI_ST7789V2_240X240 0           ///< 金逸晨1.54寸 240x240 ST7789V2 SPI屏
+#define TCFG_LCD_SPI_ST7789V2_240X240 1           ///< 金逸晨1.54寸 240x240 ST7789V2 SPI屏
 #include "lcd_board_cfg_template.h"               ///< WL83开发板标配屏以外的屏驱配置放这里
 
 #if TCFG_LCD_MIPI_ST7701S_480x800
@@ -248,13 +251,28 @@
  *        使用时将 TCFG_LCD_MIPI_ST7701S_480x800 设为0
  *        将 TCFG_LCD_SPI_ST7789V2_240X240 设为1
  */
+ #define TCFG_SPI2_ENABLE 1
+
+//*********************************************************************************//
+// SPI2配置(用于ST7789V2 SPI屏) //
+//*********************************************************************************//
+#define TCFG_SPI2_CLK_IO IO_PORTB_05 ///< SCK 时钟引脚
+#define TCFG_SPI2_DO_IO IO_PORTB_06 ///< SDA/MOSI 数据输出引脚
+#define TCFG_SPI2_DI_IO -1 ///< MISO 数据输入引脚(LCD不需要)
+#define TCFG_SPI2_CS_IO -1 ///< CS由LCD驱动单独控制
+#define TCFG_SPI2_BAUDRATE 40000000 ///< SPI时钟频率
+#define TCFG_SPI2_MODE SPI_1WIRE_MODE ///< 单向1bit模式
+#define TCFG_SPI2_HD_LEVEL 1 ///< 高电平驱动
+#define TCFG_SPI2_ATTR SPI_SCLK_L_UPL_SMPL ///< 时钟极性
+#define TCFG_SPI2_ROLE SPI_MODE_MASTER ///< 主机模式
+
 #if TCFG_LCD_SPI_ST7789V2_240X240
 #define TCFG_LCD_DEVICE_NAME "SPI_240x240_ST7789V2"
 #define TCFG_LCD_BL_VALUE 1
-#define TCFG_LCD_RESET_IO IO_PORTA_15 ///< RST 复位引脚
-#define TCFG_LCD_BL_IO IO_PORTB_03    ///< BL 背光引脚
-#define TCFG_LCD_RS_IO IO_PORTB_01    ///< DC/RS 数据/命令选择引脚
-#define TCFG_LCD_CS_IO IO_PORTB_00    ///< CS 片选引脚
+#define TCFG_LCD_RESET_IO IO_PORTB_07 ///< RST 复位引脚
+#define TCFG_LCD_BL_IO IO_PORTB_01    ///< BL 背光引脚
+#define TCFG_LCD_RS_IO IO_PORTB_04    ///< DC/RS 数据/命令选择引脚
+#define TCFG_LCD_CS_IO IO_PORTB_02    ///< CS 片选引脚
 #define TCFG_LCD_SPI_INTERFACE "spi2" ///< SPI接口，SCK和SDA由spi2控制
 #define TCFG_LCD_TE_ENABLE 0          ///< 关闭TE同步
 #define TCFG_LCD_TE_IO -1
@@ -334,21 +352,21 @@
 认证，设备无法上线使用
 配置完成后,请删除#error提示
 */
-#error "请登录https://agent.lovaiot.com创建产品后，替换下面的产品信息宏定义 PLEASE REMOVE THIS LINE AFTER CONFIGURATION"
+//#error "请登录https://agent.lovaiot.com创建产品后，替换下面的产品信息宏定义 PLEASE REMOVE THIS LINE AFTER CONFIGURATION"
 
 /**
  * 贵公司在拓云平台的UID信息, 由平台提供。
  * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【企业信息】页面中, 查看【组织UID】字段内容,
  * 复制替换下面的宏定义
  */
-#define PRODUCT_VENDOR_UID "{请登录https://agent.lovaiot.com创建}"
+#define PRODUCT_VENDOR_UID "5143932590709531730"
 
 /**
  * 产品编码。
  * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【玩具型号】页面的表中, 选择对应
  * 的产品, 查看【编码】字段内容, 复制替换下面的宏定义
  */
-#define PRODUCT_TYPE "{请登录https://agent.lovaiot.com创建}"
+#define PRODUCT_TYPE "xy_jieli_7923AE_box"
 
 /**
  * 产品名称, 以下是默认名称, 你可以自行定义, 或从平台中获取。
@@ -362,7 +380,7 @@
  * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【控制板型号】页面的表中, 选择对应
  * 的控制板, 查看【编码】字段内容, 复制替换下面的宏定义
  */
-#define BOARD_TYPE "{请登录https://agent.lovaiot.com创建}"
+#define BOARD_TYPE "xy_jieli_7923AE_borad"
 /**
  * 控制板名称, 以下是默认名称, 你可以自行定义, 或从平台中获取。
  * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【控制板型号】页面的表中, 选择对应
@@ -375,7 +393,7 @@
  * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【固件】页面的表中, 选择对应
  * 的固件, 查看【编码】字段内容, 复制替换下面的宏定义
  */
-#define FIRMWARE_TYPE "{请登录https://agent.lovaiot.com创建}" // 固件的类型, 由平台提供*
+#define FIRMWARE_TYPE "xunyou_jieli_7923AE_firmware" // 固件的类型, 由平台提供*
 
 /**
  * 固件名称, 以下是默认名称, 你可以自行定义, 或从平台中获取。

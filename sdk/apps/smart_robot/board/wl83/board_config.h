@@ -2,10 +2,10 @@
 #define BOARD_CONFIG_H
 
 /**
- * ***注意*** 
+ * ***注意***
  * 请选择所使用的板子配置, 否设备可能无法启动!!!
  */
-#error "请选择所使用的板子配置 Please select the board config"
+
 //#define CONFIG_BOARD_SMART_ROBOT_DEVELOP
 #define CONFIG_BOARD_SMART_ROBOT_DEMO
 

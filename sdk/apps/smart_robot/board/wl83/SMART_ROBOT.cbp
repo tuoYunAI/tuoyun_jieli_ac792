@@ -396,6 +396,7 @@
 <Unit filename="../../../../apps/common/lcd/lcd_driver/spi_lcd/lcd_spi_gc9307_172x320.c"><Option compilerVer="CC"/></Unit>
 <Unit filename="../../../../apps/common/lcd/lcd_driver/spi_lcd/lcd_spi_gc9307_240x296.c"><Option compilerVer="CC"/></Unit>
 <Unit filename="../../../../apps/common/lcd/lcd_driver/spi_lcd/lcd_spi_nv3006a_142x428.c"><Option compilerVer="CC"/></Unit>
+<Unit filename="../../../../apps/common/lcd/lcd_driver/spi_lcd/lcd_spi_st7789v2_240x240.c"><Option compilerVer="CC"/></Unit>
 <Unit filename="../../../../apps/common/lcd/touch_driver/cst3240.c"><Option compilerVer="CC"/></Unit>
 <Unit filename="../../../../apps/common/lcd/touch_driver/cst816d.c"><Option compilerVer="CC"/></Unit>
 <Unit filename="../../../../apps/common/lcd/touch_driver/ft6236.c"><Option compilerVer="CC"/></Unit>

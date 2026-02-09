@@ -30,7 +30,7 @@
 #define TCFG_LCD_SPI_GC9307_240X296             0
 #define TCFG_LCD_SPI_GC9307_172X320             0
 #define TCFG_LCD_SPI_NV3006A_142X428            0
-#define TCFG_LCD_SPI_ST7789V2_240X240           0 ///< 金逸晨1.54寸 240x240 ST7789V2 SPI屏
+//#define TCFG_LCD_SPI_ST7789V2_240X240           0 ///< 金逸晨1.54寸 240x240 ST7789V2 SPI屏
 
 //RGB_LCD
 #define TCFG_LCD_RGB_XXXX_480x272               0

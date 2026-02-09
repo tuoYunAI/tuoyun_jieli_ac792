@@ -99,6 +99,11 @@
 #define LCD_H 296
 #endif
 
+#if TCFG_LCD_SPI_ST7789V2_240X240
+#define LCD_W 240
+#define LCD_H 240
+#endif
+
 #if TCFG_LCD_SPI_GC9307_172X320
 #define LCD_W 172
 #define LCD_H 320
