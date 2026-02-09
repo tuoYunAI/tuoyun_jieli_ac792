@@ -30,6 +30,7 @@
 #define TCFG_LCD_SPI_GC9307_240X296             0
 #define TCFG_LCD_SPI_GC9307_172X320             0
 #define TCFG_LCD_SPI_NV3006A_142X428            0
+#define TCFG_LCD_SPI_ST7789V2_240X240           0 ///< 金逸晨1.54寸 240x240 ST7789V2 SPI屏
 
 //RGB_LCD
 #define TCFG_LCD_RGB_XXXX_480x272               0
@@ -197,6 +198,22 @@
 #define TCFG_LCD_SPI_INTERFACE              "spi2"
 #define TCFG_LCD_TE_ENABLE                  1
 #define TCFG_LCD_TE_IO                      IO_PORTA_14
+#endif
+
+/**
+ * @brief 金逸晨 1.54寸 10PIN ST7789V2 SPI LCD配置
+ *        240*240 16bit 5-6-5 RGB 模式
+ */
+#if TCFG_LCD_SPI_ST7789V2_240X240
+#define TCFG_LCD_DEVICE_NAME                "SPI_240x240_ST7789V2"
+#define TCFG_LCD_BL_VALUE                   1
+#define TCFG_LCD_RESET_IO                   IO_PORTA_15 ///< RST 复位引脚
+#define TCFG_LCD_BL_IO                      IO_PORTB_03 ///< BL 背光引脚
+#define TCFG_LCD_RS_IO                      IO_PORTB_01 ///< DC/RS 数据/命令选择引脚
+#define TCFG_LCD_CS_IO                      IO_PORTB_00 ///< CS 片选引脚
+#define TCFG_LCD_SPI_INTERFACE              "spi2"      ///< SPI接口，SCK和SDA由spi2控制
+#define TCFG_LCD_TE_ENABLE                  0           ///< 关闭TE同步
+#define TCFG_LCD_TE_IO                      -1
 #endif
 
 #if TCFG_LCD_RGB_XXXX_480x272
