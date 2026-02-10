@@ -12,5 +12,9 @@
 #endif
 
 
+#ifdef CONFIG_BOARD_SMART_ROBOT_ITO_CUBE
+#define __FLASH_SIZE__    (8 * 1024 * 1024)
+#define __SDRAM_SIZE__    (8 * 1024 * 1024)
+#endif
 
 #endif

@@ -5,9 +5,10 @@
  * ***注意*** 
  * 请选择所使用的板子配置, 否设备可能无法启动!!!
  */
-#error "请选择所使用的板子配置 Please select the board config"
+//#error "请选择所使用的板子配置 Please select the board config"
 //#define CONFIG_BOARD_SMART_ROBOT_DEVELOP
-#define CONFIG_BOARD_SMART_ROBOT_DEMO
+//#define CONFIG_BOARD_SMART_ROBOT_DEMO
+#define CONFIG_BOARD_SMART_ROBOT_ITO_CUBE
 
 //芯片型号sdram和flash配置文件
 #include "chip_cfg.h"
@@ -22,6 +23,11 @@
 
 #ifdef CONFIG_BOARD_SMART_ROBOT_DEMO
 #include "board_smart_robot_demo.h"
+#endif
+
+
+#ifdef CONFIG_BOARD_SMART_ROBOT_ITO_CUBE
+#include "board_smart_robot_ito_cube.h"
 #endif
 
 #ifdef CONFIG_NO_SDRAM_ENABLE

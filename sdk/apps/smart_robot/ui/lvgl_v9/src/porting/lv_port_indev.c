@@ -607,7 +607,7 @@ static void encoder_read(lv_indev_t *indev_drv, lv_indev_data_t *data)
         };
         app_event_notify(APP_EVENT_FROM_UI, &event);
     }else {
-        LV_LOG_WARN("encoder_read:key_e->value illegality! action: %d, val: %d", key_e->action, key_e->value);
+        //LV_LOG_WARN("encoder_read:key_e->value illegality! action: %d, val: %d", key_e->action, key_e->value);
     }
 
     data->enc_diff = encoder_diff;
