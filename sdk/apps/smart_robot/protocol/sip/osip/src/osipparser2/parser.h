@@ -29,7 +29,7 @@
 #endif
 
 #ifndef NUMBER_OF_HEADERS_COMMASEPARATED
-#define NUMBER_OF_HEADERS_COMMASEPARATED 256
+#define NUMBER_OF_HEADERS_COMMASEPARATED 65
 #endif
 
 /* internal type for parser's config */
@@ -40,7 +40,7 @@ typedef struct ___osip_message_config_t {
 } __osip_message_config_t;
 
 typedef struct ___osip_message_config_commaseparated_t {
-  char hname[256];
+  char hname[50];
 } __osip_message_config_commaseparated_t;
 
 int __osip_message_call_method(int i, osip_message_t *dest, const char *hvalue);

@@ -1,11 +1,12 @@
-#include "adapter.h"
 #include "osipparser2/osip_message.h"
 #include "osipparser2/osip_parser.h"
 #include "osipparser2/sdp_message.h"
 #include "osip_adapter.h"
+#include "string.h"
 
-
-#define TAG             "[SIP]"
+#define ADAPTER_LOG_TAG    "[SIP-ADAPTER]"
+#define LOG_LEVEL_ENABLED  LOG_INFO_LEVEL
+#include "adapter.h"
 
 
 #define SIP_VERSION "SIP/2.0"

@@ -4,8 +4,9 @@
 #include "osipparser2/osip_list.h"
 
 
-#define LOG_TAG             "[MCP]"
-
+#define ADAPTER_LOG_TAG             "[MCP]"
+#define LOG_LEVEL_ENABLED           LOG_INFO_LEVEL
+#include "adapter.h"
 
 typedef struct {
     char name[MCP_NAME_LEN];
@@ -241,7 +242,7 @@ static void handle_tools_list(void *request){
 }
 
 
-void* make_error_result(u32 code, char* msg){
+void* make_error_result(uint32_t code, char* msg){
     void *result = adapter_create_json_object();
     void *is_error_obj = adapter_json_object_new_boolean(true);
     adapter_put_json_object_value(result, "isError", is_error_obj);

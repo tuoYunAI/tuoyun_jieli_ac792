@@ -1,20 +1,15 @@
-#include "adapter.h"
 #include "app_protocol.h"
 #include "traffic.h"
 #include "mbedtls/aes.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "lwip/sockets.h"
+#include "system/includes.h"
 
 
-#define LOG_TAG             "[TRAFFIC]"
-#define LOG_ERROR_ENABLE
-#define LOG_DEBUG_ENABLE
-#define LOG_INFO_ENABLE
-#define LOG_DUMP_ENABLE
-#define LOG_CLI_ENABLE
-#include "system/debug.h"
-
+#define ADAPTER_LOG_TAG    "[TRAFFIC]"
+#define LOG_LEVEL_ENABLED  LOG_INFO_LEVEL
+#include "adapter.h"
 
 
 typedef struct 
@@ -38,13 +33,13 @@ static traffic_state_machine_t m_traffic_state;;
  */
 
 static u8 audio_transmission_started = 0;
-static void traffic_receive_task();
-static void traffic_receive_monitor_task();
-static void traffic_uplink_empty_task();
+static void traffic_receive_task(void *arg);
+static void traffic_receive_monitor_task(void *arg);
+static void traffic_uplink_empty_task(void *arg);
 
 
 void test_print_traffic_state(){
-    printf(
+    LOG_INFO(
         "+++++++++++++++++++++traffic status+++++++++++++++\r\n"
         "        media_param.ip: %s\r\n"
         "        media_param.port: %d\r\n"
@@ -126,7 +121,7 @@ int start_traffic_tunnel(media_parameter_ptr param){
         return -1;
     }
     memcpy(&m_traffic_state.media_param, param, sizeof(media_parameter_t));
-    printf("start_traffic_tunnel, media param: ip=%s, port=%d, codec=%s, transport=%s, sample_rate=%d, channels=%d, frame_duration=%d\n",
+    LOG_INFO("start_traffic_tunnel, media param: ip=%s, port=%d, codec=%s, transport=%s, sample_rate=%d, channels=%d, frame_duration=%d\n",
             m_traffic_state.media_param.ip,
             m_traffic_state.media_param.port,
             m_traffic_state.media_param.codec,
@@ -154,27 +149,27 @@ int start_traffic_tunnel(media_parameter_ptr param){
         // 设置加密密钥
         int ret = mbedtls_aes_setkey_enc(&m_traffic_state.aes_ctx, m_traffic_state.media_param.aes_key, 128);
         if (ret != 0) {
-            log_info("mbedtls_aes_setkey_enc failed: %d\n", ret);
+            LOG_INFO("mbedtls_aes_setkey_enc failed: %d\n", ret);
             mbedtls_aes_free(&m_traffic_state.aes_ctx);
             break;
         }
 
         m_traffic_state.udp_fd = sock_reg(AF_INET, SOCK_DGRAM, 0, NULL, NULL);
         if(NULL == m_traffic_state.udp_fd) {
-            log_info("sock_reg fail\n");
+            LOG_INFO("sock_reg fail\n");
             break;
         }
 
         audio_transmission_started = 0;
-        if (adapter_start_thread(traffic_uplink_empty_task, "protocol_audio_demo", 1024, 16) != true) {
-            log_info("thread audio demo fork fail\n");
+        if (RET_OK != adapter_start_thread(traffic_uplink_empty_task, "protocol_audio_demo", 1024, 16)) {
+            LOG_INFO("thread audio demo fork fail\n");
         }
-        if (adapter_start_thread(traffic_receive_task, "protocol_audio", 1024, 28) != true) {
-            log_info("thread audio receive fork fail\n");
+        if (RET_OK != adapter_start_thread(traffic_receive_task, "protocol_audio", 1024, 28)) {
+            LOG_INFO("thread audio receive fork fail\n");
             break;
         }
-        if (adapter_start_thread(traffic_receive_monitor_task, "traffic_receive_monitor_task", 1024, 20) != true) {
-            log_info("thread audio receive fork fail\n");
+        if (RET_OK != adapter_start_thread(traffic_receive_monitor_task, "traffic_receive_monitor_task", 1024, 20)) {
+            LOG_INFO("thread audio receive fork fail\n");
             break;
         }
         
@@ -198,12 +193,12 @@ int send_audio(audio_stream_packet_ptr packet){
     }
 
     if (!check_if_session_in_call() || !m_traffic_state.udp_fd){
-        log_info("Audio channel not established\n");
+        LOG_INFO("Audio channel not established\n");
         return -1;
     }   
   
     if (packet->payload_len + 16 > sizeof(send_buf)){
-        log_info("Audio packet too large: %d bytes\n", packet->payload_len);
+        LOG_INFO("Audio packet too large: %d bytes\n", packet->payload_len);
         return -1;
     }
 
@@ -226,7 +221,7 @@ int send_audio(audio_stream_packet_ptr packet){
                                 stream_block,
                                 packet->payload,
         (uint8_t*)&send_buf[sizeof(ctr_block)]) != 0) {
-        log_info("Failed to encrypt audio data");
+        LOG_INFO("Failed to encrypt audio data");
         return -1;
     }
 
@@ -239,11 +234,11 @@ int send_audio(audio_stream_packet_ptr packet){
                                 sizeof(m_traffic_state.remote_addr));
 
     if (sent_bytes < 0) {
-        log_info("UDP send failed\n");
+        LOG_INFO("UDP send failed\n");
         return -1;
     }
     
-    //log_info("Sent encrypted audio packet: %d bytes (seq: %u, payload: %u bytes)\n",
+    //LOG_INFO("Sent encrypted audio packet: %d bytes (seq: %u, payload: %u bytes)\n",
     //         sent_bytes, m_traffic_state.tx_seq, packet->payload_len);
     return 0;
 }
@@ -332,7 +327,7 @@ static void traffic_receive_task(void *arg){
     for(;;){
         
         if(!check_if_session_in_call() || !m_traffic_state.udp_fd){
-            printf("traffic receive task exit\n");
+            LOG_INFO("traffic receive task exit\n");
             clear_traffic_tunnel();
             break;
         }
@@ -415,7 +410,7 @@ static void traffic_receive_task(void *arg){
             if (m_cache_block) {
                 long gap = sequence - (m_traffic_state.rx_seq + 1);
                 if (gap >= REORDER_WINDOW) {
-                    log_info("@@@@@@Audio packet jump detected: expected seq %ld, received seq %d\n", m_traffic_state.rx_seq + 1, sequence);
+                    LOG_INFO("@@@@@@Audio packet jump detected: expected seq %ld, received seq %d\n", m_traffic_state.rx_seq + 1, sequence);
                     /* 跳跃过大，视为重同步：清空缓冲并把当前包作为新的连续开始 */
                     for (int i = 0; i < REORDER_WINDOW; i++) m_cache_block[i].filled = 0;
                     /* 直接交付当前包并更新序号 */
@@ -424,7 +419,7 @@ static void traffic_receive_task(void *arg){
                     offset += packet_len;
                     continue;
                 } else {
-                    log_info("@@@@@@Audio packet out-of-order detected: expected seq %ld, received seq %d\n", m_traffic_state.rx_seq + 1, sequence);
+                    LOG_INFO("@@@@@@Audio packet out-of-order detected: expected seq %ld, received seq %d\n", m_traffic_state.rx_seq + 1, sequence);
                     int idx = sequence % REORDER_WINDOW;
                     /* 存放到缓冲区（覆盖旧条目） */
                     memcpy(m_cache_block[idx].payload, audio_pack.payload, m_traffic_state.downlink_audio_packet_len);
@@ -436,7 +431,7 @@ static void traffic_receive_task(void *arg){
             } else {
                 /* 无缓冲支持，直接检测丢包并更新序号为最新 */
                 if (m_traffic_state.rx_seq + 1 != sequence) {
-                    log_info("@@@@@@Audio packet loss detected: expected seq %ld, received seq %d\n", m_traffic_state.rx_seq + 1, sequence);
+                    LOG_INFO("@@@@@@Audio packet loss detected: expected seq %ld, received seq %d\n", m_traffic_state.rx_seq + 1, sequence);
                 }
                 dialog_audio_dec_frame_write(&audio_pack);
                 m_traffic_state.rx_seq = sequence;
@@ -464,7 +459,7 @@ static void traffic_receive_monitor_task(void *arg){
     audio_stream_packet_t audio_pack = {0};
     audio_pack.payload = malloc(m_traffic_state.downlink_audio_packet_len);
     if(!audio_pack.payload){
-        log_info("failed to alloc mem for received data");
+        LOG_INFO("failed to alloc mem for received data");
         return;
     }
     audio_pack.payload_len = m_traffic_state.downlink_audio_packet_len;
@@ -475,7 +470,7 @@ static void traffic_receive_monitor_task(void *arg){
         }
         m_timeout_cnt++;
         if (m_timeout_cnt > 10){ // 200ms没有收到数据，flush缓存数据
-            //log_info("traffic receive monitor: no data timeout, flush traffic data\n");
+            //LOG_INFO("traffic receive monitor: no data timeout, flush traffic data\n");
 
             os_mutex_pend(&mutex, 0);
             m_traffic_state.rx_seq = 0;

@@ -303,7 +303,7 @@ int parser_init(void) {
 
   return OSIP_SUCCESS;
 }
-
+#if 0
 int parser_add_comma_separated_header(const char *hname) {
   int i;
 
@@ -316,7 +316,7 @@ int parser_add_comma_separated_header(const char *hname) {
 
   return OSIP_UNDEFINED_ERROR;
 }
-
+#endif
 int __osip_message_is_header_comma_separated(const char *hname) {
   int i;
 

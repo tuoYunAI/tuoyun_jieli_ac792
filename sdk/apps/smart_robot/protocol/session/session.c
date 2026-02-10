@@ -1,16 +1,17 @@
-
-#include "adapter.h"
 #include "app_protocol.h"
 #include "session.h"
 #include "sip/osip_adapter.h"
 #include "osipparser2/osip_list.h"
+#include "string.h"
 /**
  * 用来表示被修饰的指针必须使用malloc申请, 将由函数移动所有权（即函数内部会释放该指针），
  * 调用者在调用后不应再使用该指针。
  */
 #define MOVE
 
-#define TAG             "[SESSION]"
+#define ADAPTER_LOG_TAG        "[SESSION]"
+#define LOG_LEVEL_ENABLED      LOG_INFO_LEVEL
+#include "adapter.h"
 
 static void send_invite_ack();
 
@@ -46,13 +47,13 @@ int check_if_session_in_call(){
 }
 
 void test_print_session_state(){
-    printf("+++++++++++++++++++++session status+++++++++++++++\r\n"
+    LOG_INFO("+++++++++++++++++++++session status+++++++++++++++\r\n"
         "        protocol_inited: %d\r\n"
         "        session_status: %d\r\n"
-        "        seq: %u\r\n"
-        "        last_keepalive_ms: %u\r\n"
-        "        last_req_message_ms: %u\r\n"
-        "        last_req_message_seq: %u\r\n"
+        "        seq: %ld\r\n"
+        "        last_keepalive_ms: %ld\r\n"
+        "        last_req_message_ms: %ld\r\n"
+        "        last_req_message_seq: %d\r\n"
         "        invite_200_ok_resp_message: %p\r\n"
         "        device_ip: %s\r\n"
         "++++++++++++++++++++++++++++++++++++++++++++++++\r\n",
@@ -86,10 +87,27 @@ static int transmit_sip(char *message){
     return 0;
 }
 
+sip_ret_t transmit_mcp_over_sip(const char *message){
+    if (!message){
+        return RET_ERROR;
+    }
+
+    void *root = adapter_create_json_object();
+    adapter_put_json_string_value(root, "protocol", "MCP");
+    adapter_put_json_string_value(root, "payload", message);
+
+    char* json_string = adapter_serialize_json_to_string(root);
+    if (json_string) {
+        adapter_transmit_mqtt_message(json_string);
+    }
+
+    adapter_delete_json_object(root);
+    return RET_OK;
+}
 
 
 static void proc_response_register(MOVE received_sip_message_ptr  message){
-
+    LOG_INFO("Processing REGISTER response");
     adapter_lock_sip_mutex();
     do{
         if (m_session_state.session_status != SESSION_STATUS_REGISTERING){
@@ -111,6 +129,7 @@ static void proc_response_register(MOVE received_sip_message_ptr  message){
 }
 
 static int clear_session(){
+    LOG_INFO("Clearing session state");
     adapter_lock_sip_mutex();
     m_session_state.session_status = SESSION_STATUS_IDLE;
     m_session_state.last_req_message_ms = 0;
@@ -127,7 +146,7 @@ static int clear_session(){
 
 
 static int proc_response_invite(MOVE received_sip_message_ptr message){
-
+    LOG_INFO("Processing INVITE response");
     adapter_lock_sip_mutex();
     int ret = 0;
     do
@@ -267,7 +286,6 @@ static void proc_request_message(MOVE received_sip_message_ptr  message){
         // 解析 JSON
         void *parse = adapter_parse_json_string(message->message_body);
         if (parse) {
-            server_message_notify_t notify = {0};
             char ev[16] = {0};
             strncpy(ev, adapter_get_json_string_value(parse, "event"), sizeof(ev)-1);
             if (strcmp(ev, DEVICE_CTRL_EVENT_ALERT) == 0){
@@ -302,19 +320,19 @@ static void proc_request_message(MOVE received_sip_message_ptr  message){
 static void proc_request_bye(MOVE received_sip_message_ptr message){
     adapter_lock_sip_mutex();
     if (strncmp(message->call_id, m_session_state.session_id, sizeof(m_session_state.session_id)) != 0){
-        adapter_unlock_sip_mutex();
-        printf("BYE call_id mismatch, ignore");
+        LOG_INFO("BYE call_id mismatch, ignore: %s vs %s", message->call_id, m_session_state.session_id);
         free(message);
         return;
     }
     // 处理 BYE 请求
     m_session_state.session_status = SESSION_STATUS_IDLE;
-
+    LOG_INFO("Processing BYE request from server");
     on_call_terminated_by_server();
+	
     char *out_msg = NULL;
     size_t out_len = 0;
     int ret = build_200_ok_response(message, &out_msg, &out_len);
-    if (ret != 0 || out_len == NULL || out_len == 0){
+    if (ret != 0 || out_len == 0){
         printf("failed to response to BYE");
     }else{
         transmit_sip(out_msg);
@@ -330,7 +348,7 @@ static void proc_request_bye(MOVE received_sip_message_ptr message){
 }
 
 static void proc_request_info(MOVE received_sip_message_ptr message){
-
+    LOG_INFO("Processing INFO request");
     adapter_lock_sip_mutex();
     if (m_session_state.session_status != SESSION_STATUS_IN_CALL){
         adapter_unlock_sip_mutex();
@@ -378,6 +396,7 @@ static void proc_request_info(MOVE received_sip_message_ptr message){
             }else if (strcmp(st, WORKING_CMD_TEXT) == 0 || strcmp(st, WORKING_CMD_SENTENCE_START) == 0){
                 session_event->status = WORKING_STATUS_TEXT;
             }else {
+                LOG_INFO("Unknown working command: %s", st);
                 session_event->status = WORKING_STATUS_INVALID;
             }
             val = adapter_get_json_string_value(parse, "text");
@@ -414,6 +433,7 @@ static void proc_request_info(MOVE received_sip_message_ptr message){
 
 void send_register(void *param){
 
+    LOG_INFO("Sending REGISTER request");
     adapter_lock_sip_mutex();
 
     do{
@@ -454,6 +474,7 @@ void send_register(void *param){
 }
 
 int init_call(const char* wake_up_word){
+    LOG_INFO("Initiating call with wake-up word: %s", wake_up_word ? wake_up_word : "null");
     adapter_lock_sip_mutex();
     int ret = 0;
 
@@ -505,6 +526,7 @@ int init_call(const char* wake_up_word){
 
 
 int finish_call(){
+    LOG_INFO("Finishing call");
     adapter_lock_sip_mutex();
     int ret = 0;
     do{
@@ -578,6 +600,7 @@ static int send_listening_status(const char* cmd, const char* mode){
         strncpy(info.mode, mode, sizeof(info.mode)-1);
     }
 
+    LOG_INFO("Sending listening status: command=%s, mode=%s", info.command, info.mode);
     adapter_lock_sip_mutex();
     int ret = 0;
     do{
@@ -617,7 +640,6 @@ static int send_listening_status(const char* cmd, const char* mode){
 
     adapter_unlock_sip_mutex();
     return ret;
-
 }
 
 
@@ -626,7 +648,7 @@ void send_abort_speaking(abort_reason_t reason){
     info_param_t info = {0};
     strncpy(info.event, "listen", sizeof(info.event)-1);
     strncpy(info.command, "interrupt", sizeof(info.command)-1);
-
+    LOG_INFO("Sending abort speaking: reason=%d", reason);
     adapter_lock_sip_mutex();
 
     do{
@@ -779,6 +801,7 @@ void session_checking(void *param){
         return;
     }
 
+    LOG_INFO("Session checking...");
     adapter_lock_sip_mutex();
     uint32_t ms = adapter_get_system_ms();
 
@@ -853,6 +876,7 @@ void mqtt_proc_task(void *param){
 void init_session_module(const char* uid, const char* device_ip){
 
     init_sip();
+    LOG_INFO("Initializing session module with UID: %s, Device IP: %s", uid, device_ip);
     adapter_lock_sip_mutex();
     m_session_state.protocol_inited = 1;
     size_t len = sizeof(m_session_state.uid);
@@ -865,9 +889,10 @@ void init_session_module(const char* uid, const char* device_ip){
 #ifdef SIP_MESSAGE_CACHED_IN_LIST
     osip_list_init(&m_received_sip_list);
     adapter_start_thread(mqtt_proc_task, "mqtt_proc_task", 1024*2, 25);
-    adapter_start_periodic_task(session_checking, 50 * 1000, 1024*2, NULL);
-    adapter_start_periodic_task(send_register, 20 * 1000, 1024*2, NULL);
+#else
+    send_register(NULL);
 #endif
 
-    send_register(NULL);
+    adapter_start_periodic_task(session_checking, 50 * 1000, 1024*2, NULL);
+    adapter_start_periodic_task(send_register, 20 * 1000, 1024*2, NULL);
 }

@@ -1,10 +1,8 @@
-#include "adapter.h"
 #include "os/os_api.h"
 #include "system/init.h"
 #include "system/timer.h"
 #include "system/includes.h"
 #include "mqtt/MQTTClient.h"
-#include "system/includes.h"
 #include "app_event.h"
 
 
@@ -14,16 +12,48 @@
 #include "app_mcp_server.h"
 #include "app_audio.h"
 
+#define ADAPTER_LOG_TAG    "[SIP-ADAPTER]"
+#define LOG_LEVEL_ENABLED  LOG_INFO_LEVEL
+#include "adapter.h"
+
+extern void dbg_print(const char *format, ...);
+
+void adatper_log(sip_log_level_t level, const char* tag, const char* format, ...){
+    va_list args;
+    va_start(args, format);
+    char buffer[512];
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    switch (level) {
+        case LOG_DEBUG_LEVEL:
+            dbg_print("[Verb]: %s%s", tag, buffer); 
+            printf("[Verb]: %s%s", tag, buffer); 
+            break;
+        case LOG_INFO_LEVEL:
+            dbg_print("[Info]: %s%s", tag, buffer); 
+            printf("[Info]: %s%s", tag, buffer); 
+            break;
+        case LOG_WARN_LEVEL:
+            dbg_print("[Warn]: %s%s", tag, buffer); 
+            printf("<Warn>: %s%s", tag, buffer); 
+            break;
+        case LOG_ERROR_LEVEL:
+            dbg_print("[Error]: %s%s", tag, buffer); 
+            printf("<Error>: %s%s", tag, buffer); 
+            break;
+        default:
+            dbg_print("[Info]: %s%s", tag, buffer); 
+            printf("[Info]: %s%s", tag, buffer); 
+            break;
+    }
+}
 
 
-#define TAG             "[SIP-ADAPTER]"
-#define LOG_TAG            TAG
-#define LOG_ERROR_ENABLE
-#define LOG_DEBUG_ENABLE
-#define LOG_INFO_ENABLE
-#define LOG_DUMP_ENABLE
-#define LOG_CLI_ENABLE
-#include "system/debug.h"
+void log_error(const char* format, ...){
+
+}   
+
 
 uint32_t adapter_get_system_ms(void){
     extern uint32_t get_system_ms(void);    
@@ -32,23 +62,28 @@ uint32_t adapter_get_system_ms(void){
 
 
 
-bool adapter_start_thread(void (*task_func)(void*), const char* name, int stack_size, int priority){
-
-    if (thread_fork(name, priority, stack_size, 0, NULL, task_func, NULL) != OS_NO_ERR) {
-        log_info("thread fork fail\n");
-        return false;
+sip_ret_t adapter_start_thread(void (*task_func)(void*), const char* name, int stack_size, int priority){
+    int ret = thread_fork(name, priority, stack_size, 0, NULL, task_func, NULL);
+    if (ret != OS_NO_ERR) {
+        LOG_INFO("thread fork fail: %d\r\n", ret);
+        return RET_ERROR;
     }
-        
-    return true;
+    LOG_INFO("Start task success: %s", name);
+    return RET_OK;
 }
 
-bool adapter_start_periodic_task(void (*task_func)(void *), int period_ms, int stack_size, void* arg){
+sip_ret_t adapter_start_periodic_task(void (*task_func)(void *), int period_ms, int stack_size, void* arg){
     static int index = 0;
     char task_name[32];
     snprintf(task_name, sizeof(task_name), "sip_periodic_task_%d", index++);
-    sys_timer_add_to_task(task_name, NULL, task_func, period_ms);
 
-    return true;
+    u16 handle = sys_timer_add_to_task(task_name, NULL, task_func, period_ms);
+    if (handle == 0) {
+        LOG_INFO("Failed to create periodic task: %s", task_name);
+        return RET_ERROR;
+    }
+    LOG_INFO("Start timer task sucess: %s", task_name);
+    return RET_OK;
 }
 
 void adapter_task_delay(int delay_ms){
@@ -241,6 +276,11 @@ void on_server_session_update_notify(message_session_event_ptr session_event){
 }
 
 void on_server_mcp_call(const char* message){
+    /*
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    */
     handle_received_mcp_request(message, strlen(message));
 }
 
@@ -254,6 +294,7 @@ void init_adapter(){
     os_mutex_create(&sip_list_mutex);
     os_mutex_create(&mcp_tool_list_mutex);
     mcp_init(NULL);
+    LOG_INFO("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@adapter initialized");
 }
 
 late_initcall(init_adapter);

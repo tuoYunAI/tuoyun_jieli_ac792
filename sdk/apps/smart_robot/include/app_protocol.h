@@ -1,13 +1,18 @@
 #ifndef __SIP_PROTOCOL_H__
 #define __SIP_PROTOCOL_H__
 
-
-
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+typedef enum {
+    RET_OK = 0,
+    RET_ERROR = 1
+}sip_ret_t;
 
 /**
  * Interruption reasons
@@ -193,6 +198,15 @@ void init_session_module(const char* uid, const char* device_ip);
  * @param  len: Length of the received data
  */
 void handle_received_mqtt_message(const char *data, size_t len);     
+
+/**
+ * @brief  Transmit MCP message over SIP
+ * @param  message: Pointer to the MCP message string
+ * @return 0: Transmission successful
+ *     Other: Transmission failed
+ */
+sip_ret_t transmit_mcp_over_sip(const char *message);
+
 
 /**
  * MQTT connection status

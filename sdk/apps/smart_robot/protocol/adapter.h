@@ -1,21 +1,54 @@
 #ifndef __SIP_ADAPTER_H__
 #define __SIP_ADAPTER_H__
 
-#include "system/includes.h"
+
 #include "app_protocol.h"
+#include <ctype.h>
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define SIP_MESSAGE_CACHED_IN_LIST       //SIP消息缓存到列表中，并用任务进行异步处理
+/**
+ * SIP消息缓存到列表中，并用任务进行异步处理
+ * 强烈建议打开此宏，以异步方式处理收到的 SIP 消息，避免阻塞 MQTT 回调任务。
+ * 否则在处理 SIP 消息时可能会阻塞 MQTT 客户端，导致不可预见的异常
+ */
+#define SIP_MESSAGE_CACHED_IN_LIST       
 
 #define REGISTER_EXPIRE_SECOND  300      //注册间隔5分钟   
 #define COMMAND_TIMEOUT_MS 30000         //命令超时时间
 #define SESSION_SUPORT_MCP       1       //是否支持MCP扩展
 #define SESSION_OPUS_CBR         1       //opus是否使用cbr编码
 #define SESSION_AUDIO_FRAME_GAP  10      //音频帧间隔ms 
+
+
+
+typedef enum {
+    LOG_DEBUG_LEVEL = 0,
+    LOG_INFO_LEVEL = 1,
+    LOG_WARN_LEVEL = 2,
+    LOG_ERROR_LEVEL =3
+} sip_log_level_t;
+
+/**
+ * @brief  Log message with specified level and tag
+ */
+void adatper_log(sip_log_level_t level, const char* tag, const char* format, ...);
+
+#ifndef ADAPTER_LOG_TAG
+#define ADAPTER_LOG_TAG "[SIP]"
+#endif
+
+#ifndef LOG_LEVEL_ENABLED
+#define LOG_LEVEL_ENABLED LOG_INFO_LEVEL
+#endif
+
+#define LOG_DEBUG(fmt, ...) if (LOG_LEVEL_ENABLED == LOG_DEBUG_LEVEL) adatper_log(LOG_DEBUG_LEVEL, ADAPTER_LOG_TAG, fmt "\r\n", ##__VA_ARGS__)
+#define LOG_INFO(fmt, ...)  if (LOG_LEVEL_ENABLED <= LOG_INFO_LEVEL) adatper_log(LOG_INFO_LEVEL, ADAPTER_LOG_TAG, fmt "\r\n", ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...)  if (LOG_LEVEL_ENABLED <= LOG_WARN_LEVEL) adatper_log(LOG_WARN_LEVEL, ADAPTER_LOG_TAG, fmt "\r\n", ##__VA_ARGS__)
+#define LOG_ERROR(fmt, ...) if (LOG_LEVEL_ENABLED <= LOG_ERROR_LEVEL) adatper_log(LOG_ERROR_LEVEL, ADAPTER_LOG_TAG, fmt "\r\n", ##__VA_ARGS__)
 
 
 
@@ -27,12 +60,12 @@ uint32_t adapter_get_system_ms(void);
 /**
  * @brief  Start a periodic task
  */
-bool adapter_start_periodic_task(void (*task_func)(void *), int period_ms, int stack_size, void* arg);
+sip_ret_t adapter_start_periodic_task(void (*task_func)(void *), int period_ms, int stack_size, void* arg);
 
 /**
  * @brief  Start a new thread
  */
-bool adapter_start_thread(void (*task_func)(void*), const char* name, int stack_size, int priority);
+sip_ret_t adapter_start_thread(void (*task_func)(void*), const char* name, int stack_size, int priority);
 
 /**
  * @brief  Delay current task for specified milliseconds
