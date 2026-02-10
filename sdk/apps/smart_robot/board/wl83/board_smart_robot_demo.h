@@ -388,6 +388,6 @@
  * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【固件】页面的表中, 选择对应
  * 的固件, 点击左侧"+"展开, 可以上传新版固件。上传时的固件版本号即为下面宏定义要填写的内容。
  */
-#define FIRMWARE_VERSION "1.0.3"
+#define FIRMWARE_VERSION      "1.0.0"
 
 #endif
