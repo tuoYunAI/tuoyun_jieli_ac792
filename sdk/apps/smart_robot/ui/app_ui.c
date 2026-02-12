@@ -21,13 +21,16 @@ static OS_MUTEX mutex;
 static lv_obj_t *m_label_status = NULL;
 static lv_obj_t *m_label_emotion = NULL;
 static lv_obj_t *m_label_content = NULL;
+static lv_obj_t *m_gif_emotion = NULL;
 static int m_init  = 0;
 static int m_status_updated = 1;
 static int m_emotion_updated = 1;
 static int m_content_updated = 1;
+static int m_emotion_gif_updated = 0;
 static char m_status_text[128] = {0};
 static char m_emotion_text[128] = {0};
 static char m_content_text[512] = {0};
+static char m_emotion_gif_path[256] = {0};
 
 void ui_set_status_text(const char *text)
 {
@@ -66,6 +69,19 @@ void ui_set_content_text(const char *text)
     m_content_updated = 1;
     os_mutex_post(&mutex);
     
+}
+
+void ui_set_emotion_gif(const char *gif_path)
+{
+    os_mutex_pend(&mutex, 0);
+    if (gif_path && strnlen(gif_path, 10) > 0) {
+        strncpy(m_emotion_gif_path, gif_path, sizeof(m_emotion_gif_path) - 1);
+        m_emotion_gif_path[sizeof(m_emotion_gif_path) - 1] = '\0';
+    } else {
+        m_emotion_gif_path[0] = '\0';
+    }
+    m_emotion_gif_updated = 1;
+    os_mutex_post(&mutex);
 }
 
 
@@ -121,7 +137,27 @@ int lvgl_v9_main_task_hook()
         lv_label_set_text(m_label_content, m_content_text);
         m_content_updated = 0;
         ret = 1;
-    }   
+    }
+    if (m_emotion_gif_updated) {
+        if (m_emotion_gif_path[0] != '\0') {
+            // 如果GIF对象不存在则创建
+            if (!m_gif_emotion) {
+                lv_obj_t *scr = lv_screen_active();
+                m_gif_emotion = lv_gif_create(scr);
+                lv_obj_align(m_gif_emotion, LV_ALIGN_CENTER, 0, 0);
+            }
+            lv_gif_set_src(m_gif_emotion, m_emotion_gif_path);
+            lv_obj_remove_flag(m_gif_emotion, LV_OBJ_FLAG_HIDDEN);
+            lv_gif_restart(m_gif_emotion);
+        } else {
+            // 隐藏GIF
+            if (m_gif_emotion) {
+                lv_obj_add_flag(m_gif_emotion, LV_OBJ_FLAG_HIDDEN);
+            }
+        }
+        m_emotion_gif_updated = 0;
+        ret = 1;
+    }
     
     os_mutex_post(&mutex);
     return ret;

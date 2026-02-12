@@ -6,5 +6,7 @@ void ui_set_status_text(const char *text);
 
 void ui_set_emotion_text(const char *text);
 
+void ui_set_emotion_gif(const char *gif_path);
+
 void ui_set_content_text(const char *text);
 #endif
