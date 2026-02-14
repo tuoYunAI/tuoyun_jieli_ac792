@@ -291,6 +291,8 @@ void enter_mode_dialog_initiating(void){
 
 void enter_mode_dialog_listening(void){
     ui_set_status_text("聆听中");
+    ui_set_content_text(" ");
+    ui_set_emotion_text("");
     g_device_status.overall_state = OVERALL_STATE_DIALOG_LISTENING;
 }
 
@@ -475,8 +477,8 @@ static void proc_call_rejected(session_call_error_event_ptr notify)
 
 static void proc_session_update_event(message_session_event_ptr notify)
 {
-    log_info("APP_EVENT_CALL_UPDATED session event: %d, status: %d, text: %s\n",
-                    notify->event, notify->status, notify->text?notify->text:"");
+    log_info("APP_EVENT_CALL_UPDATED session event: %d, status: %d, text: %s, emotion: %s\n",
+                    notify->event, notify->status, notify->text, notify->emotion);
 
     session_update_cmd_t event = notify->event;
     switch (event)
@@ -490,23 +492,24 @@ static void proc_session_update_event(message_session_event_ptr notify)
     case CTRL_EVENT_SPEAKER:
         log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", notify->status == WORKING_STATUS_START ? "START" : "STOP");
         dialog_proc_speak_status(notify->status);
-
-        if (notify->status == WORKING_STATUS_TEXT) {
-            log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", "TEXT");
-            dialog_proc_speak_status(WORKING_STATUS_START);
-            
-        }
-        else if (notify->status == WORKING_STATUS_START) {
-            enter_mode_dialog_speaking();
-        } else if (notify->status == WORKING_STATUS_STOP) {
+        
+        if (notify->status == WORKING_STATUS_STOP) {
             enter_mode_dialog_listening();
-        }
+        }else {
+            if (notify->status == WORKING_STATUS_TEXT) {
+                log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", "TEXT");
+                dialog_proc_speak_status(WORKING_STATUS_START);
+            }
+            else if (notify->status == WORKING_STATUS_START) {
+                enter_mode_dialog_speaking();
+            }
 
-        if(notify->text) {
-            ui_set_content_text(notify->text);
-        }
-        if (strnlen(notify->emotion, sizeof(notify->emotion)) > 0) {
-            ui_set_emotion_text(notify->emotion);
+            if( notify->text[0] != '\0') { 
+                ui_set_content_text(notify->text);
+            }
+            if (notify->emotion[0] != '\0'){ 
+                ui_set_emotion_text(notify->emotion);
+            }
         }
         break;
     default:

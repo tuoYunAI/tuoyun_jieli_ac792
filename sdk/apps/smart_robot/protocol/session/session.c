@@ -400,12 +400,14 @@ static void proc_request_info(MOVE received_sip_message_ptr message){
                 session_event->status = WORKING_STATUS_INVALID;
             }
             val = adapter_get_json_string_value(parse, "text");
-            if (val){
+            if (val  && val[0] != '\0'){
+                LOG_INFO("@@@@@@@@@@@@@--------Received text command: %s", val);
                 strncpy(session_event->text, val, sizeof(session_event->text)-1);
             }
 
             val = adapter_get_json_string_value(parse, "emotion");
-            if (val){
+            if (val && val[0] != '\0'){
+                LOG_INFO("@@@@@@@@@@@@@--------Received emotion command: %s", val);
                 strncpy(session_event->emotion, val, sizeof(session_event->emotion)-1);
             }
             on_server_session_update_notify(session_event);
