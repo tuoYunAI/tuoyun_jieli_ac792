@@ -9,6 +9,7 @@
 #include "app_ui.h"
 #include "lvgl.h"
 
+
 #define LOG_TAG             "[UI]"
 #define LOG_ERROR_ENABLE
 #define LOG_DEBUG_ENABLE
@@ -29,9 +30,24 @@ static int m_content_updated = 1;
 static char m_status_text[128] = {0};
 static char m_emotion_text[128] = {0};
 static char m_content_text[512] = {0};
+static int m_emotion_gif_updated = 0;
+static int m_current_emotion_gif = EMOTION_GIF_WINK;
 
+/* extern 表情 gif 数据 */
 extern unsigned char emotion_wink_gif[];
 extern unsigned int wink_gif_len;
+extern unsigned char angry_gif[];
+extern unsigned int angry_gif_len;
+extern unsigned char blink_gif[];
+extern unsigned int blink_gif_len;
+extern unsigned char dizzy_gif[];
+extern unsigned int dizzy_gif_len;
+extern unsigned char happy_gif[];
+extern unsigned int happy_gif_len;
+extern unsigned char sad_gif[];
+extern unsigned int sad_gif_len;
+extern unsigned char sleep_gif[];
+extern unsigned int sleep_gif_len;
 
 void ui_set_status_text(const char *text)
 {
@@ -87,6 +103,58 @@ void ui_set_content_text(const char *text)
     os_mutex_post(&mutex);    
 }
 
+/* 获取表情 gif 数据和长度的辅助函数 */
+static void get_emotion_gif_data(emotion_gif_e emotion, unsigned char **data, unsigned int *len)
+{
+    switch (emotion) {
+        case EMOTION_GIF_WINK:
+            *data = emotion_wink_gif;
+            *len = wink_gif_len;
+            break;
+        case EMOTION_GIF_ANGRY:
+            *data = angry_gif;
+            *len = angry_gif_len;
+            break;
+        case EMOTION_GIF_BLINK:
+            *data = blink_gif;
+            *len = blink_gif_len;
+            break;
+        case EMOTION_GIF_DIZZY:
+            *data = dizzy_gif;
+            *len = dizzy_gif_len;
+            break;
+        case EMOTION_GIF_HAPPY:
+            *data = happy_gif;
+            *len = happy_gif_len;
+            break;
+        case EMOTION_GIF_SAD:
+            *data = sad_gif;
+            *len = sad_gif_len;
+            break;
+        case EMOTION_GIF_SLEEP:
+            *data = sleep_gif;
+            *len = sleep_gif_len;
+            break;
+        default:
+            *data = emotion_wink_gif;
+            *len = wink_gif_len;
+            break;
+    }
+}
+
+void ui_set_emotion_gif(emotion_gif_e emotion)
+{
+    os_mutex_pend(&mutex, 0);
+    if (emotion >= EMOTION_GIF_MAX) {
+        emotion = EMOTION_GIF_WINK;
+    }
+    if (m_current_emotion_gif != emotion) {
+        m_current_emotion_gif = emotion;
+        m_emotion_gif_updated = 1;
+        log_info("------------@@@@@@@@@@@Emotion GIF updated@@@@@@@@@@@@@------------: %d", emotion);
+    }
+    os_mutex_post(&mutex);
+}
 
 int lvgl_v9_main_task_hook()
 {
@@ -103,23 +171,28 @@ int lvgl_v9_main_task_hook()
         /* Change the active screen's background color 0x003a57 */
         lv_obj_set_style_bg_color(scr, lv_color_hex(0x000000), LV_PART_MAIN);
 
-        if( !m_emotion_gif ){
-            static lv_image_dsc_t s_emotion_wink_gif_dsc;
-            s_emotion_wink_gif_dsc.data = emotion_wink_gif;
-            s_emotion_wink_gif_dsc.data_size = wink_gif_len;
-            s_emotion_wink_gif_dsc.header.magic = LV_IMAGE_HEADER_MAGIC;
-            s_emotion_wink_gif_dsc.header.flags = 0;
-            s_emotion_wink_gif_dsc.header.cf = LV_COLOR_FORMAT_RAW;
-            s_emotion_wink_gif_dsc.header.w = 0;
-            s_emotion_wink_gif_dsc.header.h = 0;
-            s_emotion_wink_gif_dsc.header.stride = 0;
-#if 0
+#if 0  /* gif 功能暂时禁用 */
+        if (!m_emotion_gif) {
+            unsigned char *gif_data = NULL;
+            unsigned int gif_len = 0;
+            get_emotion_gif_data(m_current_emotion_gif, &gif_data, &gif_len);
+            
+            static lv_image_dsc_t s_emotion_gif_dsc;
+            s_emotion_gif_dsc.data = gif_data;
+            s_emotion_gif_dsc.data_size = gif_len;
+            s_emotion_gif_dsc.header.magic = LV_IMAGE_HEADER_MAGIC;
+            s_emotion_gif_dsc.header.flags = 0;
+            s_emotion_gif_dsc.header.cf = LV_COLOR_FORMAT_RAW;
+            s_emotion_gif_dsc.header.w = 0;
+            s_emotion_gif_dsc.header.h = 0;
+            s_emotion_gif_dsc.header.stride = 0;
+
             m_emotion_gif = lv_gif_create(scr);
-            lv_gif_set_src(m_emotion_gif, &s_emotion_wink_gif_dsc);
+            lv_gif_set_src(m_emotion_gif, &s_emotion_gif_dsc);
             lv_obj_center(m_emotion_gif);
             lv_obj_align(m_emotion_gif, LV_ALIGN_CENTER, 0, -70);
-#endif            
         }
+#endif
         
 
         /* create label once and reuse it; update text on subsequent calls */
@@ -175,7 +248,28 @@ int lvgl_v9_main_task_hook()
         lv_label_set_text(m_label_content, m_content_text);
         m_content_updated = 0;
         ret = 1;
-    }   
+    }
+#if 0  /* gif 更新功能暂时禁用 */
+    if (m_emotion_gif_updated && m_emotion_gif) {
+        unsigned char *gif_data = NULL;
+        unsigned int gif_len = 0;
+        get_emotion_gif_data(m_current_emotion_gif, &gif_data, &gif_len);
+        
+        static lv_image_dsc_t s_emotion_gif_dsc;
+        s_emotion_gif_dsc.data = gif_data;
+        s_emotion_gif_dsc.data_size = gif_len;
+        s_emotion_gif_dsc.header.magic = LV_IMAGE_HEADER_MAGIC;
+        s_emotion_gif_dsc.header.flags = 0;
+        s_emotion_gif_dsc.header.cf = LV_COLOR_FORMAT_RAW;
+        s_emotion_gif_dsc.header.w = 0;
+        s_emotion_gif_dsc.header.h = 0;
+        s_emotion_gif_dsc.header.stride = 0;
+        
+        lv_gif_set_src(m_emotion_gif, &s_emotion_gif_dsc);
+        m_emotion_gif_updated = 0;
+        ret = 1;
+    }
+#endif
     
     os_mutex_post(&mutex);
     return ret;
