@@ -171,7 +171,7 @@ int lvgl_v9_main_task_hook()
         /* Change the active screen's background color 0x003a57 */
         lv_obj_set_style_bg_color(scr, lv_color_hex(0x000000), LV_PART_MAIN);
 
-#if 0  /* gif 功能暂时禁用 */
+#if 1  /* gif 功能暂时禁用 */
         if (!m_emotion_gif) {
             unsigned char *gif_data = NULL;
             unsigned int gif_len = 0;
@@ -249,7 +249,7 @@ int lvgl_v9_main_task_hook()
         m_content_updated = 0;
         ret = 1;
     }
-#if 0  /* gif 更新功能暂时禁用 */
+#if 1  /* gif 更新功能暂时禁用 */
     if (m_emotion_gif_updated && m_emotion_gif) {
         unsigned char *gif_data = NULL;
         unsigned int gif_len = 0;
