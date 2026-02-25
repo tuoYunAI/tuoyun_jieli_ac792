@@ -113,7 +113,7 @@ int lvgl_v9_main_task_hook()
             s_emotion_wink_gif_dsc.header.w = 0;
             s_emotion_wink_gif_dsc.header.h = 0;
             s_emotion_wink_gif_dsc.header.stride = 0;
-#if 0
+#if 1
             m_emotion_gif = lv_gif_create(scr);
             lv_gif_set_src(m_emotion_gif, &s_emotion_wink_gif_dsc);
             lv_obj_center(m_emotion_gif);
