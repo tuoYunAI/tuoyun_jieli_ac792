@@ -128,7 +128,7 @@ int lvgl_v9_main_task_hook()
             lv_obj_set_style_text_color(m_label_status, lv_color_hex(0xffffff), LV_PART_MAIN);
             lv_obj_align(m_label_status, LV_ALIGN_CENTER, 0, -20);
         }
-#if 1
+#if 0
         if (!m_label_emotion) {
             m_label_emotion = lv_label_create(scr);
             lv_obj_set_style_text_color(m_label_emotion, lv_color_hex(0xffffff), LV_PART_MAIN);
