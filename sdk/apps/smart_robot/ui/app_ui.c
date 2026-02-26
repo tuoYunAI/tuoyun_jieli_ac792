@@ -122,7 +122,7 @@ int lvgl_v9_main_task_hook()
         }
         
 
-        /* create label once and reuse it; update text on subsequent calls */
+        /* create label once and reuse it; update text on subsequent calls  */
         if (!m_label_status) {
             m_label_status = lv_label_create(scr);
             lv_obj_set_style_text_color(m_label_status, lv_color_hex(0xffffff), LV_PART_MAIN);
