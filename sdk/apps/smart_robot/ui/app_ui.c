@@ -163,19 +163,23 @@ int lvgl_v9_main_task_hook()
     os_mutex_pend(&mutex, 0);
     if (m_status_updated) {
         lv_label_set_text(m_label_status, m_status_text);
+        log_info("lv_label_set_text ------------m_status_text: %s", m_status_text);
         m_status_updated = 0;
         ret = 1;
     }
     if (m_emotion_updated) {
         lv_label_set_text(m_label_emotion, m_emotion_text);
+        log_info("lv_label_set_text ------------m_emotion_text: %s", m_emotion_text);
         m_emotion_updated = 0;
         ret = 1;
     }  
     if (m_content_updated) {
         lv_label_set_text(m_label_content, m_content_text);
+        log_info("lv_label_set_text ------------m_content_text: %s", m_content_text);
+        lv_obj_invalidate(m_label_content); // 强制刷新label
         m_content_updated = 0;
         ret = 1;
-    }   
+    }
     
     os_mutex_post(&mutex);
     return ret;
