@@ -42,6 +42,8 @@ extern unsigned int dizzy_gif_len;
 
 void ui_set_status_text(const char *text)
 {
+
+    log_info("------------@@@@@@@@@@@ui_set_status_text@@@@@@@@@@@@@------------: %s", text);
     char next_text[sizeof(m_status_text)] = {0};
     os_mutex_pend(&mutex, 0);
     if (text && text[0] != '\0') {
@@ -60,6 +62,7 @@ void ui_set_status_text(const char *text)
 
 void ui_set_emotion_text(const char *text)
 {    
+        log_info("------------@@@@@@@@@@@ui_set_emotion_text@@@@@@@@@@@@@------------: %s", text);
     char next_text[sizeof(m_emotion_text)] = {0};
     os_mutex_pend(&mutex, 0);
     if (text && text[0] != '\0') {
@@ -78,6 +81,7 @@ void ui_set_emotion_text(const char *text)
 
 void ui_set_content_text(const char *text)
 {
+    log_info("------------@@@@@@@@@@@ui_set_content_text@@@@@@@@@@@@@------------: %s", text);
     char next_text[sizeof(m_content_text)] = {0};
     os_mutex_pend(&mutex, 0);
     if (text && text[0] != '\0') {
