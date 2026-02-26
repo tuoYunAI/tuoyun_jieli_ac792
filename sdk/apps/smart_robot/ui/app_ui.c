@@ -184,6 +184,38 @@ int lvgl_v9_main_task_hook()
         lv_label_set_text(m_label_content, m_content_text);
         log_info("lv_label_set_text ------------m_content_text: %s", m_content_text);
         lv_obj_invalidate(m_label_content); // 强制刷新label
+
+        // 随机切换一个gif
+        int gif_idx = rand() % 3;
+        const unsigned char *gif_data = NULL;
+        unsigned int gif_len = 0;
+        switch (gif_idx) {
+            case 0:
+                gif_data = emotion_wink_gif;
+                gif_len = wink_gif_len;
+                break;
+            case 1:
+                gif_data = happy_gif;
+                gif_len = happy_gif_len;
+                break;
+            case 2:
+                gif_data = dizzy_gif;
+                gif_len = dizzy_gif_len;
+                break;
+        }
+        if (m_emotion_gif && gif_data && gif_len > 0) {
+            static lv_image_dsc_t s_emotion_gif_dsc;
+            s_emotion_gif_dsc.data = gif_data;
+            s_emotion_gif_dsc.data_size = gif_len;
+            s_emotion_gif_dsc.header.magic = LV_IMAGE_HEADER_MAGIC;
+            s_emotion_gif_dsc.header.flags = 0;
+            s_emotion_gif_dsc.header.cf = LV_COLOR_FORMAT_RAW;
+            s_emotion_gif_dsc.header.w = 0;
+            s_emotion_gif_dsc.header.h = 0;
+            s_emotion_gif_dsc.header.stride = 0;
+            lv_gif_set_src(m_emotion_gif, &s_emotion_gif_dsc);
+        }
+
         m_content_updated = 0;
         ret = 1;
     }
