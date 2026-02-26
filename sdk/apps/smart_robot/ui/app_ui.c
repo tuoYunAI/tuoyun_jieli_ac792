@@ -20,19 +20,20 @@
 static OS_MUTEX mutex;
 static int mutex_ready = 0;
 
-static lv_obj_t *m_label_status = NULL;
+static lv_obj_t *m_label_status  = NULL;
 static lv_obj_t *m_label_emotion = NULL;
 static lv_obj_t *m_label_content = NULL;
-static lv_obj_t *m_emotion_gif = NULL;
+static lv_obj_t *m_emotion_gif   = NULL;
 
-static int m_init  = 0;
-static int m_status_updated = 0;
+static int m_init = 0;
+
+static int m_status_updated  = 0;
 static int m_emotion_updated = 0;
 static int m_content_updated = 0;
 
-static char m_status_text[128] = " ";
-static char m_emotion_text[128] = " ";
-static char m_content_text[512] = " ";
+static char m_status_text[128]  = "";
+static char m_emotion_text[128] = "";
+static char m_content_text[512] = "";
 
 extern unsigned char emotion_wink_gif[];
 extern unsigned int wink_gif_len;
@@ -59,12 +60,24 @@ void ui_set_status_text(const char *text)
 {
     ui_lock();
 
-    const char *src = (text && text[0]) ? text : " ";
+    log_info("[SET] ui_set_status_text called, input='%s'",
+             text ? text : "NULL");
+
+    const char *src = text ? text : "";
+
     if (strcmp(m_status_text, src) != 0) {
+
+        log_info("[SET] status changed: old='%s' new='%s'",
+                 m_status_text, src);
+
         strncpy(m_status_text, src, sizeof(m_status_text) - 1);
         m_status_text[sizeof(m_status_text) - 1] = '\0';
+
         m_status_updated = 1;
-        log_info("Status updated: %s", m_status_text);
+        log_info("[SET] m_status_updated=1");
+
+    } else {
+        log_info("[SET] status NOT changed (same string)");
     }
 
     ui_unlock();
@@ -74,12 +87,24 @@ void ui_set_emotion_text(const char *text)
 {
     ui_lock();
 
-    const char *src = (text && text[0]) ? text : " ";
+    log_info("[SET] ui_set_emotion_text called, input='%s'",
+             text ? text : "NULL");
+
+    const char *src = text ? text : "";
+
     if (strcmp(m_emotion_text, src) != 0) {
+
+        log_info("[SET] emotion changed: old='%s' new='%s'",
+                 m_emotion_text, src);
+
         strncpy(m_emotion_text, src, sizeof(m_emotion_text) - 1);
         m_emotion_text[sizeof(m_emotion_text) - 1] = '\0';
+
         m_emotion_updated = 1;
-        log_info("Emotion updated: %s", m_emotion_text);
+        log_info("[SET] m_emotion_updated=1");
+
+    } else {
+        log_info("[SET] emotion NOT changed (same string)");
     }
 
     ui_unlock();
@@ -89,12 +114,24 @@ void ui_set_content_text(const char *text)
 {
     ui_lock();
 
-    const char *src = (text && text[0]) ? text : " ";
+    log_info("[SET] ui_set_content_text called, input='%s'",
+             text ? text : "NULL");
+
+    const char *src = text ? text : "";
+
     if (strcmp(m_content_text, src) != 0) {
+
+        log_info("[SET] content changed: old='%s' new='%s'",
+                 m_content_text, src);
+
         strncpy(m_content_text, src, sizeof(m_content_text) - 1);
         m_content_text[sizeof(m_content_text) - 1] = '\0';
+
         m_content_updated = 1;
-        log_info("Content updated: %s", m_content_text);
+        log_info("[SET] m_content_updated=1");
+
+    } else {
+        log_info("[SET] content NOT changed (same string)");
     }
 
     ui_unlock();
@@ -154,7 +191,7 @@ int lvgl_v9_main_task_hook(void)
             lv_label_set_text(m_label_emotion, m_emotion_text);
         }
 
-        /* ===== 内容文字（直接放屏幕，避免裁剪问题）===== */
+        /* ===== 内容文字 ===== */
         if (!m_label_content) {
             m_label_content = lv_label_create(scr);
             lv_obj_set_style_text_color(m_label_content, lv_color_hex(0xffffff), 0);
@@ -170,27 +207,71 @@ int lvgl_v9_main_task_hook(void)
 
     /* ---------- 更新 UI ---------- */
 
+    log_debug("[HOOK] enter lvgl_v9_main_task_hook");
+
     ui_lock();
 
-    if (m_status_updated && m_label_status) {
-        lv_label_set_text(m_label_status, m_status_text);
+    log_debug("[HOOK] flags: status=%d emotion=%d content=%d",
+              m_status_updated,
+              m_emotion_updated,
+              m_content_updated);
+
+    if (m_status_updated) {
+
+        log_info("[HOOK] try update STATUS, label=%p text='%s'",
+                 m_label_status, m_status_text);
+
+        if (m_label_status) {
+            lv_label_set_text(m_label_status, m_status_text);
+            log_info("[HOOK] lv_label_set_text STATUS done");
+        } else {
+            log_error("[HOOK] m_label_status is NULL!");
+        }
+
         m_status_updated = 0;
         ret = 1;
     }
 
-    if (m_emotion_updated && m_label_emotion) {
-        lv_label_set_text(m_label_emotion, m_emotion_text);
+    if (m_emotion_updated) {
+
+        log_info("[HOOK] try update EMOTION, label=%p text='%s'",
+                 m_label_emotion, m_emotion_text);
+
+        if (m_label_emotion) {
+            lv_label_set_text(m_label_emotion, m_emotion_text);
+            log_info("[HOOK] lv_label_set_text EMOTION done");
+        } else {
+            log_error("[HOOK] m_label_emotion is NULL!");
+        }
+
         m_emotion_updated = 0;
         ret = 1;
     }
 
-    if (m_content_updated && m_label_content) {
-        lv_label_set_text(m_label_content, m_content_text);
+    if (m_content_updated) {
+
+        log_info("[HOOK] try update CONTENT, label=%p text='%s'",
+                 m_label_content, m_content_text);
+
+        if (m_label_content) {
+            lv_label_set_text(m_label_content, m_content_text);
+            log_info("[HOOK] lv_label_set_text CONTENT done");
+        } else {
+            log_error("[HOOK] m_label_content is NULL!");
+        }
+
         m_content_updated = 0;
         ret = 1;
     }
 
+    log_debug("[HOOK] current text: status='%s' emotion='%s' content='%s'",
+              m_status_text,
+              m_emotion_text,
+              m_content_text);
+
     ui_unlock();
+
+    log_debug("[HOOK] exit lvgl_v9_main_task_hook ret=%d", ret);
 
     return ret;
 }
