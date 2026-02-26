@@ -32,7 +32,7 @@ static char m_content_text[512] = {0};
 
 extern unsigned char emotion_wink_gif[];
 extern unsigned int wink_gif_len;
-extern unsigned char emotion_happy_gif[];
+extern unsigned char happy_gif[];
 extern unsigned int happy_gif_len;
 
 void ui_set_status_text(const char *text)
@@ -107,7 +107,7 @@ int lvgl_v9_main_task_hook()
 
         if( !m_emotion_gif ){
             static lv_image_dsc_t s_emotion_wink_gif_dsc;
-            s_emotion_wink_gif_dsc.data = emotion_happy_gif;
+            s_emotion_wink_gif_dsc.data = happy_gif;
             s_emotion_wink_gif_dsc.data_size = happy_gif_len;
             s_emotion_wink_gif_dsc.header.magic = LV_IMAGE_HEADER_MAGIC;
             s_emotion_wink_gif_dsc.header.flags = 0;
