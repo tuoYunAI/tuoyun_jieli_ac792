@@ -850,7 +850,6 @@
 <Unit filename="../../../../apps/smart_robot/ui/freetype/src/winfonts/winfnt.c"><Option compilerVer="CC"/></Unit>
 <Unit filename="../../../../apps/smart_robot/ui/freetype/src/winfonts/winfnt.h" />
 <Unit filename="../../../../apps/smart_robot/ui/app_ui.c"><Option compilerVer="CC"/></Unit>
-<Unit filename="../../../../apps/smart_robot/ui/emotion/emotion_gif_wink.c"><Option compilerVer="CC"/></Unit>
 <Unit filename="../../../../apps/smart_robot/ui/emotion/emotion_gif_happy.c"><Option compilerVer="CC"/></Unit>
 <Unit filename="../../../../apps/smart_robot/ui/emotion/emotion_gif_dizzy.c"><Option compilerVer="CC"/></Unit>
 <Unit filename="../../../../apps/smart_robot/ui/lvgl_v9/src/porting/lv_port_disp.c"><Option compilerVer="CC"/></Unit>

@@ -30,8 +30,8 @@ static char m_status_text[128] = {0};
 static char m_emotion_text[128] = {0};
 static char m_content_text[512] = {0};
 
-extern unsigned char emotion_wink_gif[];
-extern unsigned int wink_gif_len;
+// extern unsigned char emotion_wink_gif[];
+// extern unsigned int wink_gif_len;
 
 extern unsigned char happy_gif[];
 extern unsigned int happy_gif_len;
@@ -186,22 +186,19 @@ int lvgl_v9_main_task_hook()
         lv_obj_invalidate(m_label_content); // 强制刷新label
 
         // 随机切换一个gif
-        int gif_idx = rand() % 3;
+        int gif_idx = rand() % 2;
         const unsigned char *gif_data = NULL;
         unsigned int gif_len = 0;
         switch (gif_idx) {
             case 0:
-                gif_data = emotion_wink_gif;
-                gif_len = wink_gif_len;
+                gif_data = dizzy_gif;
+                gif_len = dizzy_gif_len;
                 break;
             case 1:
                 gif_data = happy_gif;
                 gif_len = happy_gif_len;
                 break;
-            case 2:
-                gif_data = dizzy_gif;
-                gif_len = dizzy_gif_len;
-                break;
+
         }
         if (m_emotion_gif && gif_data && gif_len > 0) {
             static lv_image_dsc_t s_emotion_gif_dsc;
