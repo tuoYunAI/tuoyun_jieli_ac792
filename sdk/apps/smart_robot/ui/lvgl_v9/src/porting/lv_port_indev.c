@@ -566,7 +566,7 @@ static void keypad_read(lv_indev_t *indev_drv, lv_indev_data_t *data)
         break;
     }
     data->key = key;
-    LV_LOG_INFO("lv keypad_read = %d, %d", data->key, data->state);
+    //LV_LOG_INFO("lv keypad_read = %d, %d", data->key, data->state);
 }
 
 /*------------------

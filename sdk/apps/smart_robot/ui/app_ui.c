@@ -17,6 +17,8 @@
 #define LOG_CLI_ENABLE
 #include "system/debug.h"
 
+#define UI_EMOTION_GIF_ENABLE 1
+
 static OS_MUTEX mutex;
 static lv_obj_t *m_label_status = NULL;
 static lv_obj_t *m_label_emotion = NULL;
@@ -29,6 +31,14 @@ static int m_content_updated = 1;
 static char m_status_text[128] = {0};
 static char m_emotion_text[128] = {0};
 static char m_content_text[512] = {0};
+static u16 m_timer_id = 0;
+static u32 m_gif_restart_time = 0;
+#define UI_GIF_RESTART_INTERVAL_MS 500
+
+static int ui_is_blank_char(char c)
+{
+    return c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\f' || c == '\v';
+}
 
 extern unsigned char emotion_wink_gif[];
 extern unsigned int wink_gif_len;
@@ -72,9 +82,30 @@ void ui_set_emotion_text(const char *text)
 void ui_set_content_text(const char *text)
 {
     char next_text[sizeof(m_content_text)] = {0};
+    char *start;
+    char *end;
     os_mutex_pend(&mutex, 0);
     if (text && text[0] != '\0') {
         strncpy(next_text, text, sizeof(next_text) - 1);
+
+        start = next_text;
+        while (*start && ui_is_blank_char(*start)) {
+            start++;
+        }
+
+        end = start + strlen(start);
+        while (end > start && ui_is_blank_char(*(end - 1))) {
+            end--;
+        }
+        *end = '\0';
+
+        if (start != next_text) {
+            memmove(next_text, start, strlen(start) + 1);
+        }
+
+        if (next_text[0] == '\0') {
+            strcpy(next_text, " ");
+        }
     } else {
         strcpy(next_text, " ");
     }
@@ -87,6 +118,19 @@ void ui_set_content_text(const char *text)
     os_mutex_post(&mutex);    
 }
 
+void resume_gif(void *p)
+{
+    if (m_emotion_gif && m_gif_restart_time > 0) {
+        os_mutex_pend(&mutex, 0);
+        u32 current = timer_get_ms(); 
+        if (current >= m_gif_restart_time) {
+            m_gif_restart_time = 0;
+            lv_gif_resume(m_emotion_gif);
+            log_info("Resuming emotion GIF now, current time: %d", current);
+        } 
+        os_mutex_post(&mutex);
+    }
+}
 
 int lvgl_v9_main_task_hook()
 {
@@ -102,7 +146,7 @@ int lvgl_v9_main_task_hook()
 
         /* Change the active screen's background color 0x003a57 */
         lv_obj_set_style_bg_color(scr, lv_color_hex(0x000000), LV_PART_MAIN);
-
+#if UI_EMOTION_GIF_ENABLE == 1
         if( !m_emotion_gif ){
             static lv_image_dsc_t s_emotion_wink_gif_dsc;
             s_emotion_wink_gif_dsc.data = emotion_wink_gif;
@@ -113,22 +157,22 @@ int lvgl_v9_main_task_hook()
             s_emotion_wink_gif_dsc.header.w = 0;
             s_emotion_wink_gif_dsc.header.h = 0;
             s_emotion_wink_gif_dsc.header.stride = 0;
-#if 0
+
             m_emotion_gif = lv_gif_create(scr);
             lv_gif_set_src(m_emotion_gif, &s_emotion_wink_gif_dsc);
             lv_obj_center(m_emotion_gif);
-            lv_obj_align(m_emotion_gif, LV_ALIGN_CENTER, 0, -70);
-#endif            
+            lv_obj_align(m_emotion_gif, LV_ALIGN_CENTER, 0, -70);           
         }
-        
+        m_timer_id = sys_timer_add(NULL, resume_gif, 500);
+#endif      
 
         /* create label once and reuse it; update text on subsequent calls */
         if (!m_label_status) {
             m_label_status = lv_label_create(scr);
             lv_obj_set_style_text_color(m_label_status, lv_color_hex(0xffffff), LV_PART_MAIN);
-            lv_obj_align(m_label_status, LV_ALIGN_CENTER, 0, -20);
+            lv_obj_align(m_label_status, LV_ALIGN_CENTER, 0, 0);
         }
-#if 1
+#if UI_EMOTION_GIF_ENABLE == 0
         if (!m_label_emotion) {
             m_label_emotion = lv_label_create(scr);
             lv_obj_set_style_text_color(m_label_emotion, lv_color_hex(0xffffff), LV_PART_MAIN);
@@ -156,27 +200,41 @@ int lvgl_v9_main_task_hook()
             lv_obj_set_width(m_label_content, screen_width-20);   // 限制 label 宽度，让它自动换行
             lv_label_set_long_mode(m_label_content, LV_LABEL_LONG_WRAP);
             lv_obj_set_style_text_align(m_label_content, LV_TEXT_ALIGN_CENTER, 0);
-        }
-        
+        }        
         m_init = 1;
     }
     os_mutex_pend(&mutex, 0);
+#if UI_EMOTION_GIF_ENABLE == 0    
+    if (m_emotion_updated) {
+        lv_label_set_text(m_label_emotion, m_emotion_text);
+        m_emotion_updated = 0;
+        ret = 1;
+    } 
+#else
+    
+    if (m_emotion_gif && (m_status_updated || m_content_updated)) {
+        lv_gif_pause(m_emotion_gif);
+        u32 current = timer_get_ms(); 
+        if (m_gif_restart_time == 0 || current > m_gif_restart_time) { // 避免频繁重启GIF
+            m_gif_restart_time = current + UI_GIF_RESTART_INTERVAL_MS; // 2秒内不重复重启
+        }else{
+            m_gif_restart_time += UI_GIF_RESTART_INTERVAL_MS; // 2秒内不重复重启
+        }
+        log_info("Emotion GIF paused due to status/content update till: %d", m_gif_restart_time);
+    }       
+#endif 
+
     if (m_status_updated) {
         lv_label_set_text(m_label_status, m_status_text);
         m_status_updated = 0;
         ret = 1;
     }
-    if (m_emotion_updated) {
-        lv_label_set_text(m_label_emotion, m_emotion_text);
-        m_emotion_updated = 0;
-        ret = 1;
-    }  
+    
     if (m_content_updated) {
         lv_label_set_text(m_label_content, m_content_text);
         m_content_updated = 0;
         ret = 1;
     }   
-    
     os_mutex_post(&mutex);
     return ret;
 }

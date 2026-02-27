@@ -478,7 +478,16 @@ int http_create_download_task(void)
 
 static u8 m_unique_code[33] = {0};
 char* get_device_unique_code(){
+
+/**
+ * 为了兼容自研的方盒产品，该产品的flash没有UUID, 因此在编译时直接定义一个固定的UUID字符串
+ */
+#ifdef CONFIG_BOARD_SMART_ROBOT_ITO_CUBE
+    return FLASH_UUID;
+#else     
     return m_unique_code;
+#endif 
+
 }
 
 

@@ -979,6 +979,8 @@
 #if LV_USE_GIF
 /*GIF decoder accelerate*/
 #define LV_GIF_CACHE_DECODE_DATA 1
+/*GIF最小帧间隔(ms)，用于限制GIF刷新频率，减轻UI线程负载。0表示不限制(按GIF原始delay播放)*/
+#define LV_GIF_MIN_FRAME_MS 120
 #endif
 
 

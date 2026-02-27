@@ -136,7 +136,7 @@ int lvgl_key_event_handler_2(struct sys_event *event)
 
     int msg[2 + sizeof(struct key_event) / 4];
     //编码器旋钮
-    if (key->action == KEY_EVENT_RDEC_UP || KEY_EVENT_RDEC_DOWN) {
+    if (key->action == KEY_EVENT_RDEC_UP || key->action == KEY_EVENT_RDEC_DOWN) {
         msg[0] = UI_MSG_ENCODER;
         memcpy(&msg[1], key, sizeof(struct key_event));
         if (os_taskq_post_type(LVGL_TASK_NAME, Q_USER, ARRAY_SIZE(msg), msg)) {

@@ -14,6 +14,10 @@
 
 #include "gifdec.h"
 
+#ifndef LV_GIF_MIN_FRAME_MS
+#define LV_GIF_MIN_FRAME_MS 0
+#endif
+
 /*********************
  *      DEFINES
  *********************/
@@ -199,8 +203,12 @@ static void next_frame_task_cb(lv_timer_t *t)
 {
     lv_obj_t *obj = t->user_data;
     lv_gif_t *gifobj = (lv_gif_t *) obj;
+    uint32_t frame_delay = gifobj->gif->gce.delay * 10;
+    if (frame_delay < LV_GIF_MIN_FRAME_MS) {
+        frame_delay = LV_GIF_MIN_FRAME_MS;
+    }
     uint32_t elaps = lv_tick_elaps(gifobj->last_call);
-    if (elaps < gifobj->gif->gce.delay * 10) {
+    if (elaps < frame_delay) {
         return;
     }
 

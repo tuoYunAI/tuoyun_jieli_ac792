@@ -485,31 +485,32 @@ static void proc_session_update_event(message_session_event_ptr notify)
     {
     case CTRL_EVENT_USER_TEXT:
         log_info("@TIMING@ 2 Received stt: %s\n", notify->text?notify->text:"NULL");
-        if(notify->text) {
+        if(notify->text[0] != '\0'){
             ui_set_content_text(notify->text);
         }
         break;
     case CTRL_EVENT_SPEAKER:
-        log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", notify->status == WORKING_STATUS_START ? "START" : "STOP");
-        dialog_proc_speak_status(notify->status);
+        log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", notify->status == WORKING_STATUS_START ? "START" : (notify->status == WORKING_STATUS_STOP ? "STOP":"TEXT"));
+        //dialog_proc_speak_status(notify->status);
         
-        if (notify->status == WORKING_STATUS_STOP) {
-            enter_mode_dialog_listening();
-        }else {
-            if (notify->status == WORKING_STATUS_TEXT) {
-                log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", "TEXT");
-                dialog_proc_speak_status(WORKING_STATUS_START);
-            }
-            else if (notify->status == WORKING_STATUS_START) {
-                enter_mode_dialog_speaking();
-            }
-
+        if (notify->status == WORKING_STATUS_TEXT) {
+            
             if( notify->text[0] != '\0') { 
                 ui_set_content_text(notify->text);
             }
             if (notify->emotion[0] != '\0'){ 
                 ui_set_emotion_text(notify->emotion);
             }
+
+        }else if (notify->status == WORKING_STATUS_STOP) {
+
+            dialog_proc_speak_status(WORKING_STATUS_STOP);
+
+        }else if (notify->status == WORKING_STATUS_START){
+
+            dialog_proc_speak_status(WORKING_STATUS_START);
+            enter_mode_dialog_speaking();
+
         }
         break;
     default:
