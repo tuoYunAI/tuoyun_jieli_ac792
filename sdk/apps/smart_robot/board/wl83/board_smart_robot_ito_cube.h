@@ -395,7 +395,7 @@
  * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【控制板型号】页面的表中, 选择对应
  * 的控制板, 查看【编码】字段内容, 复制替换下面的宏定义
  */
-#define BOARD_TYPE            "xy_jieli_7923AE_borad"  
+#define BOARD_TYPE            "xy_jieli_7923AE_board"  
 /**
  * 控制板名称, 以下是默认名称, 你可以自行定义, 或从平台中获取。
  * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【控制板型号】页面的表中, 选择对应
