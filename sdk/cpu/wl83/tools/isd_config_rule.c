@@ -300,7 +300,7 @@ FILE_LIST=(file=ota.bin:type=100);
 VM_ADR=0; [设置VM]
 VM_LEN=32K;
 #if defined CONFIG_DOUBLE_BANK_ENABLE || TCFG_RF_FCC_TEST_ENABLE
-VM_OPT=0;
+VM_OPT=1;
 #else
 VM_OPT=1;//单备份升级VM在升级时候默认VM不需要擦除,选择擦除会在ota_loader第二阶段擦除比较长，而且可能会造成VM丢失
 #endif
