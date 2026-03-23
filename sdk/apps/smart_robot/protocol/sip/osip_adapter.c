@@ -335,7 +335,8 @@ static int make_sdp(uplink_sdp_parameter_ptr param, char *dst, size_t dst_sz)
         "a=x-frame_duration:%d\r\n"
         "a=x-support_cbr:%d\r\n"
         "a=x-support_frame_gap:%d\r\n"
-        "a=x-mcp:%d\r\n",
+        "a=x-mcp:%d\r\n"
+        "a=x-aggregation:%d\r\n",
         param->uid, call_id, version, param->device_ip, 
         param->device_ip, 
         param->codec, 
@@ -344,7 +345,8 @@ static int make_sdp(uplink_sdp_parameter_ptr param, char *dst, size_t dst_sz)
         param->frame_duration_ms,
         param->cbr, 
         param->frame_gap,
-        param->support_mcp ? 1 : 0
+        param->support_mcp ? 1 : 0,
+        param->support_frame_aggregation ? 1 : 0
     );
     if(param->wake_up_word && param->wake_up_word[0] != '\0'){
         int m = snprintf(dst + n, (n < (int)dst_sz) ? (dst_sz - n) : 0,

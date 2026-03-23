@@ -97,6 +97,10 @@ typedef struct uplink_sdp_parameter {
    * 唤醒词 可选参数, 如果没有唤醒词则传NULL
    */
   char *wake_up_word;
+  /**
+   * 是否支持帧聚合，0表示不支持，1表示支持
+   */
+  int support_frame_aggregation;
 } uplink_sdp_parameter_t, *uplink_sdp_parameter_ptr;
 
 

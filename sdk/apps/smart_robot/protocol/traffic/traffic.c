@@ -80,24 +80,24 @@ void test_print_traffic_state(){
     64 kbps	480 bytes
  */
 
-int sample_rate_to_audio_packet_len(int sample_rate){
+int sample_rate_to_audio_packet_len(int sample_rate, int duration_ms){
     switch (sample_rate){
         case 6000:
-            return 45; // 6kbps
+            return (6 * duration_ms) / 8; // 6kbps
         case 8000:
-            return 60; // 6kbps
+            return (8 * duration_ms) / 8; // 6kbps
         case 16000:
-            return 120; // 12kbps
+            return (16 * duration_ms) / 8; //120; // 12kbps
         case 20000:
-            return 150; // 15kbps
+            return (20 * duration_ms) / 8; // 15kbps
         case 24000:
-            return 180; // 18kbps
+            return (24 * duration_ms) / 8; // 18kbps
         case 32000:
-            return 240; // 24kbps
+            return (32 * duration_ms) / 8; // 24kbps
         case 48000:
-            return 360; // 36kbps
+            return (48 * duration_ms) / 8; // 36kbps
         case 64000:
-            return 480; // 48kbps
+            return (64 * duration_ms) / 8; // 48kbps
         default:
             return -1;
     }
@@ -131,7 +131,7 @@ int start_traffic_tunnel(media_parameter_ptr param){
             m_traffic_state.media_param.frame_duration
         );
 
-    m_traffic_state.downlink_audio_packet_len = sample_rate_to_audio_packet_len(m_traffic_state.media_param.sample_rate);
+    m_traffic_state.downlink_audio_packet_len = sample_rate_to_audio_packet_len(m_traffic_state.media_param.sample_rate, m_traffic_state.media_param.frame_duration);
     if (m_traffic_state.downlink_audio_packet_len <= 0){
         return -1;
     }
@@ -159,6 +159,11 @@ int start_traffic_tunnel(media_parameter_ptr param){
             LOG_INFO("sock_reg fail\n");
             break;
         }
+
+        const int ip_precedence_vi = 6;
+        const int ip_precedence_offset = 7;
+        int priority = (ip_precedence_vi << ip_precedence_offset);
+        setsockopt(m_traffic_state.udp_fd, IPPROTO_IP, IP_TOS, &priority, sizeof(priority));
 
         audio_transmission_started = 0;
         if (RET_OK != adapter_start_thread(traffic_uplink_empty_task, "protocol_audio_demo", 1024, 16)) {
@@ -271,6 +276,7 @@ static void traffic_uplink_empty_task(void* arg){
 
 /* 重排窗口大小：可存放的最大乱序包数量 */
 const int REORDER_WINDOW = 20;
+const int REORDER_MAX_WAIT_PACKETS = 13; // 当等待超过13个乱序包时，认为前面的包丢失，直接推进序列号到最新的包
 typedef struct {
     uint32_t seq;
     uint8_t *payload;
@@ -280,7 +286,32 @@ typedef struct {
 reorder_entry_t *m_cache_block = NULL;
 uint8_t *m_cache_data_buf = NULL;
 uint32_t m_timeout_cnt = 0;
+uint32_t m_reorder_wait_cnt = 0;
 static OS_MUTEX mutex;
+
+
+static void traffic_deliver_cached_contiguous(audio_stream_packet_t *audio_pack)
+{
+    if (!audio_pack || !m_cache_block) {
+        return;
+    }
+
+    int progressed = 1;
+    while (progressed) {
+        progressed = 0;
+        uint32_t want = m_traffic_state.rx_seq + 1;
+        for (int i = 0; i < REORDER_WINDOW; i++) {
+            if (m_cache_block[i].filled && m_cache_block[i].seq == want) {
+                memcpy(audio_pack->payload, m_cache_block[i].payload, m_traffic_state.downlink_audio_packet_len);
+                dialog_audio_dec_frame_write(audio_pack);
+                m_traffic_state.rx_seq = m_cache_block[i].seq;
+                m_cache_block[i].filled = 0;
+                progressed = 1;
+                break;
+            }
+        }
+    }
+}
 
 
 static void traffic_receive_task(void *arg){
@@ -324,6 +355,7 @@ static void traffic_receive_task(void *arg){
         }
     }
     m_timeout_cnt = 0;
+    m_reorder_wait_cnt = 0;
     for(;;){
         
         if(!check_if_session_in_call() || !m_traffic_state.udp_fd){
@@ -351,6 +383,7 @@ static void traffic_receive_task(void *arg){
 
             size_t nc_off = 0;
             memcpy(ctr_block, udp_recv_buf + offset, nonce_size); // nonce from header
+            memset(stream_block, 0, sizeof(stream_block));
 
             long sequence = (long)ntohl(*(uint32_t*)&ctr_block[12]);
             if (m_traffic_state.rx_seq == 0) {
@@ -381,26 +414,10 @@ static void traffic_receive_task(void *arg){
             if ((long)(m_traffic_state.rx_seq + 1) == sequence) {
                 dialog_audio_dec_frame_write(&audio_pack);
                 m_traffic_state.rx_seq = sequence;
+                m_reorder_wait_cnt = 0;
 
                 /* 检查缓冲区中是否存在后续连续包 */
-                if (m_cache_block) {
-                    int progressed = 1;
-                    while (progressed) {
-                        progressed = 0;
-                        uint32_t want = m_traffic_state.rx_seq + 1;
-                        for (int i = 0; i < REORDER_WINDOW; i++) {
-                            if (m_cache_block[i].filled && m_cache_block[i].seq == want) {
-                                /* 将已解密数据放到 audio_pack.payload，然后交付 */
-                                memcpy(audio_pack.payload, m_cache_block[i].payload, m_traffic_state.downlink_audio_packet_len);
-                                dialog_audio_dec_frame_write(&audio_pack);
-                                m_traffic_state.rx_seq = m_cache_block[i].seq;
-                                m_cache_block[i].filled = 0;
-                                progressed = 1;
-                                break;
-                            }
-                        }
-                    }
-                }
+                traffic_deliver_cached_contiguous(&audio_pack);
 
                 offset += packet_len;
                 continue;
@@ -412,7 +429,9 @@ static void traffic_receive_task(void *arg){
                 if (gap >= REORDER_WINDOW) {
                     LOG_INFO("@@@@@@Audio packet jump detected: expected seq %ld, received seq %d\n", m_traffic_state.rx_seq + 1, sequence);
                     /* 跳跃过大，视为重同步：清空缓冲并把当前包作为新的连续开始 */
-                    for (int i = 0; i < REORDER_WINDOW; i++) m_cache_block[i].filled = 0;
+                    for (int i = 0; i < REORDER_WINDOW; i++){
+                        m_cache_block[i].filled = 0;
+                    } 
                     /* 直接交付当前包并更新序号 */
                     dialog_audio_dec_frame_write(&audio_pack);
                     m_traffic_state.rx_seq = sequence;
@@ -425,6 +444,27 @@ static void traffic_receive_task(void *arg){
                     memcpy(m_cache_block[idx].payload, audio_pack.payload, m_traffic_state.downlink_audio_packet_len);
                     m_cache_block[idx].seq = sequence;
                     m_cache_block[idx].filled = 1;
+
+                    m_reorder_wait_cnt++;
+                    if (m_reorder_wait_cnt >= REORDER_MAX_WAIT_PACKETS) {
+                        uint32_t min_seq = 0;
+                        int found = 0;
+                        for (int i = 0; i < REORDER_WINDOW; i++) {
+                            if (m_cache_block[i].filled && m_cache_block[i].seq > m_traffic_state.rx_seq) {
+                                if (!found || m_cache_block[i].seq < min_seq) {
+                                    min_seq = m_cache_block[i].seq;
+                                    found = 1;
+                                }
+                            }
+                        }
+                        if (found) {
+                            LOG_INFO("@@@@@@Audio packet loss fast-recover: skip to seq %u from %u\n", min_seq, m_traffic_state.rx_seq + 1);
+                            m_traffic_state.rx_seq = min_seq - 1;
+                            traffic_deliver_cached_contiguous(&audio_pack);
+                        }
+                        m_reorder_wait_cnt = 0;
+                    }
+
                     offset += packet_len;
                     continue;
                 }
@@ -435,6 +475,7 @@ static void traffic_receive_task(void *arg){
                 }
                 dialog_audio_dec_frame_write(&audio_pack);
                 m_traffic_state.rx_seq = sequence;
+                m_reorder_wait_cnt = 0;
                 offset += packet_len;
                 continue;
             }
@@ -473,19 +514,24 @@ static void traffic_receive_monitor_task(void *arg){
             //LOG_INFO("traffic receive monitor: no data timeout, flush traffic data\n");
 
             os_mutex_pend(&mutex, 0);
-            m_traffic_state.rx_seq = 0;
             if (m_cache_block) {
+                uint32_t min_seq = 0;
+                int found = 0;
                 for (int i = 0; i < REORDER_WINDOW; i++) {
                     if (m_cache_block[i].filled && m_cache_block[i].seq > m_traffic_state.rx_seq) {
-                        /* 将已解密数据放到 audio_pack.payload，然后交付 */
-                        memcpy(audio_pack.payload, m_cache_block[i].payload, m_traffic_state.downlink_audio_packet_len);
-                        dialog_audio_dec_frame_write(&audio_pack);
-                        m_traffic_state.rx_seq = m_cache_block[i].seq;
-                        m_cache_block[i].filled = 0;
-                    }        
+                        if (!found || m_cache_block[i].seq < min_seq) {
+                            min_seq = m_cache_block[i].seq;
+                            found = 1;
+                        }
+                    }
+                }
+                if (found) {
+                    m_traffic_state.rx_seq = min_seq - 1;
+                    traffic_deliver_cached_contiguous(&audio_pack);
                 }
             }
             m_timeout_cnt = 0;
+            m_reorder_wait_cnt = 0;
             os_mutex_post(&mutex);
         }
         os_time_dly(2);

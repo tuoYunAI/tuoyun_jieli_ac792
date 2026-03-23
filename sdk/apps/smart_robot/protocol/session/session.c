@@ -497,7 +497,8 @@ int init_call(const char* wake_up_word){
             .support_mcp = SESSION_SUPORT_MCP,
             .cbr = SESSION_OPUS_CBR,
             .frame_gap = SESSION_AUDIO_FRAME_GAP,
-            .wake_up_word = wake_up_word
+            .wake_up_word = wake_up_word,
+            .support_frame_aggregation = SESSION_SUPPORT_FRAME_AGGREGATION
         };
 
         sip_invite_param_t invite = {
