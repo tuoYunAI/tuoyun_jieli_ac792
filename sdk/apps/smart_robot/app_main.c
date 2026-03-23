@@ -536,7 +536,7 @@ void app_protocol_event_handler(struct app_event *event)
         break;  
     case APP_EVENT_CALL_ESTABLISHED:
         dialog_audio_init((media_parameter_ptr)event->arg);
-        enter_mode_dialog_initiating();
+        enter_mode_dialog_speaking();
         break;
     case APP_EVENT_CALL_REJECTED:
         proc_call_rejected((session_call_error_event_ptr)event->arg);
@@ -577,6 +577,7 @@ void app_audio_event_handler(struct app_event *event)
         if (g_device_status.overall_state == OVERALL_STATE_IDLE){
             log_info("@TIMING@ 0 Wake Word Detected, init call: %s", (char*)event->arg);
             init_call((char*)event->arg);
+            enter_mode_dialog_initiating();
         } else{
             log_info("@TIMING@ 5 Wake Word Detected, interrupting...");
             tuoyun_asr_recorder_close();

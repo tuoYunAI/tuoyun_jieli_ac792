@@ -376,7 +376,7 @@
  * 登录https://agent.lovaiot.com后, 在左侧菜单中，进入【型号管理】> 【固件】页面的表中, 选择对应
  * 的固件, 查看【编码】字段内容, 复制替换下面的宏定义
  */
-#define FIRMWARE_TYPE         "{请登录https://agent.lovaiot.com创建}"            //固件的类型, 由平台提供*
+#define FIRMWARE_TYPE         "{请登录https://agent.lovaiot.com创建}" 
 
 /**
  * 固件名称, 以下是默认名称, 你可以自行定义, 或从平台中获取。
