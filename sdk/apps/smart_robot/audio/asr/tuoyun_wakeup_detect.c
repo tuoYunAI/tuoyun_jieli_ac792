@@ -124,6 +124,9 @@ static int vad_callback(enum vad_event event)
 
 void tuoyun_asr_recorder_open()
 {
+#if LOCAL_AUDIO_LOOP_TEST
+    return;
+#endif    
     int err;
     struct stream_fmt fmt = {0};
     struct encoder_fmt enc_fmt = {0};
@@ -227,6 +230,9 @@ __exit0:
 
 int tuoyun_asr_recorder_close()
 {
+#if LOCAL_AUDIO_LOOP_TEST
+    return 0;
+#endif    
     log_info("tuoyun_asr_recorder_close ---- close");
     aisp_suspend();
     os_mutex_pend(&mutex, 0);

@@ -9,6 +9,7 @@
 #include "vad_node.h"
 #include "app_event.h"
 #include "tuoyun_voice_recorder.h"
+#include "app_config.h"
 
 
 #define LOG_TAG             "[RECORDER]"
@@ -225,4 +226,35 @@ int tuoyun_voice_recorder_close()
     app_event_notify(APP_EVENT_FROM_AUDIO, &ev);
     return 0;
 }
+#include "server/ai_server.h"
+#include "../player/tuoyun_flow_player.h"
 
+#if LOCAL_AUDIO_LOOP_TEST
+
+static int fs_write_data(void *file, void *buf, int len)
+{
+    extern int tuoyun_audio_write_data(void *buf, int len);
+    return tuoyun_audio_write_data(((u8*)buf)+8, len - 8);
+}
+
+void virtual_test_loop_audio()
+{
+    extern void tuoyun_audio_player_clear(void);
+    tuoyun_audio_player_clear();
+    
+    log_info("@@@@@ start local audio testing...");
+    struct ai_voice_param param = {0};
+
+    param.code_type = AUDIO_CODING_OPUS;
+    param.frame_ms = 20;
+    param.output = fs_write_data;
+    param.sample_rate = 16000;
+    param.format_mode = 3; //对应RAW模式
+    ai_voice_recorder_open(&param);
+    os_time_dly(20);
+
+    extern void tuoyun_audio_player_start(player_event_callback_fn callback);
+    tuoyun_audio_player_start(NULL);
+}
+
+#endif

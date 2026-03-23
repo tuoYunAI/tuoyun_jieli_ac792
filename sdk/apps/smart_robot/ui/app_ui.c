@@ -56,7 +56,7 @@ void ui_set_status_text(const char *text)
     if (strcmp(m_status_text, next_text) != 0) {
         strcpy(m_status_text, next_text);
         m_status_updated = 1;
-        log_info("------------@@@@@@@@@@@Status updated@@@@@@@@@@@@@------------: %s", m_status_text);
+        //log_info("------------@@@@@@@@@@@Status updated@@@@@@@@@@@@@------------: %s", m_status_text);
     }
     os_mutex_post(&mutex);
 }
@@ -74,7 +74,7 @@ void ui_set_emotion_text(const char *text)
     if (strcmp(m_emotion_text, next_text) != 0) {
         strcpy(m_emotion_text, next_text);
         m_emotion_updated = 1;
-        log_info("------------@@@@@@@@@@@Emotion updated@@@@@@@@@@@@@------------: %s", m_emotion_text);
+        //log_info("------------@@@@@@@@@@@Emotion updated@@@@@@@@@@@@@------------: %s", m_emotion_text);
     }
     os_mutex_post(&mutex); 
 }
@@ -113,7 +113,7 @@ void ui_set_content_text(const char *text)
     if (strcmp(m_content_text, next_text) != 0) {
         strcpy(m_content_text, next_text);
         m_content_updated = 1;
-        log_info("------------@@@@@@@@@@@Content updated@@@@@@@@@@@@@------------: %s", m_content_text);
+        //log_info("------------@@@@@@@@@@@Content updated@@@@@@@@@@@@@------------: %s", m_content_text);
     }
     os_mutex_post(&mutex);    
 }
@@ -126,7 +126,7 @@ void resume_gif(void *p)
         if (current >= m_gif_restart_time) {
             m_gif_restart_time = 0;
             lv_gif_resume(m_emotion_gif);
-            log_info("Resuming emotion GIF now, current time: %d", current);
+            //log_info("Resuming emotion GIF now, current time: %d", current);
         } 
         os_mutex_post(&mutex);
     }
@@ -220,7 +220,7 @@ int lvgl_v9_main_task_hook()
         }else{
             m_gif_restart_time += UI_GIF_RESTART_INTERVAL_MS; // 2秒内不重复重启
         }
-        log_info("Emotion GIF paused due to status/content update till: %d", m_gif_restart_time);
+        //log_info("Emotion GIF paused due to status/content update till: %d", m_gif_restart_time);
     }       
 #endif 
 

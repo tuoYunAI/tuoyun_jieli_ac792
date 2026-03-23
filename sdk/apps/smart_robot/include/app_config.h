@@ -2,7 +2,7 @@
 #define APP_CONFIG_H
 
 #define TELNET_LOG_OUTPUT
-
+#define LOCAL_AUDIO_LOOP_TEST               0    // 本地音频环回测试，打开后会把接收的音频数据直接送到解码器进行播放
 #define AUDIO_ENC_SAMPLE_SOURCE_MIC         0
 #define AUDIO_ENC_SAMPLE_SOURCE_PLNK0       1
 #define AUDIO_ENC_SAMPLE_SOURCE_PLNK1       2
