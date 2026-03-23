@@ -12,6 +12,7 @@
 #include "lwip/netdb.h"
 #include "debug_server.h"
 #include "app_tone.h"
+#include "net_event.h"
 #include "app_event.h"
 
 #define MAX_RECV_BUF_SIZE   50 //单次能接收数据的最大字节数(Bytes)
@@ -71,12 +72,40 @@ static int tcp_recv_data(void *sock_hdl, void *buf, u32 len)
     return sock_recv(sock_hdl, buf, len, 0);
 }
 
+static char* SHOW_VERSION = "version";
+
+static char* PROVISIONING = "provisioning";
+
+static char* PRO_DEL = "provdel";
+/**
+ * 开启本地语音环回测试，测试时请确保麦克风和扬声器都已连接好，并且音量适中，否则可能会有爆音
+ */
+static char* STR_LOCAL_AUDIO_LOOP_TEST = "LOCAL_AUDIO_LOOP_TEST";
 
 static void proc_telnet_cmd(char *cmd)
 {
-    char* version = "version";
-    if (strncmp(cmd, version, strlen(version)) == 0) {
+    if (strncmp(cmd, SHOW_VERSION, strlen(SHOW_VERSION)) == 0) {
         dbg_print("Firmware Version: %s\r\n", FIRMWARE_VERSION);
+    }else if (strncmp(cmd, STR_LOCAL_AUDIO_LOOP_TEST, strlen(STR_LOCAL_AUDIO_LOOP_TEST)) == 0) {
+#if LOCAL_AUDIO_LOOP_TEST
+        extern void virtual_test_loop_audio();
+        virtual_test_loop_audio();
+#endif               
+        
+    }else if(strncmp(cmd, PROVISIONING, strlen(PROVISIONING)) == 0){
+        struct net_event net = {0};
+        net.arg = "net";
+        net.event = NET_CONNECT_TIMEOUT_NOT_FOUND_SSID;
+        net_event_notify(NET_EVENT_FROM_USER, &net);
+    }else if(strncmp(cmd, PRO_DEL, strlen(PRO_DEL)) == 0){
+        int len = strlen(cmd);
+        char* ssid = cmd + strlen(PRO_DEL) + 1;
+        while(*ssid <= ' ' && *ssid != '\0') {
+            ssid++;
+        }
+        wifi_del_stored_sta_info(ssid);
+
+        dbg_print("SSID deleted: %s", ssid);
     }else{
         //dbg_print("Unknown command: %s", cmd);
     }
