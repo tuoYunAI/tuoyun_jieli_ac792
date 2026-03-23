@@ -182,9 +182,9 @@ static int wifi_event_callback(void *network_ctx, enum WIFI_EVENT event)
                 | BIT(0) //0:CCK 1M
                 | BIT(1) //1:CCK 2M
                 | BIT(2) //2:CCK 5.5M
-                | BIT(3) //3:OFDM 6M
+                //| BIT(3) //3:OFDM 6M
                 | BIT(4) //4:MCS0/7.2M
-                | BIT(5) //5:OFDM 9M
+                //| BIT(5) //5:OFDM 9M
                 | BIT(6) //6:CCK 11M
                 | BIT(7) //7:OFDM 12M
                 | BIT(8) //8:MCS1/14.4M
@@ -208,7 +208,7 @@ static int wifi_event_callback(void *network_ctx, enum WIFI_EVENT event)
 
     case WIFI_EVENT_AP_START:
         log_info("network_user_callback->WIFI_EVENT_AP_START,CH=%d", wifi_get_channel());
-        //wifi_rxfilter_cfg(7);    //过滤广播+多播+not_my_bssid
+        wifi_rxfilter_cfg(4);    //过滤广播+多播+not_my_bssid
         break;
     case WIFI_EVENT_AP_STOP:
         log_info("network_user_callback->WIFI_EVENT_AP_STOP");
@@ -432,7 +432,7 @@ int start_wifi_network(void)
         }
         g_wifi_info.inited = 1;
 
-        u16 id = sys_timer_add_to_task("sys_timer", NULL, wifi_status, 20 * 1000);
+        u16 id = sys_timer_add_to_task("sys_timer", NULL, wifi_status, 5 * 1000);
     }
     
     if (g_wifi_info.total_cnt <= 0) {
@@ -451,7 +451,7 @@ int start_wifi_network(void)
     }
     g_wifi_info.current_idx = g_wifi_info.total_cnt - 1;
     connect_to_wifi(g_wifi_info.current_idx);
-    g_wifi_connection_timer = sys_timer_add_to_task("sys_timer", NULL, init_network_connection_timeout, 20000); 
+    g_wifi_connection_timer = sys_timer_add_to_task("sys_timer", NULL, init_network_connection_timeout, 10000); 
 
     return 0;
 }
