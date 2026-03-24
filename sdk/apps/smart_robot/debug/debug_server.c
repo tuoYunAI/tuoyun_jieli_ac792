@@ -77,6 +77,12 @@ static char* SHOW_VERSION = "version";
 static char* PROVISIONING = "provisioning";
 
 static char* PRO_DEL = "provdel";
+
+static char* LAST_WORD = "lastword";
+
+
+static char* EXCEPTION = "exception";
+static char* ASSERT_ERROR = "assert";
 /**
  * 开启本地语音环回测试，测试时请确保麦克风和扬声器都已连接好，并且音量适中，否则可能会有爆音
  */
@@ -90,8 +96,8 @@ static void proc_telnet_cmd(char *cmd)
 #if LOCAL_AUDIO_LOOP_TEST
         extern void virtual_test_loop_audio();
         virtual_test_loop_audio();
-#endif               
-        
+#endif
+
     }else if(strncmp(cmd, PROVISIONING, strlen(PROVISIONING)) == 0){
         struct net_event net = {0};
         net.arg = "net";
@@ -106,7 +112,23 @@ static void proc_telnet_cmd(char *cmd)
         wifi_del_stored_sta_info(ssid);
 
         dbg_print("SSID deleted: %s", ssid);
-    }else{
+    }else if (strncmp(cmd, LAST_WORD, strlen(LAST_WORD)) == 0) {
+        char *get_exception_log_buf(int* len);
+        int len = 0;
+        char* log_buf = get_exception_log_buf(&len);
+        dbg_print("Last exception log, len: %d, content:\n%s", len, log_buf);
+
+    }
+#if 0    
+    else if (strncmp(cmd, EXCEPTION, strlen(EXCEPTION)) == 0) {
+         u32 *prt = (u32 *)0xabcdef;
+        *prt = 0x12345678;
+
+    }else if(strncmp(cmd, ASSERT_ERROR, strlen(ASSERT_ERROR)) == 0){
+        ASSERT(0, "%s %s no response\n", __FUNCTION__, "SUSPEND");
+    }
+#endif        
+    else{
         //dbg_print("Unknown command: %s", cmd);
     }
 }
@@ -135,13 +157,13 @@ _reconnect_:
             int len = strlen(cmd);
             strncpy(cmd + len, recv_buf, sizeof(cmd) - (len+1));
             tcp_send_data(client_info->fd, recv_buf, strlen(recv_buf));
-            
+
             if (strchr(recv_buf, '\r') || strchr(recv_buf, '\n')) {
                 proc_telnet_cmd(cmd);
                 memset(cmd, 0, sizeof(cmd));
             }
             memset(recv_buf, 0, sizeof(recv_buf));
-            
+
         } else {
             tcp_client_quit(client_info);
             goto _reconnect_;
@@ -323,7 +345,7 @@ static void debug_server_transmiting(void *priv)
         int blen = cbuf_get_data_size(&cbuf);
         if(blen == 0){
             continue;;
-        }   
+        }
         read_len = cbuf_read(&cbuf, temp_buf, blen > sizeof(temp_buf)?sizeof(temp_buf):blen);
         if (read_len > 0) {
 
@@ -342,8 +364,8 @@ static void debug_server_transmiting(void *priv)
             }
 
             os_mutex_post(&server_info.tcp_mutex);
-            
-            
+
+
         } else {
             os_time_dly(5);
         }
@@ -386,14 +408,14 @@ static void tcp_server_init_task(void *priv)
             os_time_dly(gap_ms);
             tone_player_stop();
         }
-        
+
         if (last >= 10) {
             int num = (last % 100) / 10;
             play_tone_file(get_tone_files()->num[num]);
             os_time_dly(gap_ms);
             tone_player_stop();
         }
-        
+
         int num = last % 10;
         play_tone_file(get_tone_files()->num[num]);
         os_time_dly(gap_ms);
@@ -401,7 +423,7 @@ static void tcp_server_init_task(void *priv)
         os_time_dly(60);
         idx--;
     }
-    
+
     struct app_event event = {
         .event = APP_EVENT_TELNET_DEBUG_STARTED,
         .arg = NULL
@@ -428,7 +450,7 @@ void write_debug_data(u8* data, u32 len)
         return;
     }
     return;
-}   
+}
 
 /* 格式化并写入日志内容 */
 static u8 msg_buf[1024] = {0};
@@ -439,23 +461,23 @@ void dbg_print(const char *format, ...)
     }
 
     os_mutex_pend(&server_info.buf_mutex, 0);
-    
+
     /* 写入日志前缀 */
     u8 pre[20] = {0};
     snprintf(pre, sizeof(pre), "[%08d] ", os_time_get());
     write_debug_data(pre, strnlen(pre, sizeof(pre)));
 
-    
+
     va_list args;
     va_start(args, format);
     int msg_len = vsnprintf(msg_buf, sizeof(msg_buf), format, args);
     va_end(args);
-    
+
     if (msg_len > 0) {
         write_debug_data(msg_buf, msg_len < sizeof(msg_buf) ? msg_len : sizeof(msg_buf) - 1);
     }
-    
-    
+
+
     os_mutex_post(&server_info.buf_mutex);
 
     return;
@@ -468,30 +490,30 @@ void dbg_printf_buf(u8 *buf, u32 len){
     }
 
     os_mutex_pend(&server_info.buf_mutex, 0);
-    
+
     /* 以十六进制格式打印缓冲区内容 */
     u8 hex_buf[80];  /* 每行最多16字节,格式为 "XX XX XX ... " */
     u32 i = 0;
-    
+
     while (i < len) {
         int line_len = 0;
         int bytes_in_line = (len - i) > 16 ? 16 : (len - i);
-        
+
         /* 格式化一行的十六进制数据 */
         for (int j = 0; j < bytes_in_line; j++) {
-            line_len += snprintf(hex_buf + line_len, sizeof(hex_buf) - line_len, 
+            line_len += snprintf(hex_buf + line_len, sizeof(hex_buf) - line_len,
                                 "%02X ", buf[i + j]);
         }
-        
+
         /* 添加换行符 */
         if (line_len < sizeof(hex_buf) - 1) {
             hex_buf[line_len++] = '\n';
         }
-        
+
         write_debug_data(hex_buf, line_len);
         i += bytes_in_line;
     }
-    
+
     os_mutex_post(&server_info.buf_mutex);
 
     return;
@@ -510,6 +532,59 @@ void start_debug_server()
         printf("thread fork fail\n");
     }
 #endif
+}
+
+void log_assert(const char* file, int line, const char* task, const char* fmt, ...)
+{
+#ifdef CONFIG_SAVE_EXCEPTION_LOG_IN_FLASH
+    void write_assert_log_to_flash(void *data, u32 len);
+    char log_buf[1024];
+    int prefix_len;
+    int msg_len;
+    int total_len;
+    va_list args;
+
+    prefix_len = snprintf(log_buf, sizeof(log_buf),
+                          "assert file:%s line:%d task:%s\n",
+                          file ? file : "unknown",
+                          line,
+                          task ? task : "unknown");
+    if (prefix_len < 0) {
+        return;
+    }
+
+    if ((u32)prefix_len >= sizeof(log_buf)) {
+        log_buf[sizeof(log_buf) - 1] = '\0';
+        write_assert_log_to_flash(log_buf, sizeof(log_buf));
+        return;
+    }
+
+    va_start(args, fmt);
+    msg_len = vsnprintf(log_buf + prefix_len,
+                        sizeof(log_buf) - prefix_len,
+                        fmt ? fmt : "",
+                        args);
+    va_end(args);
+
+    if (msg_len < 0) {
+        return;
+    }
+
+    total_len = prefix_len + msg_len;
+    if ((u32)total_len >= sizeof(log_buf)) {
+        total_len = sizeof(log_buf) - 1;
+    }
+
+    log_buf[total_len] = '\0';
+    dbg_print("+++++++++++++++++++++++++++*****%s", log_buf);
+    write_assert_log_to_flash(log_buf, total_len + 1);
+#else
+    (void)file;
+    (void)line;
+    (void)task;
+    (void)fmt;
+#endif
+
 }
 
 

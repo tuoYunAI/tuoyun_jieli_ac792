@@ -2,7 +2,7 @@
 #include "asm/cache.h"
 #include "app_config.h"
 #include "fs/fs.h"
-#include "init.h"
+#include "system/init.h"
 
 #define LOG_TAG_CONST       DEBUG_EXCP
 #define LOG_TAG             "[DEBUG_EXCP]"
@@ -538,7 +538,13 @@ static void deb_printf(char *format, ...)
 static u32 exception_log_flash_addr sec(.volatile_ram);
 static char exception_log_buf[EXCEPTION_LOG_BUF_SIZE];
 static u32 exception_log_cnt sec(.volatile_ram);
-
+char *get_exception_log_buf(int* len)
+{   
+    if (len) {
+        *len = strnlen(exception_log_buf, sizeof(exception_log_buf));
+    }
+    return exception_log_buf;
+}
 static int get_exception_log_flash_addr(void)
 {
     struct vfs_attr file_attr;
@@ -554,9 +560,9 @@ static int get_exception_log_flash_addr(void)
     sdfile_reserve_zone_read(exception_log_buf, exception_log_flash_addr, sizeof(exception_log_buf), 0);
     if (exception_log_buf[0] != -1) {
         printf("last exception log : \n%s\n", exception_log_buf);
-        sdfile_reserve_zone_erase(exception_log_flash_addr, SDFILE_SECTOR_SIZE, 0);
+        //sdfile_reserve_zone_erase(exception_log_flash_addr, SDFILE_SECTOR_SIZE, 0);
     }
-    memset(exception_log_buf, 0, sizeof(exception_log_buf));
+    //memset(exception_log_buf, 0, sizeof(exception_log_buf));
     return 0;
 }
 platform_initcall(get_exception_log_flash_addr);
@@ -570,6 +576,15 @@ static void write_exception_log_to_flash(void *data, u32 len)
     set_os_init_flag(0);
     extern void norflash_set_write_cpu_hold(u8 hold_en);
     norflash_set_write_cpu_hold(0);
+    sdfile_reserve_zone_erase(exception_log_flash_addr, SDFILE_SECTOR_SIZE, 0);
+    sdfile_reserve_zone_write(data, exception_log_flash_addr, len, 0);
+}
+
+void write_assert_log_to_flash(void *data, u32 len)
+{
+    if (exception_log_flash_addr == 0) {
+        return;
+    }
     sdfile_reserve_zone_erase(exception_log_flash_addr, SDFILE_SECTOR_SIZE, 0);
     sdfile_reserve_zone_write(data, exception_log_flash_addr, len, 0);
 }
@@ -638,6 +653,7 @@ void dlog_exception_log_to_flash(void)
 
 void exception_analyze(int *sp)
 {
+    memset(exception_log_buf, 0, sizeof(exception_log_buf));
     log_output_release_deadlock();
 
     u32 cpu_id = current_cpu_id();

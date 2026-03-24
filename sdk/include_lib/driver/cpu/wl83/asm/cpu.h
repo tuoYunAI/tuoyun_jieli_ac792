@@ -229,6 +229,7 @@ extern void exception_reset(void);
 extern void system_soft_reset(void);
 extern void cpu_assert_debug(void);
 extern const char *os_current_task_rom(void);
+extern void log_assert(const char* file, int line, const char* task, const char* fmt, ...);
 extern const int config_asser;
 #define ASSERT(a,...)   \
         do { \
@@ -236,6 +237,7 @@ extern const int config_asser;
                 if(!(a)){ \
                     printf("file:%s, line:%d, task:%s", __FILE__, __LINE__,os_current_task_rom()); \
                     printf("ASSERT-FAILD: " #a " " __VA_ARGS__); \
+                    log_assert(__FILE__, __LINE__, os_current_task_rom(), #a " " __VA_ARGS__); \
                     cpu_assert_debug(); \
                 } \
             }else {\
