@@ -276,7 +276,7 @@ static void traffic_uplink_empty_task(void* arg){
 
 /* 重排窗口大小：可存放的最大乱序包数量 */
 const int REORDER_WINDOW = 20;
-const int REORDER_MAX_WAIT_PACKETS = 13; // 当等待超过13个乱序包时，认为前面的包丢失，直接推进序列号到最新的包
+const int REORDER_MAX_WAIT_PACKETS = 7; // 当等待超过7个乱序包时，认为前面的包丢失，直接推进序列号到最新的包
 typedef struct {
     uint32_t seq;
     uint8_t *payload;
@@ -320,10 +320,10 @@ static void traffic_receive_task(void *arg){
     socklen_t len = sizeof(s_addr);
     static int nonce_size = 16;
     /**
-     * 60ms帧, 最长不超过20K
+     * 60ms帧, 3帧聚合后UDP包负载大小 = 16字节(Nonce) + 3 * 120字节(音频数据) = 376字节, 所以1K的缓冲足够了
      */
     int packet_len = m_traffic_state.downlink_audio_packet_len + nonce_size;
-    int buf_len = 8*1024;
+    int buf_len = 1024;
     u8* udp_recv_buf = malloc(buf_len);
     if(!udp_recv_buf){
         return;
@@ -510,7 +510,7 @@ static void traffic_receive_monitor_task(void *arg){
             break;
         }
         m_timeout_cnt++;
-        if (m_timeout_cnt > 10){ // 200ms没有收到数据，flush缓存数据
+        if (m_timeout_cnt > 8){ // 80ms没有收到数据，flush缓存数据
             //LOG_INFO("traffic receive monitor: no data timeout, flush traffic data\n");
 
             os_mutex_pend(&mutex, 0);
@@ -534,7 +534,7 @@ static void traffic_receive_monitor_task(void *arg){
             m_reorder_wait_cnt = 0;
             os_mutex_post(&mutex);
         }
-        os_time_dly(2);
+        os_time_dly(1);
     }
 
     free(audio_pack.payload);
