@@ -14,7 +14,7 @@
 //#define CONFIG_AUDIO_ENABLE
 #define CONFIG_MEDIA_ENABLE
 #define CONFIG_UI_ENABLE
-#define CONFIG_VIDEO_ENABLE
+//#define CONFIG_VIDEO_ENABLE
 
 //*********************************************************************************//
 //                                   时钟配置                                      //

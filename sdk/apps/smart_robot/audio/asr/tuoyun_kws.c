@@ -203,7 +203,7 @@ int aisp_vfs_fwrite(void *data, u32 len)
     u32 wlen = cbuf_write(cbuf, data, len);
     if (wlen != len) {
         cbuf_clear(cbuf);
-        log_warn("jlkws busy!");
+        //log_warn("jlkws busy!");
     }
     return len;
 }
