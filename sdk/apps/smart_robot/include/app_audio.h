@@ -7,6 +7,17 @@
 
 
 /**
+ * Working status of device microphone and speaker
+ */
+typedef enum{
+    WORKING_STATUS_STOP_PENDING = 0,
+    WORKING_STATUS_STOP = 1,
+    WORKING_STATUS_START = 10,
+    WORKING_STATUS_INVALID = 99
+}device_working_status_t;
+
+
+/**
  * @brief  Initialize network audio module. Call this function when creating a session.
  * @param  downlink_media_param: Pointer to Media parameter
  * @return 0: Initialization successful

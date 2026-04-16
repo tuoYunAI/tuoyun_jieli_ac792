@@ -12,6 +12,7 @@
 #include "system/timer.h"
 #include "app_wifi.h"
 #include "app_event.h"
+#include "app_protocol.h"
 
 #if TCFG_WIFI_ENABLE
 
@@ -463,6 +464,15 @@ void wifi_status(void)
     if (wifi_is_on()) {
         log_info("WIFI U= %d KB/s, D= %d KB/s", wifi_get_upload_rate() / 1024, wifi_get_download_rate() / 1024);
         log_info("Router_RSSI=%d,Quality=%d", wifi_get_rssi(), wifi_get_cqi()); //侦测路由器端信号质量
+        register_param_t param = {
+            .online = 1,
+            .battery = 0, // TODO: 获取实际电池电量
+            .network = {
+                .type = WIFI,
+                .rssi = wifi_get_rssi()
+            }
+        };
+        report_register_status(&param);
     }
 }
 

@@ -101,6 +101,12 @@ typedef enum{
     APP_EVENT_SERVER_NOTIFY,
 
     /**
+     * Lifecycle event notification, used to notify the application layer of the current lifecycle 
+     * status of the device, such as activation, deactivation, etc.
+     */
+    APP_EVENT_SERVER_LIFECYCLE_EVENT,
+
+    /**
      * Session established notification, indicating that signaling and media channels have been 
      * successfully established, and the terminal enters session interaction.
      */
@@ -111,6 +117,18 @@ typedef enum{
      */
     APP_EVENT_CALL_REJECTED,
 
+    /**
+     * Session input text notification, used to notify the application layer of the text content of 
+     * the current session, such as the text content recognized by the server.
+     */
+    APP_EVENT_CALL_INPUT_TEXT_NOTIFY,
+
+    /**
+     * Session output text notification, used to notify the application layer of the text content 
+     * that the server expects to be spoken by the device, such as the text content of a TTS request
+     */
+    APP_EVENT_CALL_OUTPUT_TEXT_NOTIFY,
+    
     /**
      * Session status update notification, used to notify the application layer of the current 
      * session status changes, such as start/stop dictation, etc.
@@ -127,7 +145,16 @@ typedef enum{
      * Session termination confirmation notification, indicating that the terminal initiated 
      * termination and the server confirmed the local session release request.
      */
-    APP_EVENT_CALL_TERMINATE_ACK
+    APP_EVENT_CALL_TERMINATE_ACK,
+
+    /**
+     * 
+     */
+    APP_EVENT_SET_DEVICE_MODE,
+
+    APP_EVENT_EXECUTE_MOTION,
+
+    APP_EVENT_STOP_MOTION,
 }protocol_event_type_t;
 
 

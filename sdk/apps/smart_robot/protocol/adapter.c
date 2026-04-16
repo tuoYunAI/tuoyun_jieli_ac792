@@ -226,19 +226,22 @@ void adapter_transmit_mqtt_message(char* message){
 void on_call_established(char* session_id, media_parameter_ptr media_param){
     struct app_event event = {
         .event = APP_EVENT_CALL_ESTABLISHED,
-        .arg = &media_param
+        .arg = media_param
     };
     app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
 }
 
 
 void on_call_ack_error(session_call_error_t error_code){
-    session_call_error_event_t notify = {       
-        .event = error_code
-    };
+    session_call_error_event_ptr notify = malloc(sizeof(session_call_error_event_t));
+    if (!notify) {
+        return;
+    }
+    memset(notify, 0, sizeof(session_call_error_event_t));
+    notify->event = error_code;
     struct app_event event = {
         .event = APP_EVENT_CALL_REJECTED,
-        .arg = &notify
+        .arg = notify
     };
     app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
 }
@@ -259,7 +262,7 @@ void on_call_terminated_ack(){
     app_event_notify(APP_EVENT_FROM_PROTOCOL, &event); 
 }
 
-void on_server_message_notify(server_message_notify_ptr notify){
+void on_server_notify(MOVE event_system_notification_ptr notify){
     app_event_t event = {
         .event = APP_EVENT_SERVER_NOTIFY,
         .arg = notify
@@ -267,7 +270,55 @@ void on_server_message_notify(server_message_notify_ptr notify){
     app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
 }
 
-void on_server_session_update_notify(message_session_event_ptr session_event){
+void on_server_lifecycle_event(MOVE event_device_lifecycle_ptr lifecycle){
+    app_event_t event = {
+        .event = APP_EVENT_SERVER_LIFECYCLE_EVENT,
+        .arg = lifecycle
+    };
+    app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
+}
+
+void on_set_device_mode(MOVE control_device_mode_set_ptr params){
+    app_event_t event = {
+        .event = APP_EVENT_SET_DEVICE_MODE,
+        .arg = params
+    };
+    app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
+}
+
+void on_execute_motion(MOVE control_device_motion_execute_ptr params){
+    app_event_t event = {
+        .event = APP_EVENT_EXECUTE_MOTION,
+        .arg = params
+    };
+    app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
+}
+
+void on_stop_motion(MOVE control_device_motion_stop_ptr params){
+    app_event_t event = {
+        .event = APP_EVENT_STOP_MOTION,
+        .arg = params
+    };
+    app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
+}   
+
+void on_server_session_input_text_notify(MOVE data_audio_input_text_ptr audio_input_text){
+    app_event_t event = {
+        .event = APP_EVENT_CALL_INPUT_TEXT_NOTIFY,
+        .arg = audio_input_text
+    };
+    app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
+}
+
+void on_server_session_output_text_notify(MOVE data_audio_output_text_ptr audio_output_text){
+    app_event_t event = {
+        .event = APP_EVENT_CALL_OUTPUT_TEXT_NOTIFY,
+        .arg = audio_output_text
+    };
+    app_event_notify(APP_EVENT_FROM_PROTOCOL, &event);
+}
+
+void on_server_session_update_notify(MOVE control_audio_output_state_ptr session_event){
     struct app_event event = {
         .event = APP_EVENT_CALL_UPDATED,
         .arg = session_event
@@ -294,7 +345,7 @@ void init_adapter(){
     os_mutex_create(&sip_list_mutex);
     os_mutex_create(&mcp_tool_list_mutex);
     mcp_init(NULL);
-    LOG_INFO("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@adapter initialized");
+    LOG_INFO("adapter initialized");
 }
 
 late_initcall(init_adapter);

@@ -348,12 +348,12 @@ app_status_t get_network_status(){
 void app_main(void)
 {
     log_info("\n\n\n ------------tuoyun smart robot run %s-------------\n\n\n", __TIME__);
-
+#ifndef CONFIG_UI_ENABLE // 如果有UI, 取消开机提示音
     int ret = play_tone_file_callback(get_tone_files()->power_on, NULL, poweron_tone_play_end_callback);
     if (ret) {
         poweron_tone_play_end_callback(NULL, STREAM_EVENT_STOP);
     }
-
+#endif
     thread_fork("wifi_init_task", 25, 4000, 0, 0, start_wifi_network, NULL);
 
     return;
@@ -457,7 +457,7 @@ void app_user_event_handler(struct app_event *event)
     }
 }
 
-static void proc_server_notify(server_message_notify_ptr event)
+static void proc_server_notify(event_system_notification_ptr event)
 {
     log_info("proc_server_notify");
 }
@@ -475,49 +475,66 @@ static void proc_call_rejected(session_call_error_event_ptr notify)
     enter_mode_idle();
 }
 
-static void proc_session_update_event(message_session_event_ptr notify)
+static void proc_session_input_text_notify(data_audio_input_text_ptr notify)
 {
-    log_info("APP_EVENT_CALL_UPDATED session event: %d, status: %d, text: %s, emotion: %s\n",
-                    notify->event, notify->status, notify->text, notify->emotion);
+    log_info("@TIMING@ 2 Received stt: %s\n", notify->text?notify->text:"NULL");
+    if(notify->text[0] != '\0'){
+        ui_set_content_text(notify->text);
+    }
+}
 
-    session_update_cmd_t event = notify->event;
-    switch (event)
-    {
-    case CTRL_EVENT_USER_TEXT:
-        log_info("@TIMING@ 2 Received stt: %s\n", notify->text?notify->text:"NULL");
-        if(notify->text[0] != '\0'){
-            ui_set_content_text(notify->text);
-        }
-        break;
-    case CTRL_EVENT_SPEAKER:
-        log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", notify->status == WORKING_STATUS_START ? "START" : (notify->status == WORKING_STATUS_STOP ? "STOP":"TEXT"));
-        //dialog_proc_speak_status(notify->status);
-        
-        if (notify->status == WORKING_STATUS_TEXT) {
-            
-            if( notify->text[0] != '\0') { 
-                ui_set_content_text(notify->text);
-            }
-            if (notify->emotion[0] != '\0'){ 
-                ui_set_emotion_text(notify->emotion);
-            }
+static void proc_session_output_text_notify(data_audio_output_text_ptr notify)
+{
+    if (!notify) {
+        return;
+    }
 
-        }else if (notify->status == WORKING_STATUS_STOP) {
+    log_info("@TIMING@ 3 command: TEXT CTRL_EVENT_SPEAKER");
+    if(notify->text[0] != '\0'){
+        ui_set_content_text(notify->text);
+    }
+    if (notify->emotion[0] != '\0'){
+        ui_set_emotion_text(notify->emotion);
+    }
 
-            dialog_proc_speak_status(WORKING_STATUS_STOP);
-
-        }else if (notify->status == WORKING_STATUS_START){
-
-            dialog_proc_speak_status(WORKING_STATUS_START);
-            enter_mode_dialog_speaking();
-
-        }
-        break;
-    default:
-        break;
-    } 
+}
+static void proc_session_update_event(control_audio_output_state_ptr notify)
+{
+    if (!notify) {
+        return;
+    }
+    log_info("@TIMING@ 3 command: %s CTRL_EVENT_SPEAKER", notify->state == ON ? "START" : "STOP");
+    if (notify->state == OFF) {
+        dialog_proc_speak_status(WORKING_STATUS_STOP);
+    }else{
+        dialog_proc_speak_status(WORKING_STATUS_START);
+        enter_mode_dialog_speaking();
+    }
          
 }
+
+        static void free_protocol_event_arg(protocol_event_type_t event_type, void *arg)
+        {
+            if (!arg) {
+                return;
+            }
+
+            switch (event_type) {
+            case APP_EVENT_SERVER_NOTIFY:
+            case APP_EVENT_SERVER_LIFECYCLE_EVENT:
+            case APP_EVENT_CALL_REJECTED:
+            case APP_EVENT_CALL_INPUT_TEXT_NOTIFY:
+            case APP_EVENT_CALL_OUTPUT_TEXT_NOTIFY:
+            case APP_EVENT_CALL_UPDATED:
+            case APP_EVENT_SET_DEVICE_MODE:
+            case APP_EVENT_EXECUTE_MOTION:
+            case APP_EVENT_STOP_MOTION:
+                free(arg);
+                break;
+            default:
+                break;
+            }
+        }
 
 void app_protocol_event_handler(struct app_event *event)
 {
@@ -532,8 +549,10 @@ void app_protocol_event_handler(struct app_event *event)
         }
         break;
     case APP_EVENT_SERVER_NOTIFY:
-         proc_server_notify((server_message_notify_ptr)event->arg);
+         proc_server_notify((event_system_notification_ptr)event->arg);
         break;  
+    case APP_EVENT_SERVER_LIFECYCLE_EVENT:
+        break;
     case APP_EVENT_CALL_ESTABLISHED:
         dialog_audio_init((media_parameter_ptr)event->arg);
         enter_mode_dialog_speaking();
@@ -541,8 +560,22 @@ void app_protocol_event_handler(struct app_event *event)
     case APP_EVENT_CALL_REJECTED:
         proc_call_rejected((session_call_error_event_ptr)event->arg);
         break;
+    case APP_EVENT_CALL_INPUT_TEXT_NOTIFY:
+        log_info("app_user_event_handler: APP_EVENT_CALL_INPUT_TEXT_NOTIFY");
+        proc_session_input_text_notify((data_audio_input_text_ptr)event->arg);
+        break;
+    case APP_EVENT_CALL_OUTPUT_TEXT_NOTIFY:
+        log_info("app_user_event_handler: APP_EVENT_CALL_OUTPUT_TEXT_NOTIFY");
+        proc_session_output_text_notify((data_audio_output_text_ptr)event->arg);
+        break;           
     case APP_EVENT_CALL_UPDATED:
-        proc_session_update_event((message_session_event_ptr)event->arg);
+        proc_session_update_event((control_audio_output_state_ptr)event->arg);
+        break;
+    case APP_EVENT_SET_DEVICE_MODE:
+        break;
+    case APP_EVENT_EXECUTE_MOTION:
+        break;
+    case APP_EVENT_STOP_MOTION:
         break;
     case APP_EVENT_CALL_SERVER_TERMINATED:
         log_info("app_user_event_handler: APP_EVENT_CALL_SERVER_TERMINATED");
@@ -556,6 +589,8 @@ void app_protocol_event_handler(struct app_event *event)
     default:
         break;
     }
+
+    free_protocol_event_arg(event->event, event->arg);
 
     //test_print_session_state();
     //test_print_traffic_state();
@@ -582,7 +617,10 @@ void app_audio_event_handler(struct app_event *event)
             log_info("@TIMING@ 5 Wake Word Detected, interrupting...");
             tuoyun_asr_recorder_close();
             dialog_proc_interrupt_speak();
-            send_abort_speaking(ABORT_REASON_WAKE_WORD_DETECTED);
+            event_session_barge_in_t barge_in = {
+                .reason = BARGE_IN_REASON_WAKE_WORD_DETECTED,
+            };
+            send_abort_speaking(&barge_in);
         }
         
         break;   

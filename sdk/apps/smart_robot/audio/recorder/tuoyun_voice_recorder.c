@@ -56,14 +56,30 @@ static const struct stream_file_ops ai_tx_ops = {
     .write = tuoyun_recorder_data_output,
 };
 
+
+u16 voice_active_time_task_id = 0;
+
+void recorder_voice_active_status(void){
+    void report_traffic_active();
+    report_traffic_active();
+}
+
+
 static int vad_callback(enum vad_event event)
 {
     switch (event) {
     case VAD_EVENT_SPEAK_START:
         log_info("@TIMING@ 0 VAD_EVENT_SPEAK_START");
+        voice_active_time_task_id = sys_timer_add_to_task("sys_timer", NULL, recorder_voice_active_status, 1 * 1000);
         break;
     case VAD_EVENT_SPEAK_STOP:
         log_info("@TIMING@ 1 VAD_EVENT_SPEAK_STOP");
+        if (voice_active_time_task_id) {
+            sys_timer_del(voice_active_time_task_id);
+            voice_active_time_task_id = 0;
+        }
+        break;
+    default:
         break;
     }
 

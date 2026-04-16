@@ -311,6 +311,10 @@ static void traffic_deliver_cached_contiguous(audio_stream_packet_t *audio_pack)
             }
         }
     }
+    /**
+     * 通知Traffic通道活跃
+     */
+    report_traffic_active();
 }
 
 
