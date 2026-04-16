@@ -240,7 +240,7 @@ static void proc_response_info(MOVE received_sip_message_ptr message){
         return;
     }
     if (is_response_ok(message)) {
-        printf("INFO request acknowledged");
+        LOG_INFO("INFO request acknowledged");
     }
     m_session_state.last_req_message_ms = 0;
     m_session_state.last_req_message_seq = 0;
@@ -325,7 +325,7 @@ static void proc_request_bye(MOVE received_sip_message_ptr message){
     size_t out_len = 0;
     int ret = build_200_ok_response(message, &out_msg, &out_len);
     if (ret != 0 || out_len == 0){
-        printf("failed to response to BYE");
+        LOG_INFO("failed to response to BYE");
     }else{
         transmit_sip(out_msg);
         free_sip_message(out_msg);
